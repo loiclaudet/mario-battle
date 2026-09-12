@@ -17,12 +17,18 @@ local OVER_FRAMES = 0x80 -- Vs_TimeToExit
 local HALT = 0xFF
 
 type EnemyView = { inst: Artboard<Data.Enemy>, vm: Data.Enemy }
+type FireballView = { inst: Artboard<Data.Fireball>, vm: Data.Fireball }
 
 type Game = {
     playerArtboard: Input<Artboard<Data.Player>>,
     spinyArtboard: Input<Artboard<Data.Enemy>>,
     flyArtboard: Input<Artboard<Data.Enemy>>,
     crabArtboard: Input<Artboard<Data.Enemy>>,
+    powArtboard: Input<Artboard<Data.Pow>>,
+    fireballArtboard: Input<Artboard<Data.Fireball>>,
+    powInst: Artboard<Data.Pow>?,
+    powVm: Data.Pow?,
+    fireballViews: { [number]: FireballView },
     ready: boolean,
     context: Context?,
     vm: Data.Game?,
@@ -41,6 +47,7 @@ type Game = {
     winner: Winner,
     overFrames: number,
     style: number,
+    debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender (headless checks only)
     acc: number,
     blockImage: Image?,
     sampler: ImageSampler,
@@ -76,6 +83,25 @@ local function pushVm(self: Game)
             view.vm.last.value = e.last
         end
     end
+    local powVm = self.powVm
+    if powVm ~= nil then
+        powVm.hits.value = self.world.powHits
+    end
+    for _, f in self.fireballs.list do
+        local view = self.fireballViews[f.id]
+        if view ~= nil then
+            view.vm.pose.value = f.pose
+        end
+    end
+end
+
+local function ensureFireballViews(self: Game)
+    for _, f in self.fireballs.list do
+        if self.fireballViews[f.id] == nil then
+            local vm = Data.Fireball.new()
+            self.fireballViews[f.id] = { inst = self.fireballArtboard:instance(vm), vm = vm }
+        end
+    end
 end
 
 -- every spawned enemy gets its own component instance, picked by kind
@@ -103,9 +129,14 @@ local function startRound(self: Game)
     if vm ~= nil and vm.style.value ~= self.style then
         self.style = math.floor(vm.style.value) % 6 -- --data=style=n picks the enemy set
     end
+    if vm ~= nil then
+        self.debug = math.floor(vm.debug.value)
+    end
     World.reset(self.world)
     Enemies.reset(self.enemies, self.style)
     self.enemyViews = {}
+    Fireballs.reset(self.fireballs)
+    self.fireballViews = {}
     for _, p in self.players do
         Players.reset(p)
     end
@@ -126,6 +157,7 @@ local function endRound(self: Game, winner: Winner)
         end
     end
     Enemies.haltAll(self.enemies)
+    Fireballs.haltAll(self.fireballs)
 end
 
 -- a live enemy or a fireball touched a player: everything freezes and they fall off the screen
@@ -142,6 +174,7 @@ local function killPlayer(self: Game, index: number)
         end
     end
     Enemies.haltAll(self.enemies)
+    Fireballs.haltAll(self.fireballs)
 end
 
 -- one 1/60 step ----------------------------------------------------------------------------------
@@ -195,6 +228,29 @@ local function stepPlaying(self: Game)
             Enemies.markLast(self.enemies)
         end
     end
+    if self.debug > 0 and self.world.frame == 30 then
+        if self.debug == 2 then
+            eev.ender = true
+        else
+            eev.fireball = true
+        end
+    end
+    if eev.fireball or eev.ender then
+        -- level with a random player, like Vs_Random picking the y
+        local target = self.players[self.world.frame % 2 + 1]
+        if eev.ender then
+            Fireballs.spawnEnder(self.fireballs, self.enemies.spawnCnt2, target.body.y)
+        else
+            Fireballs.spawnHorz(self.fireballs, self.enemies.spawnCnt2, target.body.y)
+        end
+        play(self, 'fireball')
+    end
+    local fev = Fireballs.update(self.fireballs, self.world, self.players, self.world.frame)
+    ensureFireballViews(self)
+    if fev.killed > 0 then
+        killPlayer(self, fev.killed)
+        return
+    end
 
     -- a dying player ends the round once they have fallen off the screen
     for i, p in self.players do
@@ -236,6 +292,8 @@ local function step(self: Game)
             World.reset(self.world)
             Enemies.reset(self.enemies, self.style)
             self.enemyViews = {}
+            Fireballs.reset(self.fireballs)
+            self.fireballViews = {}
             for _, p in self.players do
                 Players.reset(p)
             end
@@ -276,6 +334,9 @@ local function ensureReady(self: Game)
         self.playerVm[i] = pvm
         self.playerInst[i] = self.playerArtboard:instance(pvm)
     end
+    local powVm = Data.Pow.new()
+    self.powVm = powVm
+    self.powInst = self.powArtboard:instance(powVm)
     print('game ready')
 end
 
@@ -292,6 +353,13 @@ function advance(self: Game, seconds: number): boolean
     end
     for _, view in self.enemyViews do
         view.inst:advance(seconds)
+    end
+    for _, view in self.fireballViews do
+        view.inst:advance(seconds)
+    end
+    local powInst = self.powInst
+    if powInst ~= nil then
+        powInst:advance(seconds)
     end
     return true
 end
@@ -343,10 +411,20 @@ function draw(self: Game, renderer: Renderer)
             renderer:restore()
         end
     end
+    local powInst = self.powInst
+    if powInst ~= nil then
+        drawInstance(renderer, powInst, Stage.POW_X, Stage.POW_Y, false)
+    end
     for _, e in self.enemies.list do
         local view = self.enemyViews[e.slot]
         if view ~= nil then
             drawWrapped(renderer, view.inst, e.body.x + e.jitter, e.body.y, e.dir < 0)
+        end
+    end
+    for _, f in self.fireballs.list do
+        local view = self.fireballViews[f.id]
+        if view ~= nil then
+            drawWrapped(renderer, view.inst, f.body.x, f.body.y, f.dir < 0)
         end
     end
     for i, p in self.players do
@@ -387,6 +465,11 @@ return function(context: Context): Layout<Game>
         spinyArtboard = late(),
         flyArtboard = late(),
         crabArtboard = late(),
+        powArtboard = late(),
+        fireballArtboard = late(),
+        powInst = nil,
+        powVm = nil,
+        fireballViews = {},
         ready = false,
         context = nil,
         vm = nil,
@@ -405,6 +488,7 @@ return function(context: Context): Layout<Game>
         winner = 'none',
         overFrames = 0,
         style = 0,
+        debug = 0,
         acc = 0,
         blockImage = nil,
         sampler = ImageSampler('clamp', 'clamp', 'nearest'),

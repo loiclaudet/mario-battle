@@ -1,0 +1,76 @@
+<Rive version="1" kind="fragment">
+    <!-- Fireball: 16x16. a warning sparkle at the spawn edge, then the spinning flame. from Fireball.pose. ids 6:xxx -->
+    <Artboard isComponent="true" defaultStateMachineId="6:500" viewModelId="9:600" viewModelInstanceId="9:601" width="16" height="16" styleId="6:101" x="200" y="-120" name="Fireball" id="6:100">
+        <LayoutComponentStyle name="Fireball Style" id="6:101"/>
+        <Solo activeComponentId="6:200" name="Frames" id="6:110">
+            <Image assetId="8:7484" originX="0" originY="0" name="sparkle_1" id="6:200"/>
+            <Image assetId="8:10614" originX="0" originY="0" name="sparkle_2" id="6:201"/>
+            <Image assetId="8:12608" originX="0" originY="0" name="sparkle_3" id="6:202"/>
+            <Image assetId="8:6894" originX="0" originY="0" name="fireball_1" id="6:203"/>
+            <Image assetId="8:9444" originX="0" originY="0" name="fireball_2" id="6:204"/>
+            <Image assetId="8:25586" originX="0" originY="0" name="fireball_3" id="6:205"/>
+            <Image assetId="8:38257" originX="0" originY="0" name="fireball_4" id="6:206"/>
+            <Image assetId="8:38663" originX="0" originY="0" name="fireball_5" id="6:207"/>
+            <Image assetId="8:45869" originX="0" originY="0" name="fireball_6" id="6:208"/>
+            <Image assetId="8:40987" originX="0" originY="0" name="fireball_7" id="6:209"/>
+            <Image assetId="8:12234" originX="0" originY="0" name="fireball_8" id="6:210"/>
+        </Solo>
+        <LinearAnimation loopValue="loop" fps="60" duration="24" name="Warning" id="6:400">
+            <KeyedObject objectId="6:110">
+                <KeyedProperty propertyKey="296">
+                    <KeyFrameId value="6:200" frame="0"/>
+                    <KeyFrameId value="6:201" frame="8"/>
+                    <KeyFrameId value="6:202" frame="16"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation loopValue="loop" fps="60" duration="32" name="Flying" id="6:401">
+            <KeyedObject objectId="6:110">
+                <KeyedProperty propertyKey="296">
+                    <KeyFrameId value="6:203" frame="0"/>
+                    <KeyFrameId value="6:204" frame="4"/>
+                    <KeyFrameId value="6:205" frame="8"/>
+                    <KeyFrameId value="6:206" frame="12"/>
+                    <KeyFrameId value="6:207" frame="16"/>
+                    <KeyFrameId value="6:208" frame="20"/>
+                    <KeyFrameId value="6:209" frame="24"/>
+                    <KeyFrameId value="6:210" frame="28"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <StateMachine name="Fireball" id="6:500">
+            <StateMachineLayer name="Pose" id="6:501">
+                <AnyState x="60" y="-100" id="6:502"/>
+                <ExitState x="560" y="-100" id="6:503"/>
+                <EntryState x="0" y="0" id="6:504">
+                    <StateTransition stateToId="6:520" id="6:505"/>
+                </EntryState>
+                <AnimationState animationId="6:400" x="160" y="0" id="6:520">
+                    <StateTransition stateToId="6:521" duration="0">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyEnum>
+                                    <DataBindContext sourcePathIds="9:600-9:610" propertyKey="637"/>
+                                </BindablePropertyEnum>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueEnumComparator value="9:152"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <AnimationState animationId="6:401" x="320" y="0" id="6:521">
+                    <StateTransition stateToId="6:520" duration="0">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyEnum>
+                                    <DataBindContext sourcePathIds="9:600-9:610" propertyKey="637"/>
+                                </BindablePropertyEnum>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueEnumComparator value="9:151"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+    <ComponentAsset artboardId="6:100" name="Fireball" id="6:102"/>
+</Rive>

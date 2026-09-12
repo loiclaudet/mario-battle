@@ -13,7 +13,6 @@ declare -A sfx=(
   [player_down]=smb3_player_down.wav
   [fireball]=smb3_fireball.wav
   [pow]=smb3_thwomp.wav
-  [game_over]=smb3_game_over.wav
   [pipe]=smb3_pipe.wav
 )
 for name in "${!sfx[@]}"; do

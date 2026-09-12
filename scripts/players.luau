@@ -49,7 +49,7 @@ function Players.new(index: number): Player
         walkCnt = 0,
         walkFrame = 0,
         pose = 'stand',
-        prevJump = false,
+        prevJump = true, -- the press that started the round must not also jump
     }
     return p
 end

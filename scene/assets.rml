@@ -80,7 +80,6 @@
     <AudioAsset file="assets/sfx/bump.wav" name="bump" id="8:38258"/>
     <AudioAsset file="assets/sfx/coin.wav" name="coin" id="8:11990"/>
     <AudioAsset file="assets/sfx/fireball.wav" name="fireball" id="8:49304"/>
-    <AudioAsset file="assets/sfx/game_over.wav" name="game_over" id="8:29237"/>
     <AudioAsset file="assets/sfx/jump.wav" name="jump" id="8:49293"/>
     <AudioAsset file="assets/sfx/kick.wav" name="kick" id="8:9950"/>
     <AudioAsset file="assets/sfx/pipe.wav" name="pipe" id="8:29829"/>

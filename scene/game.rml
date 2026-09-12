@@ -106,6 +106,8 @@
                 <ScriptInputArtboard artboardId="2:100" name="spinyArtboard"/>
                 <ScriptInputArtboard artboardId="3:100" name="flyArtboard"/>
                 <ScriptInputArtboard artboardId="4:100" name="crabArtboard"/>
+                <ScriptInputArtboard artboardId="5:100" name="powArtboard"/>
+                <ScriptInputArtboard artboardId="6:100" name="fireballArtboard"/>
             </ScriptedLayout>
         </LayoutComponent>
 

@@ -5,7 +5,7 @@ local Sfx = {}
 
 export type Bank = { sources: { [string]: AudioSource } }
 
-Sfx.NAMES = { 'jump', 'kick', 'coin', 'bump', 'player_down', 'fireball', 'pow', 'game_over', 'pipe' }
+Sfx.NAMES = { 'jump', 'kick', 'coin', 'bump', 'player_down', 'fireball', 'pow', 'pipe' }
 
 function Sfx.load(context: Context): Bank
     local bank: Bank = { sources = {} }

@@ -28,6 +28,7 @@
         <ViewModelPropertyNumber name="coinsP2" id="9:213"/>
         <ViewModelPropertyNumber name="shakeY" id="9:214"/>
         <ViewModelPropertyNumber name="style" id="9:215"/>
+        <ViewModelPropertyNumber name="debug" id="9:216"/>
         <ViewModelInstance exports="true" name="Default" id="9:201">
             <ViewModelInstanceEnum propertyValue="9:101" viewModelPropertyId="9:210" id="9:220"/>
             <ViewModelInstanceEnum propertyValue="9:111" viewModelPropertyId="9:211" id="9:221"/>
@@ -35,6 +36,7 @@
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:213" id="9:223"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:214" id="9:224"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:215" id="9:225"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:216" id="9:226"/>
         </ViewModelInstance>
     </ViewModel>
 
@@ -60,6 +62,25 @@
         <ViewModelInstance exports="true" name="Default" id="9:301">
             <ViewModelInstanceEnum propertyValue="9:141" viewModelPropertyId="9:310" id="9:320"/>
             <ViewModelInstanceEnum propertyValue="9:131" viewModelPropertyId="9:311" id="9:321"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <DataEnumCustom name="FireballPose" id="9:150">
+        <DataEnumValue key="warning" value="Warning" id="9:151"/>
+        <DataEnumValue key="flying" value="Flying" id="9:152"/>
+    </DataEnumCustom>
+
+    <ViewModel defaultInstanceId="9:501" name="Pow" id="9:500">
+        <ViewModelPropertyNumber name="hits" id="9:510"/>
+        <ViewModelInstance exports="true" name="Default" id="9:501">
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:510" id="9:520"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <ViewModel defaultInstanceId="9:601" name="Fireball" id="9:600">
+        <ViewModelPropertyEnumCustom enumId="9:150" name="pose" id="9:610"/>
+        <ViewModelInstance exports="true" name="Default" id="9:601">
+            <ViewModelInstanceEnum propertyValue="9:151" viewModelPropertyId="9:610" id="9:620"/>
         </ViewModelInstance>
     </ViewModel>
 
