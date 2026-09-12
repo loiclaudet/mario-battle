@@ -896,6 +896,15 @@
     16
    ],
    "anchor": "bottom"
+  },
+  {
+   "name": "block",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 0,
+   "y": 48,
+   "w": 16,
+   "h": 16
   }
  ]
 }

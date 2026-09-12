@@ -102,6 +102,7 @@
             <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" widthUnitsValue="auto" heightUnitsValue="auto" name="Playfield Style" id="0:111"/>
             <ScriptedLayout scriptAssetId="8:990" name="Playfield" id="0:112">
                 <FocusData/>
+                <ScriptInputArtboard artboardId="1:100" name="playerArtboard"/>
                 <ScriptInputArtboard artboardId="2:1" name="spiny"/>
             </ScriptedLayout>
         </LayoutComponent>

@@ -37,6 +37,31 @@
         </ViewModelInstance>
     </ViewModel>
 
+    <DataEnumCustom name="PlayerPose" id="9:130">
+        <DataEnumValue key="stand" value="Stand" id="9:131"/>
+        <DataEnumValue key="walk" value="Walk" id="9:132"/>
+        <DataEnumValue key="skid" value="Skid" id="9:133"/>
+        <DataEnumValue key="jump" value="Jump" id="9:134"/>
+        <DataEnumValue key="fall" value="Fall" id="9:135"/>
+        <DataEnumValue key="stun" value="Stun" id="9:136"/>
+        <DataEnumValue key="kick" value="Kick" id="9:137"/>
+        <DataEnumValue key="dead" value="Dead" id="9:138"/>
+    </DataEnumCustom>
+
+    <DataEnumCustom name="Character" id="9:140">
+        <DataEnumValue key="mario" value="Mario" id="9:141"/>
+        <DataEnumValue key="luigi" value="Luigi" id="9:142"/>
+    </DataEnumCustom>
+
+    <ViewModel defaultInstanceId="9:301" name="Player" id="9:300">
+        <ViewModelPropertyEnumCustom enumId="9:140" name="character" id="9:310"/>
+        <ViewModelPropertyEnumCustom enumId="9:130" name="pose" id="9:311"/>
+        <ViewModelInstance exports="true" name="Default" id="9:301">
+            <ViewModelInstanceEnum propertyValue="9:141" viewModelPropertyId="9:310" id="9:320"/>
+            <ViewModelInstanceEnum propertyValue="9:131" viewModelPropertyId="9:311" id="9:321"/>
+        </ViewModelInstance>
+    </ViewModel>
+
     <ViewModel defaultInstanceId="9:401" name="Enemy" id="9:400">
         <ViewModelPropertyEnumCustom enumId="9:120" name="pose" id="9:410"/>
         <ViewModelPropertyBoolean name="angry" id="9:411"/>

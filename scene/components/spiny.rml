@@ -1,7 +1,7 @@
 <Rive version="1" kind="fragment">
     <!-- Spiny component: 16x16, frames in a Solo, one animation per pose, state machine driven by Enemy.pose.
          ids: 2:xxx -->
-    <Artboard isComponent="true" defaultStateMachineId="2:50" viewModelId="9:400" viewModelInstanceId="9:401" width="16" height="16" styleId="2:2" x="400" y="0" name="Spiny" id="2:1">
+    <Artboard isComponent="true" defaultStateMachineId="2:50" viewModelId="9:400" viewModelInstanceId="9:401" width="16" height="16" styleId="2:2" x="40" y="-120" name="Spiny" id="2:1">
         <LayoutComponentStyle name="Spiny Style" id="2:2"/>
 
         <Solo activeComponentId="2:11" name="Frames" id="2:10">

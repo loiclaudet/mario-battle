@@ -1,127 +1,329 @@
--- spike: proves the entity path. a script-instanced Spiny component walks along
--- the floor, its pose view model flips every 2 seconds, keyboard and gamepad
--- events are printed, and a key press plays the jump sound.
+--!strict
+-- the playfield: runs the battle at a fixed 60 steps per second, writes the view models the markup
+-- reads (phase, winner, coins, shake, entity poses) and draws the entity component instances.
+local Stage = require('scripts/stage')
+local Input = require('scripts/input')
+local Sfx = require('scripts/sfx')
+local World = require('scripts/world')
+local Players = require('scripts/players')
+local Enemies = require('scripts/enemies')
+local Fireballs = require('scripts/fireballs')
 
-type Game = {
-    spiny: Input<Artboard<Data.Enemy>>,
-    inst: Artboard<Data.Enemy>?,
-    vm: Data.Enemy?,
-    size: Vector,
-    acc: number,
-    frame: number,
-    x: number,
-    dir: number,
-    jump: AudioSource?,
-    context: Context?,
-}
+type Phase = 'title' | 'playing' | 'over'
+type Winner = 'none' | 'mario' | 'luigi'
 
 local STEP = 1 / 60
+local OVER_FRAMES = 0x80 -- Vs_TimeToExit
+local HALT = 0xFF
+
+type Game = {
+    playerArtboard: Input<Artboard<Data.Player>>,
+    spiny: Input<Artboard<Data.Enemy>>,
+    ready: boolean,
+    context: Context?,
+    vm: Data.Game?,
+    sfx: Sfx.Bank?,
+    input: Input.State,
+    world: World.State,
+    players: { Players.Player },
+    playerInst: { Artboard<Data.Player> },
+    playerVm: { Data.Player },
+    enemies: Enemies.State,
+    fireballs: Fireballs.State,
+    bumpCooldown: number,
+    coins: { number },
+    phase: Phase,
+    winner: Winner,
+    overFrames: number,
+    style: number,
+    acc: number,
+    blockImage: Image?,
+    sampler: ImageSampler,
+    black: Paint,
+    path: Path,
+    size: Vector,
+}
+
+-- view model -------------------------------------------------------------------------------------
+
+local function pushVm(self: Game)
+    local vm = self.vm
+    if vm == nil then
+        return
+    end
+    vm.phase.value = self.phase
+    vm.winner.value = self.winner
+    vm.coinsP1.value = self.coins[1]
+    vm.coinsP2.value = self.coins[2]
+    vm.shakeY.value = -self.world.shakeY
+    vm.style.value = self.style
+    for i, p in self.players do
+        local pvm = self.playerVm[i]
+        if pvm ~= nil then
+            pvm.pose.value = p.pose
+        end
+    end
+end
+
+-- round flow -------------------------------------------------------------------------------------
+
+local function startRound(self: Game)
+    World.reset(self.world)
+    for _, p in self.players do
+        Players.reset(p)
+    end
+    self.coins = { 0, 0 }
+    self.bumpCooldown = 0
+    self.winner = 'none'
+    self.phase = 'playing'
+    self.overFrames = 0
+end
+
+local function endRound(self: Game, winner: Winner)
+    self.phase = 'over'
+    self.winner = winner
+    self.overFrames = OVER_FRAMES
+    for _, p in self.players do
+        if p.state == Players.STATE_NORMAL then
+            p.halt = HALT
+        end
+    end
+end
+
+local function play(self: Game, name: string)
+    local bank = self.sfx
+    if bank ~= nil then
+        Sfx.play(bank, name)
+    end
+end
+
+-- one 1/60 step ----------------------------------------------------------------------------------
+
+local function stepPlaying(self: Game)
+    World.update(self.world)
+    for i, p in self.players do
+        local ev = Players.update(p, self.world, Input.intent(self.input, i))
+        if ev.jump then
+            play(self, 'jump')
+        end
+        if ev.bump then
+            play(self, 'bump')
+        end
+        if ev.stun then
+            play(self, 'bump')
+        end
+        if ev.pow then
+            play(self, 'pow')
+        end
+    end
+    local cooldown, stunned = Players.bumpEachOther(self.players[1], self.players[2], self.bumpCooldown)
+    self.bumpCooldown = cooldown
+    if stunned then
+        play(self, 'bump')
+    end
+
+    -- a dying player ends the round once they have fallen off the screen
+    for i, p in self.players do
+        if p.state == Players.STATE_DYING and p.body.y > Stage.HEIGHT + 16 then
+            endRound(self, if i == 1 then 'luigi' else 'mario')
+            return
+        end
+    end
+    if self.coins[1] + self.coins[2] >= 5 then
+        endRound(self, if self.coins[1] >= self.coins[2] then 'mario' else 'luigi')
+    end
+end
+
+local function step(self: Game)
+    local anyJump = false
+    for i = 1, 2 do
+        local intent = Input.intent(self.input, i)
+        anyJump = anyJump or intent.jump or intent.start
+    end
+    if self.phase == 'title' then
+        if anyJump then
+            startRound(self)
+        end
+    elseif self.phase == 'playing' then
+        stepPlaying(self)
+    else
+        -- over: freeze, show the winner, then back to the title
+        for _, p in self.players do
+            if p.state == Players.STATE_DYING then
+                Players.update(p, self.world, Input.intent(self.input, p.index))
+            end
+        end
+        self.overFrames -= 1
+        if self.overFrames <= 0 then
+            self.phase = 'title'
+            self.winner = 'none'
+            self.style = (self.style + 1) % 6
+        end
+    end
+end
+
+-- lifecycle --------------------------------------------------------------------------------------
 
 function init(self: Game, context: Context): boolean
     self.context = context
-    print("game init")
+    local vm = context:viewModel()
+    if vm ~= nil then
+        self.vm = vm :: any
+    end
     return true
 end
 
 function resize(self: Game, size: Vector, scale: number)
     self.size = size
-    print(`resize {size.x}x{size.y} @{scale}`)
 end
 
-local function ensureInstance(self: Game)
-    if self.inst ~= nil then
+local function ensureReady(self: Game)
+    if self.ready then
         return
     end
-    local vm = Data.Enemy.new()
-    self.inst = self.spiny:instance(vm)
-    self.vm = vm
-    print("spiny instanced")
     local context = self.context
-    if context ~= nil then
-        self.jump = context:audio("jump")
-        print(`audio jump {if self.jump ~= nil then "ok" else "nil"}`)
+    if context == nil then
+        return
     end
-end
-
-local function step(self: Game)
-    self.frame += 1
-    self.x += 0.75 * self.dir
-    if self.x > 240 then
-        self.dir = -1
-    elseif self.x < 0 then
-        self.dir = 1
+    self.ready = true
+    self.sfx = Sfx.load(context)
+    self.blockImage = context:image('block')
+    for i = 1, 2 do
+        local pvm = Data.Player.new()
+        pvm.character.value = if i == 1 then 'mario' else 'luigi'
+        self.playerVm[i] = pvm
+        self.playerInst[i] = self.playerArtboard:instance(pvm)
     end
-    local vm = self.vm
-    if vm ~= nil then
-        local flipped = (self.frame // 120) % 2 == 1
-        vm.pose.value = if flipped then "flipped" else "walk"
-    end
+    print('game ready')
 end
 
 function advance(self: Game, seconds: number): boolean
-    ensureInstance(self)
-    self.acc += seconds
+    ensureReady(self)
+    self.acc += math.min(seconds, 0.25)
     while self.acc >= STEP do
         self.acc -= STEP
         step(self)
     end
-    local inst = self.inst
-    if inst ~= nil then
+    pushVm(self)
+    for _, inst in self.playerInst do
         inst:advance(seconds)
     end
     return true
 end
 
-function draw(self: Game, renderer: Renderer)
-    local inst = self.inst
-    if inst == nil then
-        return
-    end
+-- drawing ----------------------------------------------------------------------------------------
+
+local function drawInstance(renderer: Renderer, inst: Artboard<any>, x: number, y: number, flip: boolean)
     renderer:save()
-    if self.dir < 0 then
-        -- flip horizontally around the sprite's own 16px box
-        renderer:transform(Mat2D.withScaleAndTranslation(-1, 1, self.x + 16, 192))
+    if flip then
+        renderer:transform(Mat2D.withScaleAndTranslation(-1, 1, x + 16, y))
     else
-        renderer:transform(Mat2D.withTranslation(self.x, 192))
+        renderer:transform(Mat2D.withTranslation(x, y))
     end
     inst:draw(renderer)
     renderer:restore()
 end
 
+-- entities near an edge are drawn on both sides so the wrap is seamless
+local function drawWrapped(renderer: Renderer, inst: Artboard<any>, x: number, y: number, flip: boolean)
+    drawInstance(renderer, inst, x, y, flip)
+    if x > Stage.WIDTH - 16 then
+        drawInstance(renderer, inst, x - Stage.WIDTH, y, flip)
+    elseif x < 0 then
+        drawInstance(renderer, inst, x + Stage.WIDTH, y, flip)
+    end
+end
+
+local function rect(self: Game, x: number, y: number, w: number, h: number)
+    self.path:reset()
+    self.path:moveTo(Vector.xy(x, y))
+    self.path:lineTo(Vector.xy(x + w, y))
+    self.path:lineTo(Vector.xy(x + w, y + h))
+    self.path:lineTo(Vector.xy(x, y + h))
+    self.path:close()
+end
+
+function draw(self: Game, renderer: Renderer)
+    renderer:save()
+    renderer:transform(Mat2D.withTranslation(0, -self.world.shakeY))
+    -- bumped blocks: black out the tile, draw the block sprite where it has bounced to
+    local block = self.blockImage
+    for _, b in self.world.blocks do
+        rect(self, b.x, b.y - b.y % 16, 16, 16)
+        renderer:drawPath(self.path, self.black)
+        if block ~= nil then
+            renderer:save()
+            renderer:transform(Mat2D.withTranslation(b.x, b.y))
+            renderer:drawImage(block, self.sampler, 'srcOver', 1)
+            renderer:restore()
+        end
+    end
+    for i, p in self.players do
+        local inst = self.playerInst[i]
+        if inst ~= nil then
+            drawWrapped(renderer, inst, p.body.x, p.body.y, p.dir < 0)
+        end
+    end
+    renderer:restore()
+end
+
+-- input ------------------------------------------------------------------------------------------
+
 function keyboardEvent(self: Game, event: KeyboardEvent): boolean
-    print(`key {event.key} {event.phase}`)
-    if event.phase == "down" and self.jump ~= nil then
-        Audio.play(self.jump)
+    if event.phase == 'down' then
+        Input.keyDown(self.input, event.key)
+    elseif event.phase == 'up' then
+        Input.keyUp(self.input, event.key)
     end
     return true
 end
 
 function gamepadConnected(self: Game, event: GamepadConnected)
-    print(`gamepad connected {event.deviceId}`)
+    Input.padConnected(self.input, event.deviceId)
+end
+
+function gamepadDisconnected(self: Game, event: GamepadDisconnected)
+    Input.padDisconnected(self.input, event.deviceId)
 end
 
 function gamepadEvent(self: Game, event: GamepadEvent)
-    print(`gamepad {event.deviceId} {event.changeKind} {event.changeIndex} = {event.changeValue} south={event.south} west={event.west} left={event.dpadLeft} stick={event.leftStick.x}`)
+    Input.padEvent(self.input, event)
 end
 
 return function(context: Context): Layout<Game>
     return {
+        playerArtboard = late(),
         spiny = late(),
-        inst = nil,
-        vm = nil,
-        size = Vector.xy(256, 240),
-        acc = 0,
-        frame = 0,
-        x = 16,
-        dir = 1,
-        jump = nil,
+        ready = false,
         context = nil,
+        vm = nil,
+        sfx = nil,
+        input = Input.new(),
+        world = World.new(),
+        players = { Players.new(1), Players.new(2) },
+        playerInst = {},
+        playerVm = {},
+        enemies = Enemies.new(),
+        fireballs = Fireballs.new(),
+        bumpCooldown = 0,
+        coins = { 0, 0 },
+        phase = 'title',
+        winner = 'none',
+        overFrames = 0,
+        style = 0,
+        acc = 0,
+        blockImage = nil,
+        sampler = ImageSampler('clamp', 'clamp', 'nearest'),
+        black = Paint.with({ color = Color.rgb(0, 0, 0) }),
+        path = Path.new(),
+        size = Vector.xy(256, 240),
         init = init,
         resize = resize,
         advance = advance,
         draw = draw,
         keyboardEvent = keyboardEvent,
         gamepadConnected = gamepadConnected,
+        gamepadDisconnected = gamepadDisconnected,
         gamepadEvent = gamepadEvent,
     }
 end

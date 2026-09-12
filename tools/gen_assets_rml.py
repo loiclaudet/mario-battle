@@ -26,11 +26,15 @@ for n in sorted(f[:-4] for f in os.listdir(os.path.join(root, 'assets/sfx')) if 
     lines.append(f'    <AudioAsset file="assets/sfx/{n}.wav" name="{n}" id="{stable_id("audio", n)}"/>')
 lines.append('    <!-- font, ofl licensed -->')
 lines.append('    <FontAsset file="assets/fonts/PressStart2P-Regular.ttf" name="PressStart2P" id="8:850"/>')
-lines.append('    <!-- scripts: modules first, game last, because require only finds modules declared above -->')
-modules = ['stage', 'physics', 'input', 'sfx']
+lines.append('    <!-- scripts: modules first, game last, because require only finds modules declared above. folderPath makes them require("scripts/<name>") -->')
+modules = ['stage', 'physics', 'input', 'sfx', 'world', 'players', 'enemies', 'fireballs']
 for i, m in enumerate(modules):
-    lines.append(f'    <ScriptAsset file="scripts/{m}.luau" isModule="true" name="{m}" id="8:{901+i}"/>')
-lines.append('    <ScriptAsset file="scripts/game.luau" name="game" id="8:990"/>')
+    lines.append(f'    <ScriptAsset file="scripts/{m}.luau" folderPath="scripts" isModule="true" name="{m}" id="8:{901+i}"/>')
+lines.append('    <ScriptAsset file="scripts/game.luau" folderPath="scripts" name="game" id="8:990"/>')
+lines.append('    <!-- tests, kept out of the rev by excludeFromRev; declared here so they see the modules above -->')
+tests = sorted(f[:-5] for f in os.listdir(os.path.join(root, 'scripts')) if f.endswith('_test.luau'))
+for i, t in enumerate(tests):
+    lines.append(f'    <ScriptAsset file="scripts/{t}.luau" folderPath="scripts" name="{t}" id="8:{951+i}"/>')
 lines.append('</Rive>')
 open(os.path.join(root, 'scene/assets.rml'), 'w').write('\n'.join(lines) + '\n')
 json.dump(ids, open(os.path.join(root, 'tools/asset_ids.json'), 'w'), indent=1, sort_keys=True)
