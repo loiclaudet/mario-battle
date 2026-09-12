@@ -103,7 +103,9 @@
             <ScriptedLayout scriptAssetId="8:990" name="Playfield" id="0:112">
                 <FocusData/>
                 <ScriptInputArtboard artboardId="1:100" name="playerArtboard"/>
-                <ScriptInputArtboard artboardId="2:1" name="spiny"/>
+                <ScriptInputArtboard artboardId="2:100" name="spinyArtboard"/>
+                <ScriptInputArtboard artboardId="3:100" name="flyArtboard"/>
+                <ScriptInputArtboard artboardId="4:100" name="crabArtboard"/>
             </ScriptedLayout>
         </LayoutComponent>
 

@@ -632,7 +632,7 @@
    "h": 16
   },
   {
-   "name": "crab_angry_1",
+   "name": "crab_angry_walk_1",
    "out": "assets/sprites",
    "sheet": "bm",
    "x": 102,
@@ -641,7 +641,7 @@
    "h": 16
   },
   {
-   "name": "crab_angry_2",
+   "name": "crab_angry_walk_2",
    "out": "assets/sprites",
    "sheet": "bm",
    "x": 121,
@@ -696,7 +696,7 @@
    }
   },
   {
-   "name": "crab_blue_angry_1",
+   "name": "crab_blue_angry_walk_1",
    "out": "assets/sprites",
    "sheet": "bm",
    "x": 102,
@@ -709,7 +709,7 @@
    }
   },
   {
-   "name": "crab_blue_angry_2",
+   "name": "crab_blue_angry_walk_2",
    "out": "assets/sprites",
    "sheet": "bm",
    "x": 121,

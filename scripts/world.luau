@@ -97,13 +97,13 @@ function World.solidAt(w: State, x: number, y: number): boolean
     return not World.isBounced(w, x, y)
 end
 
-export type Probe = { ground: boolean, ceiling: boolean, underHit: boolean }
+export type Probe = { ground: boolean, ceiling: boolean, underHit: boolean, underHitLeft: boolean, underHitRight: boolean }
 
 -- Vs_CollideAgainstWorld for a 16x16 body: floor probes at (x+4, y+16) and (x+12, y+16) count when
 -- the body is within 6px of the tile top and not rising; the ceiling probe at (x+8, y) counts when
 -- the head is at least 9px into the tile and rising. underHit is true when a foot stands on a bounced block.
 function World.probe(w: State, b: Physics.Body): Probe
-    local out: Probe = { ground = false, ceiling = false, underHit = false }
+    local out: Probe = { ground = false, ceiling = false, underHit = false, underHitLeft = false, underHitRight = false }
     local fy = b.y + 16
     local left = b.x + 4
     local right = b.x + 12
@@ -116,9 +116,9 @@ function World.probe(w: State, b: Physics.Body): Probe
         out.ceiling = true
     end
     if fy % 16 < 6 then
-        if (Stage.solidAt(left, fy) and World.isBounced(w, left, fy)) or (Stage.solidAt(right, fy) and World.isBounced(w, right, fy)) then
-            out.underHit = true
-        end
+        out.underHitLeft = Stage.solidAt(left, fy) and World.isBounced(w, left, fy)
+        out.underHitRight = Stage.solidAt(right, fy) and World.isBounced(w, right, fy)
+        out.underHit = out.underHitLeft or out.underHitRight
     end
     return out
 end

@@ -18,12 +18,12 @@
     <ImageAsset file="assets/stage/stub_l.png" samplerFilter="1" name="stub_l" id="8:30000"/>
     <ImageAsset file="assets/stage/stub_r.png" samplerFilter="1" name="stub_r" id="8:52755"/>
     <!-- sprite frames -->
-    <ImageAsset file="assets/sprites/crab_angry_1.png" samplerFilter="1" name="crab_angry_1" id="8:40812"/>
-    <ImageAsset file="assets/sprites/crab_angry_2.png" samplerFilter="1" name="crab_angry_2" id="8:53350"/>
     <ImageAsset file="assets/sprites/crab_angry_flipped.png" samplerFilter="1" name="crab_angry_flipped" id="8:2185"/>
-    <ImageAsset file="assets/sprites/crab_blue_angry_1.png" samplerFilter="1" name="crab_blue_angry_1" id="8:18660"/>
-    <ImageAsset file="assets/sprites/crab_blue_angry_2.png" samplerFilter="1" name="crab_blue_angry_2" id="8:36046"/>
+    <ImageAsset file="assets/sprites/crab_angry_walk_1.png" samplerFilter="1" name="crab_angry_walk_1" id="8:19431"/>
+    <ImageAsset file="assets/sprites/crab_angry_walk_2.png" samplerFilter="1" name="crab_angry_walk_2" id="8:40653"/>
     <ImageAsset file="assets/sprites/crab_blue_angry_flipped.png" samplerFilter="1" name="crab_blue_angry_flipped" id="8:53436"/>
+    <ImageAsset file="assets/sprites/crab_blue_angry_walk_1.png" samplerFilter="1" name="crab_blue_angry_walk_1" id="8:4584"/>
+    <ImageAsset file="assets/sprites/crab_blue_angry_walk_2.png" samplerFilter="1" name="crab_blue_angry_walk_2" id="8:8162"/>
     <ImageAsset file="assets/sprites/crab_blue_flipped.png" samplerFilter="1" name="crab_blue_flipped" id="8:28454"/>
     <ImageAsset file="assets/sprites/crab_blue_walk_1.png" samplerFilter="1" name="crab_blue_walk_1" id="8:49310"/>
     <ImageAsset file="assets/sprites/crab_blue_walk_2.png" samplerFilter="1" name="crab_blue_walk_2" id="8:12052"/>

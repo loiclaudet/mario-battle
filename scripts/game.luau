@@ -16,9 +16,13 @@ local STEP = 1 / 60
 local OVER_FRAMES = 0x80 -- Vs_TimeToExit
 local HALT = 0xFF
 
+type EnemyView = { inst: Artboard<Data.Enemy>, vm: Data.Enemy }
+
 type Game = {
     playerArtboard: Input<Artboard<Data.Player>>,
-    spiny: Input<Artboard<Data.Enemy>>,
+    spinyArtboard: Input<Artboard<Data.Enemy>>,
+    flyArtboard: Input<Artboard<Data.Enemy>>,
+    crabArtboard: Input<Artboard<Data.Enemy>>,
     ready: boolean,
     context: Context?,
     vm: Data.Game?,
@@ -29,6 +33,7 @@ type Game = {
     playerInst: { Artboard<Data.Player> },
     playerVm: { Data.Player },
     enemies: Enemies.State,
+    enemyViews: { [number]: EnemyView }, -- by enemy slot
     fireballs: Fireballs.State,
     bumpCooldown: number,
     coins: { number },
@@ -63,12 +68,44 @@ local function pushVm(self: Game)
             pvm.pose.value = p.pose
         end
     end
+    for _, e in self.enemies.list do
+        local view = self.enemyViews[e.slot]
+        if view ~= nil then
+            view.vm.pose.value = e.pose
+            view.vm.angry.value = e.angry
+            view.vm.last.value = e.last
+        end
+    end
+end
+
+-- every spawned enemy gets its own component instance, picked by kind
+local function ensureEnemyViews(self: Game)
+    for _, e in self.enemies.list do
+        if self.enemyViews[e.slot] == nil then
+            local vm = Data.Enemy.new()
+            local source = if e.kind == 'spiny' then self.spinyArtboard elseif e.kind == 'fly' then self.flyArtboard else self.crabArtboard
+            self.enemyViews[e.slot] = { inst = source:instance(vm), vm = vm }
+        end
+    end
+end
+
+local function play(self: Game, name: string)
+    local bank = self.sfx
+    if bank ~= nil then
+        Sfx.play(bank, name)
+    end
 end
 
 -- round flow -------------------------------------------------------------------------------------
 
 local function startRound(self: Game)
+    local vm = self.vm
+    if vm ~= nil and vm.style.value ~= self.style then
+        self.style = math.floor(vm.style.value) % 6 -- --data=style=n picks the enemy set
+    end
     World.reset(self.world)
+    Enemies.reset(self.enemies, self.style)
+    self.enemyViews = {}
     for _, p in self.players do
         Players.reset(p)
     end
@@ -88,13 +125,23 @@ local function endRound(self: Game, winner: Winner)
             p.halt = HALT
         end
     end
+    Enemies.haltAll(self.enemies)
 end
 
-local function play(self: Game, name: string)
-    local bank = self.sfx
-    if bank ~= nil then
-        Sfx.play(bank, name)
+-- a live enemy or a fireball touched a player: everything freezes and they fall off the screen
+local function killPlayer(self: Game, index: number)
+    local victim = self.players[index]
+    if victim.state ~= Players.STATE_NORMAL then
+        return
     end
+    Players.kill(victim)
+    play(self, 'player_down')
+    for i, p in self.players do
+        if i ~= index then
+            p.halt = HALT
+        end
+    end
+    Enemies.haltAll(self.enemies)
 end
 
 -- one 1/60 step ----------------------------------------------------------------------------------
@@ -120,6 +167,33 @@ local function stepPlaying(self: Game)
     self.bumpCooldown = cooldown
     if stunned then
         play(self, 'bump')
+    end
+
+    local halted = false
+    for _, p in self.players do
+        if p.halt > 0 or p.state == Players.STATE_DYING then
+            halted = true
+        end
+    end
+    local eev = Enemies.update(self.enemies, self.world, self.players, self.world.frame, halted)
+    ensureEnemyViews(self)
+    if eev.spawned then
+        play(self, 'pipe')
+    end
+    if eev.flip then
+        play(self, 'bump')
+    end
+    if eev.killed > 0 then
+        killPlayer(self, eev.killed)
+        return
+    end
+    if eev.kick then
+        play(self, 'kick')
+        play(self, 'coin')
+        self.coins[eev.coin] += 1
+        if self.coins[1] + self.coins[2] == 4 then
+            Enemies.markLast(self.enemies)
+        end
     end
 
     -- a dying player ends the round once they have fallen off the screen
@@ -158,6 +232,14 @@ local function step(self: Game)
             self.phase = 'title'
             self.winner = 'none'
             self.style = (self.style + 1) % 6
+            -- clear the arena behind the title
+            World.reset(self.world)
+            Enemies.reset(self.enemies, self.style)
+            self.enemyViews = {}
+            for _, p in self.players do
+                Players.reset(p)
+            end
+            self.coins = { 0, 0 }
         end
     end
 end
@@ -207,6 +289,9 @@ function advance(self: Game, seconds: number): boolean
     pushVm(self)
     for _, inst in self.playerInst do
         inst:advance(seconds)
+    end
+    for _, view in self.enemyViews do
+        view.inst:advance(seconds)
     end
     return true
 end
@@ -258,6 +343,12 @@ function draw(self: Game, renderer: Renderer)
             renderer:restore()
         end
     end
+    for _, e in self.enemies.list do
+        local view = self.enemyViews[e.slot]
+        if view ~= nil then
+            drawWrapped(renderer, view.inst, e.body.x + e.jitter, e.body.y, e.dir < 0)
+        end
+    end
     for i, p in self.players do
         local inst = self.playerInst[i]
         if inst ~= nil then
@@ -293,7 +384,9 @@ end
 return function(context: Context): Layout<Game>
     return {
         playerArtboard = late(),
-        spiny = late(),
+        spinyArtboard = late(),
+        flyArtboard = late(),
+        crabArtboard = late(),
         ready = false,
         context = nil,
         vm = nil,
@@ -304,6 +397,7 @@ return function(context: Context): Layout<Game>
         playerInst = {},
         playerVm = {},
         enemies = Enemies.new(),
+        enemyViews = {},
         fireballs = Fireballs.new(),
         bumpCooldown = 0,
         coins = { 0, 0 },

@@ -15,7 +15,8 @@
     </DataEnumCustom>
 
     <DataEnumCustom name="EnemyPose" id="9:120">
-        <DataEnumValue key="walk" value="Walk" id="9:121"/>
+        <DataEnumValue key="walkA" value="Walk A" id="9:121"/>
+        <DataEnumValue key="walkB" value="Walk B" id="9:124"/>
         <DataEnumValue key="flipped" value="Flipped" id="9:122"/>
         <DataEnumValue key="dying" value="Dying" id="9:123"/>
     </DataEnumCustom>
