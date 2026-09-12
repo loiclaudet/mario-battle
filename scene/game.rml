@@ -13,12 +13,12 @@
             <Solo activeComponentId="0:441" name="Pause" id="0:440">
                 <Node name="none" id="0:441"/>
                 <Node name="banner" id="0:442">
-                <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="PauseText" id="0:443">
-                    <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:444">
-                        <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
-                    </TextStylePaint>
-                    <TextValueRun styleId="0:444" text="PAUSE" name="Run" id="0:445"/>
-                </Text>
+                    <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="PauseText" id="0:443">
+                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:444">
+                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:444" text="PAUSE" name="Run" id="0:445"/>
+                    </Text>
                     <Shape x="0" y="120" name="Band" id="0:446">
                         <Rectangle width="256" height="24" originX="0" originY="0" name="Rect"/>
                         <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
@@ -28,26 +28,24 @@
             <Solo activeComponentId="0:411" name="Winner" id="0:410">
                 <Node name="none" id="0:411"/>
                 <Node name="mario" id="0:412">
-                <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="MarioWins" id="0:415">
-                    <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:416">
-                        <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
-                    </TextStylePaint>
-                    <TextValueRun styleId="0:416" text="MARIO WINS" name="Run" id="0:417"/>
-                </Text>
-
+                    <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="MarioWins" id="0:415">
+                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:416">
+                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:416" text="MARIO WINS" name="Run" id="0:417"/>
+                    </Text>
                     <Shape x="0" y="120" name="Band" id="0:414">
                         <Rectangle width="256" height="24" originX="0" originY="0" name="Rect"/>
                         <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
                     </Shape>
                 </Node>
                 <Node name="luigi" id="0:413">
-                <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="LuigiWins" id="0:419">
-                    <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:420">
-                        <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
-                    </TextStylePaint>
-                    <TextValueRun styleId="0:420" text="LUIGI WINS" name="Run" id="0:421"/>
-                </Text>
-
+                    <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="LuigiWins" id="0:419">
+                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:420">
+                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:420" text="LUIGI WINS" name="Run" id="0:421"/>
+                    </Text>
                     <Shape x="0" y="120" name="Band" id="0:418">
                         <Rectangle width="256" height="24" originX="0" originY="0" name="Rect"/>
                         <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
@@ -57,19 +55,18 @@
             <Solo activeComponentId="0:432" name="Title" id="0:430">
                 <Node name="none" id="0:431"/>
                 <Node name="panel" id="0:432">
-                <Text x="128" y="116" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleText" id="0:434">
-                    <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:435">
-                        <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
-                    </TextStylePaint>
-                    <TextValueRun styleId="0:435" text="MARIO BATTLE" name="Run" id="0:436"/>
-                </Text>
-                <Text x="128" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleHint" id="0:437">
-                    <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:438">
-                        <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
-                    </TextStylePaint>
-                    <TextValueRun styleId="0:438" text="PRESS JUMP" name="Run" id="0:439"/>
-                </Text>
-
+                    <Text x="128" y="116" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleText" id="0:434">
+                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:435">
+                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:435" text="MARIO BATTLE" name="Run" id="0:436"/>
+                    </Text>
+                    <Text x="128" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleHint" id="0:437">
+                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:438">
+                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                        </TextStylePaint>
+                        <TextValueRun styleId="0:438" text="PRESS JUMP" name="Run" id="0:439"/>
+                    </Text>
                     <Shape x="0" y="108" name="Band" id="0:433">
                         <Rectangle width="256" height="48" originX="0" originY="0" name="Rect"/>
                         <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
