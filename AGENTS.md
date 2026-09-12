@@ -31,6 +31,19 @@ spawns a fireball at once, `--data=debug=2` the game ender. component artboards 
 play it: `rive . --fit=contain` (the default fit reflows the artboard to the window; contain keeps 256x240 and
 letterboxes). keyboard only works in the live window, there is no headless keyboard flag.
 
+## pushing and publishing
+
+the project is bound to rive file 2576840 in the "experiments" project (`push:` in `rive.yaml`).
+
+```bash
+rive push --name="what changed"   # new revision of that file, editor picks it up live
+rive . --publish                  # signed build/mario-battle.riv for the web runtime (watermarked if unbound)
+```
+
+the first push wrote coop ids into every rml element. keep them: a push reads a renumbered element as a
+delete plus an add. `tools/gen_enemy_rml.py` rewrites the three enemy files without those ids, so after
+regenerating expect the next push to recreate their objects (harmless, just noisy in the revision).
+
 ## regenerating
 
 ```bash

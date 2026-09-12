@@ -20,26 +20,26 @@
         </Solo>
 
         <LinearAnimation loopValue="loop" duration="1" name="walkA" id="2:400">
-            <KeyedObject objectId="2:110"><KeyedProperty propertyKey="296"><KeyFrameId value="2:200" frame="0"/></KeyedProperty></KeyedObject>
-            <KeyedObject objectId="2:111"><KeyedProperty propertyKey="296"><KeyFrameId value="2:210" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:110" id="0:61666"><KeyedProperty propertyKey="296" id="0:61667"><KeyFrameId value="2:200" frame="0" id="0:61668"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:111" id="0:61669"><KeyedProperty propertyKey="296" id="0:61670"><KeyFrameId value="2:210" frame="0" id="0:61671"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="walkB" id="2:401">
-            <KeyedObject objectId="2:110"><KeyedProperty propertyKey="296"><KeyFrameId value="2:201" frame="0"/></KeyedProperty></KeyedObject>
-            <KeyedObject objectId="2:111"><KeyedProperty propertyKey="296"><KeyFrameId value="2:211" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:110" id="0:61672"><KeyedProperty propertyKey="296" id="0:61673"><KeyFrameId value="2:201" frame="0" id="0:61674"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:111" id="0:61675"><KeyedProperty propertyKey="296" id="0:61676"><KeyFrameId value="2:211" frame="0" id="0:61677"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="flipped" id="2:402">
-            <KeyedObject objectId="2:110"><KeyedProperty propertyKey="296"><KeyFrameId value="2:202" frame="0"/></KeyedProperty></KeyedObject>
-            <KeyedObject objectId="2:111"><KeyedProperty propertyKey="296"><KeyFrameId value="2:212" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:110" id="0:61678"><KeyedProperty propertyKey="296" id="0:61679"><KeyFrameId value="2:202" frame="0" id="0:61680"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:111" id="0:61681"><KeyedProperty propertyKey="296" id="0:61682"><KeyFrameId value="2:212" frame="0" id="0:61683"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="dying" id="2:403">
-            <KeyedObject objectId="2:110"><KeyedProperty propertyKey="296"><KeyFrameId value="2:203" frame="0"/></KeyedProperty></KeyedObject>
-            <KeyedObject objectId="2:111"><KeyedProperty propertyKey="296"><KeyFrameId value="2:213" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:110" id="0:61684"><KeyedProperty propertyKey="296" id="0:61685"><KeyFrameId value="2:203" frame="0" id="0:61686"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:111" id="0:61687"><KeyedProperty propertyKey="296" id="0:61688"><KeyFrameId value="2:213" frame="0" id="0:61689"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="skin normal" id="2:420">
-            <KeyedObject objectId="2:105"><KeyedProperty propertyKey="296"><KeyFrameId value="2:110" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:105" id="0:61690"><KeyedProperty propertyKey="296" id="0:61691"><KeyFrameId value="2:110" frame="0" id="0:61692"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="skin blue" id="2:421">
-            <KeyedObject objectId="2:105"><KeyedProperty propertyKey="296"><KeyFrameId value="2:111" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="2:105" id="0:61693"><KeyedProperty propertyKey="296" id="0:61694"><KeyFrameId value="2:111" frame="0" id="0:61695"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
 
         <StateMachine name="Spiny" id="2:500">
@@ -50,130 +50,130 @@
                     <StateTransition stateToId="2:520" id="2:505"/>
                 </EntryState>
                 <AnimationState animationId="2:400" x="160" y="0" id="2:520">
-                    <StateTransition stateToId="2:521" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:521" duration="0" id="0:61696">
+                        <TransitionViewModelCondition opValue="equal" id="0:61697">
+                            <TransitionPropertyViewModelComparator id="0:61698">
+                                <BindablePropertyEnum id="0:61699">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61700"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:124"/>
+                            <TransitionValueEnumComparator value="9:124" id="0:61701"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:522" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:522" duration="0" id="0:61702">
+                        <TransitionViewModelCondition opValue="equal" id="0:61703">
+                            <TransitionPropertyViewModelComparator id="0:61704">
+                                <BindablePropertyEnum id="0:61705">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61706"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:122"/>
+                            <TransitionValueEnumComparator value="9:122" id="0:61707"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:523" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:523" duration="0" id="0:61708">
+                        <TransitionViewModelCondition opValue="equal" id="0:61709">
+                            <TransitionPropertyViewModelComparator id="0:61710">
+                                <BindablePropertyEnum id="0:61711">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61712"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:123"/>
+                            <TransitionValueEnumComparator value="9:123" id="0:61713"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="2:401" x="300" y="0" id="2:521">
-                    <StateTransition stateToId="2:520" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:520" duration="0" id="0:61714">
+                        <TransitionViewModelCondition opValue="equal" id="0:61715">
+                            <TransitionPropertyViewModelComparator id="0:61716">
+                                <BindablePropertyEnum id="0:61717">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61718"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:121"/>
+                            <TransitionValueEnumComparator value="9:121" id="0:61719"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:522" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:522" duration="0" id="0:61720">
+                        <TransitionViewModelCondition opValue="equal" id="0:61721">
+                            <TransitionPropertyViewModelComparator id="0:61722">
+                                <BindablePropertyEnum id="0:61723">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61724"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:122"/>
+                            <TransitionValueEnumComparator value="9:122" id="0:61725"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:523" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:523" duration="0" id="0:61726">
+                        <TransitionViewModelCondition opValue="equal" id="0:61727">
+                            <TransitionPropertyViewModelComparator id="0:61728">
+                                <BindablePropertyEnum id="0:61729">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61730"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:123"/>
+                            <TransitionValueEnumComparator value="9:123" id="0:61731"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="2:402" x="440" y="0" id="2:522">
-                    <StateTransition stateToId="2:520" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:520" duration="0" id="0:61732">
+                        <TransitionViewModelCondition opValue="equal" id="0:61733">
+                            <TransitionPropertyViewModelComparator id="0:61734">
+                                <BindablePropertyEnum id="0:61735">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61736"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:121"/>
+                            <TransitionValueEnumComparator value="9:121" id="0:61737"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:521" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:521" duration="0" id="0:61738">
+                        <TransitionViewModelCondition opValue="equal" id="0:61739">
+                            <TransitionPropertyViewModelComparator id="0:61740">
+                                <BindablePropertyEnum id="0:61741">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61742"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:124"/>
+                            <TransitionValueEnumComparator value="9:124" id="0:61743"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:523" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:523" duration="0" id="0:61744">
+                        <TransitionViewModelCondition opValue="equal" id="0:61745">
+                            <TransitionPropertyViewModelComparator id="0:61746">
+                                <BindablePropertyEnum id="0:61747">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61748"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:123"/>
+                            <TransitionValueEnumComparator value="9:123" id="0:61749"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="2:403" x="580" y="0" id="2:523">
-                    <StateTransition stateToId="2:520" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:520" duration="0" id="0:61750">
+                        <TransitionViewModelCondition opValue="equal" id="0:61751">
+                            <TransitionPropertyViewModelComparator id="0:61752">
+                                <BindablePropertyEnum id="0:61753">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61754"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:121"/>
+                            <TransitionValueEnumComparator value="9:121" id="0:61755"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:521" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:521" duration="0" id="0:61756">
+                        <TransitionViewModelCondition opValue="equal" id="0:61757">
+                            <TransitionPropertyViewModelComparator id="0:61758">
+                                <BindablePropertyEnum id="0:61759">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61760"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:124"/>
+                            <TransitionValueEnumComparator value="9:124" id="0:61761"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
-                    <StateTransition stateToId="2:522" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                    <StateTransition stateToId="2:522" duration="0" id="0:61762">
+                        <TransitionViewModelCondition opValue="equal" id="0:61763">
+                            <TransitionPropertyViewModelComparator id="0:61764">
+                                <BindablePropertyEnum id="0:61765">
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637" id="0:61766"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:122"/>
+                            <TransitionValueEnumComparator value="9:122" id="0:61767"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
@@ -185,26 +185,26 @@
                     <StateTransition stateToId="2:540" id="2:514"/>
                 </EntryState>
                 <AnimationState animationId="2:420" x="160" y="0" id="2:540">
-                    <StateTransition stateToId="2:541" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyBoolean>
-                                    <DataBindContext sourcePathIds="9:400-9:412" propertyKey="634"/>
+                    <StateTransition stateToId="2:541" duration="0" id="0:61768">
+                        <TransitionViewModelCondition opValue="equal" id="0:61769">
+                            <TransitionPropertyViewModelComparator id="0:61770">
+                                <BindablePropertyBoolean id="0:61771">
+                                    <DataBindContext sourcePathIds="9:400-9:412" propertyKey="634" id="0:61772"/>
                                 </BindablePropertyBoolean>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="true"/>
+                            <TransitionValueBooleanComparator value="true" id="0:61773"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="2:421" x="300" y="0" id="2:541">
-                    <StateTransition stateToId="2:540" duration="0">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyBoolean>
-                                    <DataBindContext sourcePathIds="9:400-9:412" propertyKey="634"/>
+                    <StateTransition stateToId="2:540" duration="0" id="0:61774">
+                        <TransitionViewModelCondition opValue="equal" id="0:61775">
+                            <TransitionPropertyViewModelComparator id="0:61776">
+                                <BindablePropertyBoolean id="0:61777">
+                                    <DataBindContext sourcePathIds="9:400-9:412" propertyKey="634" id="0:61778"/>
                                 </BindablePropertyBoolean>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="false"/>
+                            <TransitionValueBooleanComparator value="false" id="0:61779"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>

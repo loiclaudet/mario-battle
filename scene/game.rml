@@ -3,8 +3,8 @@
          overlay, hud coin fills, playfield script, stage strips.
          ids: 0:1xx layout, 0:2xx stage, 0:3xx hud, 0:4xx overlay, 0:5xx state machine, 0:6xx animations, 0:7xx converters. -->
     <Artboard defaultStateMachineId="0:500" viewModelId="9:200" viewModelInstanceId="9:201" clip="true" width="256" height="240" styleId="0:101" x="0" y="0" name="Game" id="0:100">
-        <Fill name="Background">
-            <SolidColor colorValue="FF000000" name="Black"/>
+        <Fill name="Background" id="0:61780">
+            <SolidColor colorValue="FF000000" name="Black" id="0:61781"/>
         </Fill>
         <LayoutComponentStyle name="Game Style" id="0:101"/>
 
@@ -15,13 +15,13 @@
                 <Node name="banner" id="0:442">
                     <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="PauseText" id="0:443">
                         <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:444">
-                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                            <Fill name="Fill" id="0:61782"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61783"/></Fill>
                         </TextStylePaint>
                         <TextValueRun styleId="0:444" text="PAUSE" name="Run" id="0:445"/>
                     </Text>
                     <Shape x="0" y="120" name="Band" id="0:446">
-                        <Rectangle width="256" height="24" originX="0" originY="0" name="Rect"/>
-                        <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
+                        <Rectangle width="256" height="24" originX="0" originY="0" name="Rect" id="0:61784"/>
+                        <Fill name="Fill" id="0:61785"><SolidColor colorValue="FF000000" name="Black" id="0:61786"/></Fill>
                     </Shape>
                 </Node>
             </Solo>
@@ -30,25 +30,25 @@
                 <Node name="mario" id="0:412">
                     <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="MarioWins" id="0:415">
                         <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:416">
-                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                            <Fill name="Fill" id="0:61787"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61788"/></Fill>
                         </TextStylePaint>
                         <TextValueRun styleId="0:416" text="MARIO WINS" name="Run" id="0:417"/>
                     </Text>
                     <Shape x="0" y="120" name="Band" id="0:414">
-                        <Rectangle width="256" height="24" originX="0" originY="0" name="Rect"/>
-                        <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
+                        <Rectangle width="256" height="24" originX="0" originY="0" name="Rect" id="0:61789"/>
+                        <Fill name="Fill" id="0:61790"><SolidColor colorValue="FF000000" name="Black" id="0:61791"/></Fill>
                     </Shape>
                 </Node>
                 <Node name="luigi" id="0:413">
                     <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="LuigiWins" id="0:419">
                         <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:420">
-                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                            <Fill name="Fill" id="0:61792"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61793"/></Fill>
                         </TextStylePaint>
                         <TextValueRun styleId="0:420" text="LUIGI WINS" name="Run" id="0:421"/>
                     </Text>
                     <Shape x="0" y="120" name="Band" id="0:418">
-                        <Rectangle width="256" height="24" originX="0" originY="0" name="Rect"/>
-                        <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
+                        <Rectangle width="256" height="24" originX="0" originY="0" name="Rect" id="0:61794"/>
+                        <Fill name="Fill" id="0:61795"><SolidColor colorValue="FF000000" name="Black" id="0:61796"/></Fill>
                     </Shape>
                 </Node>
             </Solo>
@@ -57,19 +57,19 @@
                 <Node name="panel" id="0:432">
                     <Text x="128" y="116" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleText" id="0:434">
                         <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:435">
-                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                            <Fill name="Fill" id="0:61797"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61798"/></Fill>
                         </TextStylePaint>
                         <TextValueRun styleId="0:435" text="MARIO BATTLE" name="Run" id="0:436"/>
                     </Text>
                     <Text x="128" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleHint" id="0:437">
                         <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:438">
-                            <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                            <Fill name="Fill" id="0:61799"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61800"/></Fill>
                         </TextStylePaint>
                         <TextValueRun styleId="0:438" text="PRESS JUMP" name="Run" id="0:439"/>
                     </Text>
                     <Shape x="0" y="108" name="Band" id="0:433">
-                        <Rectangle width="256" height="48" originX="0" originY="0" name="Rect"/>
-                        <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
+                        <Rectangle width="256" height="48" originX="0" originY="0" name="Rect" id="0:61801"/>
+                        <Fill name="Fill" id="0:61802"><SolidColor colorValue="FF000000" name="Black" id="0:61803"/></Fill>
                     </Shape>
                 </Node>
             </Solo>
@@ -78,34 +78,34 @@
         <!-- hud: five coin fills per player, opacity 0 or 1 from coinsP1/coinsP2 through the slot range mappers -->
         <Node name="Hud" id="0:300">
             <Image assetId="8:60009" x="72" y="16" originX="0" originY="0" opacity="0" name="p1_coin_1" id="0:301">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:701"/>
+                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:701" id="0:61804"/>
             </Image>
             <Image assetId="8:60009" x="80" y="16" originX="0" originY="0" opacity="0" name="p1_coin_2" id="0:302">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:702"/>
+                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:702" id="0:61805"/>
             </Image>
             <Image assetId="8:60009" x="88" y="16" originX="0" originY="0" opacity="0" name="p1_coin_3" id="0:303">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:703"/>
+                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:703" id="0:61806"/>
             </Image>
             <Image assetId="8:60009" x="96" y="16" originX="0" originY="0" opacity="0" name="p1_coin_4" id="0:304">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:704"/>
+                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:704" id="0:61807"/>
             </Image>
             <Image assetId="8:60009" x="104" y="16" originX="0" originY="0" opacity="0" name="p1_coin_5" id="0:305">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:705"/>
+                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:705" id="0:61808"/>
             </Image>
             <Image assetId="8:60009" x="160" y="16" originX="0" originY="0" opacity="0" name="p2_coin_1" id="0:306">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:701"/>
+                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:701" id="0:61809"/>
             </Image>
             <Image assetId="8:60009" x="168" y="16" originX="0" originY="0" opacity="0" name="p2_coin_2" id="0:307">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:702"/>
+                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:702" id="0:61810"/>
             </Image>
             <Image assetId="8:60009" x="176" y="16" originX="0" originY="0" opacity="0" name="p2_coin_3" id="0:308">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:703"/>
+                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:703" id="0:61811"/>
             </Image>
             <Image assetId="8:60009" x="184" y="16" originX="0" originY="0" opacity="0" name="p2_coin_4" id="0:309">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:704"/>
+                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:704" id="0:61812"/>
             </Image>
             <Image assetId="8:60009" x="192" y="16" originX="0" originY="0" opacity="0" name="p2_coin_5" id="0:310">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:705"/>
+                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:705" id="0:61813"/>
             </Image>
         </Node>
 
@@ -113,19 +113,19 @@
         <LayoutComponent width="256" height="240" styleId="0:111" name="Playfield Layout" id="0:110">
             <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" widthUnitsValue="auto" heightUnitsValue="auto" name="Playfield Style" id="0:111"/>
             <ScriptedLayout scriptAssetId="8:990" name="Playfield" id="0:112">
-                <FocusData/>
-                <ScriptInputArtboard artboardId="1:100" name="playerArtboard"/>
-                <ScriptInputArtboard artboardId="2:100" name="spinyArtboard"/>
-                <ScriptInputArtboard artboardId="3:100" name="flyArtboard"/>
-                <ScriptInputArtboard artboardId="4:100" name="crabArtboard"/>
-                <ScriptInputArtboard artboardId="5:100" name="powArtboard"/>
-                <ScriptInputArtboard artboardId="6:100" name="fireballArtboard"/>
+                <FocusData id="0:61814"/>
+                <ScriptInputArtboard artboardId="1:100" name="playerArtboard" id="0:61815"/>
+                <ScriptInputArtboard artboardId="2:100" name="spinyArtboard" id="0:61816"/>
+                <ScriptInputArtboard artboardId="3:100" name="flyArtboard" id="0:61817"/>
+                <ScriptInputArtboard artboardId="4:100" name="crabArtboard" id="0:61818"/>
+                <ScriptInputArtboard artboardId="5:100" name="powArtboard" id="0:61819"/>
+                <ScriptInputArtboard artboardId="6:100" name="fireballArtboard" id="0:61820"/>
             </ScriptedLayout>
         </LayoutComponent>
 
         <!-- stage, framebuffer coordinates from PRG/levels/2PVs/Typical.asm. y is bound to shakeY for the pow shake -->
         <Node name="Stage" id="0:200">
-            <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14"/>
+            <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14" id="0:61821"/>
             <Image assetId="8:39357" x="52" y="12" originX="0" originY="0" name="hud_m" id="0:201"/>
             <Image assetId="8:30507" x="140" y="12" originX="0" originY="0" name="hud_l" id="0:202"/>
             <Image assetId="8:48161" x="0" y="16" originX="0" originY="0" name="pipe_tl" id="0:203"/>
@@ -144,25 +144,25 @@
 
         <!-- one frame animations, one per overlay state -->
         <LinearAnimation loopValue="loop" duration="1" name="Title Show" id="0:601">
-            <KeyedObject objectId="0:430"><KeyedProperty propertyKey="296"><KeyFrameId value="0:432" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:430" id="0:61822"><KeyedProperty propertyKey="296" id="0:61823"><KeyFrameId value="0:432" frame="0" id="0:61824"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="Title Hide" id="0:602">
-            <KeyedObject objectId="0:430"><KeyedProperty propertyKey="296"><KeyFrameId value="0:431" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:430" id="0:61825"><KeyedProperty propertyKey="296" id="0:61826"><KeyFrameId value="0:431" frame="0" id="0:61827"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="Winner None" id="0:603">
-            <KeyedObject objectId="0:410"><KeyedProperty propertyKey="296"><KeyFrameId value="0:411" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:410" id="0:61828"><KeyedProperty propertyKey="296" id="0:61829"><KeyFrameId value="0:411" frame="0" id="0:61830"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="Winner Mario" id="0:604">
-            <KeyedObject objectId="0:410"><KeyedProperty propertyKey="296"><KeyFrameId value="0:412" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:410" id="0:61831"><KeyedProperty propertyKey="296" id="0:61832"><KeyFrameId value="0:412" frame="0" id="0:61833"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="Winner Luigi" id="0:605">
-            <KeyedObject objectId="0:410"><KeyedProperty propertyKey="296"><KeyFrameId value="0:413" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:410" id="0:61834"><KeyedProperty propertyKey="296" id="0:61835"><KeyFrameId value="0:413" frame="0" id="0:61836"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="Pause Off" id="0:606">
-            <KeyedObject objectId="0:440"><KeyedProperty propertyKey="296"><KeyFrameId value="0:441" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:440" id="0:61837"><KeyedProperty propertyKey="296" id="0:61838"><KeyFrameId value="0:441" frame="0" id="0:61839"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="Pause On" id="0:607">
-            <KeyedObject objectId="0:440"><KeyedProperty propertyKey="296"><KeyFrameId value="0:442" frame="0"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:440" id="0:61840"><KeyedProperty propertyKey="296" id="0:61841"><KeyFrameId value="0:442" frame="0" id="0:61842"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
 
         <StateMachine name="Game" id="0:500">
@@ -175,67 +175,67 @@
                 </EntryState>
                 <AnimationState animationId="0:601" x="160" y="0" id="0:520">
                     <StateTransition stateToId="0:522" duration="0" id="0:528">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61843">
+                            <TransitionPropertyViewModelComparator id="0:61844">
+                                <BindablePropertyEnum id="0:61845">
+                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637" id="0:61846"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:103"/>
+                            <TransitionValueEnumComparator value="9:103" id="0:61847"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                     <StateTransition stateToId="0:521" duration="0" id="0:523">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61848">
+                            <TransitionPropertyViewModelComparator id="0:61849">
+                                <BindablePropertyEnum id="0:61850">
+                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637" id="0:61851"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:102"/>
+                            <TransitionValueEnumComparator value="9:102" id="0:61852"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="0:602" x="320" y="0" id="0:521">
                     <StateTransition stateToId="0:522" duration="0" id="0:524">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61853">
+                            <TransitionPropertyViewModelComparator id="0:61854">
+                                <BindablePropertyEnum id="0:61855">
+                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637" id="0:61856"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:103"/>
+                            <TransitionValueEnumComparator value="9:103" id="0:61857"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                     <StateTransition stateToId="0:520" duration="0" id="0:525">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61858">
+                            <TransitionPropertyViewModelComparator id="0:61859">
+                                <BindablePropertyEnum id="0:61860">
+                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637" id="0:61861"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:101"/>
+                            <TransitionValueEnumComparator value="9:101" id="0:61862"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="0:602" x="480" y="0" id="0:522">
                     <StateTransition stateToId="0:520" duration="0" id="0:526">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61863">
+                            <TransitionPropertyViewModelComparator id="0:61864">
+                                <BindablePropertyEnum id="0:61865">
+                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637" id="0:61866"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:101"/>
+                            <TransitionValueEnumComparator value="9:101" id="0:61867"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                     <StateTransition stateToId="0:521" duration="0" id="0:527">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61868">
+                            <TransitionPropertyViewModelComparator id="0:61869">
+                                <BindablePropertyEnum id="0:61870">
+                                    <DataBindContext sourcePathIds="9:200-9:210" propertyKey="637" id="0:61871"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:102"/>
+                            <TransitionValueEnumComparator value="9:102" id="0:61872"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
@@ -249,47 +249,47 @@
                 </EntryState>
                 <AnimationState animationId="0:603" x="160" y="0" id="0:540">
                     <StateTransition stateToId="0:541" duration="0" id="0:543">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61873">
+                            <TransitionPropertyViewModelComparator id="0:61874">
+                                <BindablePropertyEnum id="0:61875">
+                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61876"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:112"/>
+                            <TransitionValueEnumComparator value="9:112" id="0:61877"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                     <StateTransition stateToId="0:542" duration="0" id="0:544">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61878">
+                            <TransitionPropertyViewModelComparator id="0:61879">
+                                <BindablePropertyEnum id="0:61880">
+                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61881"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:113"/>
+                            <TransitionValueEnumComparator value="9:113" id="0:61882"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="0:604" x="320" y="0" id="0:541">
                     <StateTransition stateToId="0:540" duration="0" id="0:545">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61883">
+                            <TransitionPropertyViewModelComparator id="0:61884">
+                                <BindablePropertyEnum id="0:61885">
+                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61886"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:111"/>
+                            <TransitionValueEnumComparator value="9:111" id="0:61887"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="0:605" x="480" y="0" id="0:542">
                     <StateTransition stateToId="0:540" duration="0" id="0:546">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyEnum>
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61888">
+                            <TransitionPropertyViewModelComparator id="0:61889">
+                                <BindablePropertyEnum id="0:61890">
+                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61891"/>
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:111"/>
+                            <TransitionValueEnumComparator value="9:111" id="0:61892"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
@@ -303,25 +303,25 @@
                 </EntryState>
                 <AnimationState animationId="0:606" x="160" y="0" id="0:560">
                     <StateTransition stateToId="0:561" duration="0" id="0:562">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyBoolean>
-                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61893">
+                            <TransitionPropertyViewModelComparator id="0:61894">
+                                <BindablePropertyBoolean id="0:61895">
+                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634" id="0:61896"/>
                                 </BindablePropertyBoolean>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="true"/>
+                            <TransitionValueBooleanComparator value="true" id="0:61897"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>
                 <AnimationState animationId="0:607" x="320" y="0" id="0:561">
                     <StateTransition stateToId="0:560" duration="0" id="0:563">
-                        <TransitionViewModelCondition opValue="equal">
-                            <TransitionPropertyViewModelComparator>
-                                <BindablePropertyBoolean>
-                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634"/>
+                        <TransitionViewModelCondition opValue="equal" id="0:61898">
+                            <TransitionPropertyViewModelComparator id="0:61899">
+                                <BindablePropertyBoolean id="0:61900">
+                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634" id="0:61901"/>
                                 </BindablePropertyBoolean>
                             </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="false"/>
+                            <TransitionValueBooleanComparator value="false" id="0:61902"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>

@@ -9,3 +9,6 @@ excludeFromRev:
 logs:
   file: build/rive.log
   problems: build/problems.log
+push:
+  projectId: 1666517
+  fileId: 2576840
