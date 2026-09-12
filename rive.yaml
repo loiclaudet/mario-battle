@@ -1,4 +1,11 @@
 name: mario-battle
+main: Game
+exclude:
+  - tools
+  - docs
+excludeFromRev:
+  scripts:
+    - "*_test"
 logs:
   file: build/rive.log
   problems: build/problems.log

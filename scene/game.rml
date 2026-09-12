@@ -1,0 +1,45 @@
+<Rive version="1" kind="fragment">
+    <!-- Game artboard: the nes framebuffer, 256x240. earlier siblings draw on top, so the order is
+         hud fills, playfield script, then the stage strips. ids: 0:1xx layout, 0:2xx stage, 0:3xx hud, 0:5xx state machine -->
+    <Artboard defaultStateMachineId="0:500" viewModelId="9:200" viewModelInstanceId="9:201" clip="true" width="256" height="240" styleId="0:101" x="0" y="0" name="Game" id="0:100">
+        <Fill name="Background">
+            <SolidColor colorValue="FF000000" name="Black"/>
+        </Fill>
+        <LayoutComponentStyle name="Game Style" id="0:101"/>
+
+        <!-- playfield: the simulation. fill sized so resize gets 256x240 and local coords equal artboard coords -->
+        <LayoutComponent width="256" height="240" styleId="0:111" name="Playfield Layout" id="0:110">
+            <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" widthUnitsValue="auto" heightUnitsValue="auto" name="Playfield Style" id="0:111"/>
+            <ScriptedLayout scriptAssetId="8:990" name="Playfield" id="0:112">
+                <FocusData/>
+                <ScriptInputArtboard artboardId="2:1" name="spiny"/>
+            </ScriptedLayout>
+        </LayoutComponent>
+
+        <!-- stage, framebuffer coordinates from PRG/levels/2PVs/Typical.asm -->
+        <Node name="Stage" id="0:200">
+            <Image assetId="8:113" x="52" y="12" originX="0" originY="0" name="hud_m" id="0:201"/>
+            <Image assetId="8:114" x="140" y="12" originX="0" originY="0" name="hud_l" id="0:202"/>
+            <Image assetId="8:101" x="0" y="16" originX="0" originY="0" name="pipe_tl" id="0:203"/>
+            <Image assetId="8:102" x="224" y="16" originX="0" originY="0" name="pipe_tr" id="0:204"/>
+            <Image assetId="8:105" x="0" y="48" originX="0" originY="0" name="ledge_ul" id="0:205"/>
+            <Image assetId="8:106" x="160" y="48" originX="0" originY="0" name="ledge_ur" id="0:206"/>
+            <Image assetId="8:107" x="64" y="96" originX="0" originY="0" name="platform_c" id="0:207"/>
+            <Image assetId="8:108" x="0" y="112" originX="0" originY="0" name="stub_l" id="0:208"/>
+            <Image assetId="8:109" x="224" y="112" originX="0" originY="0" name="stub_r" id="0:209"/>
+            <Image assetId="8:110" x="0" y="160" originX="0" originY="0" name="ledge_ll" id="0:210"/>
+            <Image assetId="8:111" x="160" y="160" originX="0" originY="0" name="ledge_lr" id="0:211"/>
+            <Image assetId="8:103" x="0" y="176" originX="0" originY="0" name="pipe_bl" id="0:212"/>
+            <Image assetId="8:104" x="224" y="176" originX="0" originY="0" name="pipe_br" id="0:213"/>
+            <Image assetId="8:112" x="0" y="208" originX="0" originY="0" name="floor" id="0:214"/>
+        </Node>
+
+        <StateMachine name="Game" id="0:500">
+            <StateMachineLayer name="Phase" id="0:510">
+                <AnyState x="60" y="-100" id="0:511"/>
+                <ExitState x="560" y="-100" id="0:512"/>
+                <EntryState x="0" y="0" id="0:513"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+</Rive>

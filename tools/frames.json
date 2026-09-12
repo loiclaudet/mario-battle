@@ -1,0 +1,26 @@
+{
+  "sheets": {
+    "bg": { "file": "tools/sheets/backgrounds_battle_mode.png", "transparent": [153, 153, 153], "originX": 4, "originY": 12 },
+    "bm": { "file": "tools/sheets/battleminigame.png", "transparent": [0, 0, 0], "originX": 0, "originY": 0 }
+  },
+  "frames": [
+    { "name": "pipe_tl", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 16, "w": 32, "h": 32 },
+    { "name": "pipe_tr", "out": "assets/stage", "sheet": "bg", "x": 224, "y": 16, "w": 32, "h": 32 },
+    { "name": "pipe_bl", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 176, "w": 32, "h": 32 },
+    { "name": "pipe_br", "out": "assets/stage", "sheet": "bg", "x": 224, "y": 176, "w": 32, "h": 32 },
+    { "name": "ledge_ul", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 48, "w": 96, "h": 16 },
+    { "name": "ledge_ur", "out": "assets/stage", "sheet": "bg", "x": 160, "y": 48, "w": 96, "h": 16 },
+    { "name": "platform_c", "out": "assets/stage", "sheet": "bg", "x": 64, "y": 96, "w": 128, "h": 16 },
+    { "name": "stub_l", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 112, "w": 32, "h": 16 },
+    { "name": "stub_r", "out": "assets/stage", "sheet": "bg", "x": 224, "y": 112, "w": 32, "h": 16 },
+    { "name": "ledge_ll", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 160, "w": 96, "h": 16 },
+    { "name": "ledge_lr", "out": "assets/stage", "sheet": "bg", "x": 160, "y": 160, "w": 96, "h": 16 },
+    { "name": "floor", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 208, "w": 256, "h": 32 },
+    { "name": "hud_m", "out": "assets/stage", "sheet": "bg", "x": 52, "y": 12, "w": 65, "h": 17 },
+    { "name": "hud_l", "out": "assets/stage", "sheet": "bg", "x": 140, "y": 12, "w": 65, "h": 17 },
+
+    { "name": "spiny_walk_1", "out": "assets/sprites", "sheet": "bm", "x": 43, "y": 43, "w": 16, "h": 16 },
+    { "name": "spiny_walk_2", "out": "assets/sprites", "sheet": "bm", "x": 63, "y": 43, "w": 16, "h": 16 },
+    { "name": "spiny_flipped", "out": "assets/sprites", "sheet": "bm", "x": 83, "y": 43, "w": 16, "h": 16 }
+  ]
+}

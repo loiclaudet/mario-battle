@@ -1,0 +1,50 @@
+<Rive version="1" kind="fragment">
+    <!-- view models are the contract between scripts/game.luau (writer) and the markup (reader).
+         ids: 9:1xx enums, 9:2xx Game, 9:3xx Player, 9:4xx Enemy, 9:5xx Pow, 9:6xx Fireball. -->
+
+    <DataEnumCustom name="Phase" id="9:100">
+        <DataEnumValue key="title" value="Title" id="9:101"/>
+        <DataEnumValue key="playing" value="Playing" id="9:102"/>
+        <DataEnumValue key="over" value="Over" id="9:103"/>
+    </DataEnumCustom>
+
+    <DataEnumCustom name="Winner" id="9:110">
+        <DataEnumValue key="none" value="None" id="9:111"/>
+        <DataEnumValue key="mario" value="Mario" id="9:112"/>
+        <DataEnumValue key="luigi" value="Luigi" id="9:113"/>
+    </DataEnumCustom>
+
+    <DataEnumCustom name="EnemyPose" id="9:120">
+        <DataEnumValue key="walk" value="Walk" id="9:121"/>
+        <DataEnumValue key="flipped" value="Flipped" id="9:122"/>
+        <DataEnumValue key="dying" value="Dying" id="9:123"/>
+    </DataEnumCustom>
+
+    <ViewModel defaultInstanceId="9:201" name="Game" id="9:200">
+        <ViewModelPropertyEnumCustom enumId="9:100" name="phase" id="9:210"/>
+        <ViewModelPropertyEnumCustom enumId="9:110" name="winner" id="9:211"/>
+        <ViewModelPropertyNumber name="coinsP1" id="9:212"/>
+        <ViewModelPropertyNumber name="coinsP2" id="9:213"/>
+        <ViewModelPropertyNumber name="shakeY" id="9:214"/>
+        <ViewModelPropertyNumber name="style" id="9:215"/>
+        <ViewModelInstance exports="true" name="Default" id="9:201">
+            <ViewModelInstanceEnum propertyValue="9:101" viewModelPropertyId="9:210" id="9:220"/>
+            <ViewModelInstanceEnum propertyValue="9:111" viewModelPropertyId="9:211" id="9:221"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:212" id="9:222"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:213" id="9:223"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:214" id="9:224"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:215" id="9:225"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <ViewModel defaultInstanceId="9:401" name="Enemy" id="9:400">
+        <ViewModelPropertyEnumCustom enumId="9:120" name="pose" id="9:410"/>
+        <ViewModelPropertyBoolean name="angry" id="9:411"/>
+        <ViewModelPropertyBoolean name="last" id="9:412"/>
+        <ViewModelInstance exports="true" name="Default" id="9:401">
+            <ViewModelInstanceEnum propertyValue="9:121" viewModelPropertyId="9:410" id="9:420"/>
+            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:411" id="9:421"/>
+            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:412" id="9:422"/>
+        </ViewModelInstance>
+    </ViewModel>
+</Rive>

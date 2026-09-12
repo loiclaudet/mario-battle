@@ -1,0 +1,96 @@
+<Rive version="1" kind="fragment">
+    <!-- Spiny component: 16x16, frames in a Solo, one animation per pose, state machine driven by Enemy.pose.
+         ids: 2:xxx -->
+    <Artboard isComponent="true" defaultStateMachineId="2:50" viewModelId="9:400" viewModelInstanceId="9:401" width="16" height="16" styleId="2:2" x="400" y="0" name="Spiny" id="2:1">
+        <LayoutComponentStyle name="Spiny Style" id="2:2"/>
+
+        <Solo activeComponentId="2:11" name="Frames" id="2:10">
+            <Image assetId="8:201" originX="0" originY="0" name="walk_1" id="2:11"/>
+            <Image assetId="8:202" originX="0" originY="0" name="walk_2" id="2:12"/>
+            <Image assetId="8:203" originX="0" originY="0" name="flipped" id="2:13"/>
+        </Solo>
+
+        <!-- walk cycle: two frames, 8 game frames each -->
+        <LinearAnimation loopValue="loop" fps="60" duration="16" name="Walk" id="2:20">
+            <KeyedObject objectId="2:10">
+                <KeyedProperty propertyKey="296">
+                    <KeyFrameId value="2:11" frame="0"/>
+                    <KeyFrameId value="2:12" frame="8"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation loopValue="loop" fps="60" duration="1" name="Flipped" id="2:21">
+            <KeyedObject objectId="2:10">
+                <KeyedProperty propertyKey="296">
+                    <KeyFrameId value="2:13" frame="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation loopValue="loop" fps="60" duration="1" name="Dying" id="2:22">
+            <KeyedObject objectId="2:10">
+                <KeyedProperty propertyKey="296">
+                    <KeyFrameId value="2:13" frame="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+
+        <StateMachine name="Spiny" id="2:50">
+            <StateMachineLayer name="Pose" id="2:51">
+                <AnyState x="60" y="-100" id="2:52"/>
+                <ExitState x="560" y="-100" id="2:53"/>
+                <EntryState x="0" y="0" id="2:54">
+                    <StateTransition stateToId="2:60" id="2:55"/>
+                </EntryState>
+                <!-- Walk -->
+                <AnimationState animationId="2:20" x="160" y="0" id="2:60">
+                    <StateTransition stateToId="2:61" duration="0" id="2:62">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyEnum>
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                                </BindablePropertyEnum>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueEnumComparator value="9:122"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                    <StateTransition stateToId="2:70" duration="0" id="2:63">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyEnum>
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                                </BindablePropertyEnum>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueEnumComparator value="9:123"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <!-- Flipped -->
+                <AnimationState animationId="2:21" x="320" y="0" id="2:61">
+                    <StateTransition stateToId="2:60" duration="0" id="2:64">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyEnum>
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                                </BindablePropertyEnum>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueEnumComparator value="9:121"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                    <StateTransition stateToId="2:70" duration="0" id="2:65">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyEnum>
+                                    <DataBindContext sourcePathIds="9:400-9:410" propertyKey="637"/>
+                                </BindablePropertyEnum>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueEnumComparator value="9:123"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <!-- Dying -->
+                <AnimationState animationId="2:22" x="480" y="0" id="2:70"/>
+            </StateMachineLayer>
+        </StateMachine>
+    </Artboard>
+    <ComponentAsset artboardId="2:1" name="Spiny" id="2:3"/>
+</Rive>
