@@ -10,6 +10,21 @@
 
         <!-- overlay: title panel and winner banner, each a Solo the state machine switches -->
         <Node name="Overlay" id="0:400">
+            <Solo activeComponentId="0:441" name="Pause" id="0:440">
+                <Node name="none" id="0:441"/>
+                <Node name="banner" id="0:442">
+                <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="PauseText" id="0:443">
+                    <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:444">
+                        <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                    </TextStylePaint>
+                    <TextValueRun styleId="0:444" text="PAUSE" name="Run" id="0:445"/>
+                </Text>
+                    <Shape x="0" y="120" name="Band" id="0:446">
+                        <Rectangle width="256" height="24" originX="0" originY="0" name="Rect"/>
+                        <Fill name="Fill"><SolidColor colorValue="FF000000" name="Black"/></Fill>
+                    </Shape>
+                </Node>
+            </Solo>
             <Solo activeComponentId="0:411" name="Winner" id="0:410">
                 <Node name="none" id="0:411"/>
                 <Node name="mario" id="0:412">
@@ -146,6 +161,12 @@
         <LinearAnimation loopValue="loop" duration="1" name="Winner Luigi" id="0:605">
             <KeyedObject objectId="0:410"><KeyedProperty propertyKey="296"><KeyFrameId value="0:413" frame="0"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
+        <LinearAnimation loopValue="loop" duration="1" name="Pause Off" id="0:606">
+            <KeyedObject objectId="0:440"><KeyedProperty propertyKey="296"><KeyFrameId value="0:441" frame="0"/></KeyedProperty></KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation loopValue="loop" duration="1" name="Pause On" id="0:607">
+            <KeyedObject objectId="0:440"><KeyedProperty propertyKey="296"><KeyFrameId value="0:442" frame="0"/></KeyedProperty></KeyedObject>
+        </LinearAnimation>
 
         <StateMachine name="Game" id="0:500">
             <!-- Phase: Title, Playing, Over follow Game.phase -->
@@ -272,6 +293,38 @@
                                 </BindablePropertyEnum>
                             </TransitionPropertyViewModelComparator>
                             <TransitionValueEnumComparator value="9:111"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
+            <!-- Pause: banner follows Game.paused -->
+            <StateMachineLayer name="Pause" id="0:550">
+                <AnyState x="60" y="-100" id="0:551"/>
+                <ExitState x="560" y="-100" id="0:552"/>
+                <EntryState x="0" y="0" id="0:553">
+                    <StateTransition stateToId="0:560" id="0:554"/>
+                </EntryState>
+                <AnimationState animationId="0:606" x="160" y="0" id="0:560">
+                    <StateTransition stateToId="0:561" duration="0" id="0:562">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean>
+                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634"/>
+                                </BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="true"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <AnimationState animationId="0:607" x="320" y="0" id="0:561">
+                    <StateTransition stateToId="0:560" duration="0" id="0:563">
+                        <TransitionViewModelCondition opValue="equal">
+                            <TransitionPropertyViewModelComparator>
+                                <BindablePropertyBoolean>
+                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634"/>
+                                </BindablePropertyBoolean>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueBooleanComparator value="false"/>
                         </TransitionViewModelCondition>
                     </StateTransition>
                 </AnimationState>

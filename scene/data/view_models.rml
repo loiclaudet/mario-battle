@@ -29,6 +29,7 @@
         <ViewModelPropertyNumber name="shakeY" id="9:214"/>
         <ViewModelPropertyNumber name="style" id="9:215"/>
         <ViewModelPropertyNumber name="debug" id="9:216"/>
+        <ViewModelPropertyBoolean name="paused" id="9:217"/>
         <ViewModelInstance exports="true" name="Default" id="9:201">
             <ViewModelInstanceEnum propertyValue="9:101" viewModelPropertyId="9:210" id="9:220"/>
             <ViewModelInstanceEnum propertyValue="9:111" viewModelPropertyId="9:211" id="9:221"/>
@@ -37,6 +38,7 @@
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:214" id="9:224"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:215" id="9:225"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:216" id="9:226"/>
+            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:217" id="9:227"/>
         </ViewModelInstance>
     </ViewModel>
 

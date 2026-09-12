@@ -48,6 +48,8 @@ type Game = {
     overFrames: number,
     style: number,
     debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender (headless checks only)
+    paused: boolean,
+    prevStart: boolean,
     acc: number,
     blockImage: Image?,
     sampler: ImageSampler,
@@ -69,6 +71,7 @@ local function pushVm(self: Game)
     vm.coinsP2.value = self.coins[2]
     vm.shakeY.value = -self.world.shakeY
     vm.style.value = self.style
+    vm.paused.value = self.paused
     for i, p in self.players do
         local pvm = self.playerVm[i]
         if pvm ~= nil then
@@ -145,6 +148,7 @@ local function startRound(self: Game)
     self.winner = 'none'
     self.phase = 'playing'
     self.overFrames = 0
+    self.paused = false
 end
 
 local function endRound(self: Game, winner: Winner)
@@ -266,16 +270,25 @@ end
 
 local function step(self: Game)
     local anyJump = false
+    local anyStart = false
     for i = 1, 2 do
         local intent = Input.intent(self.input, i)
         anyJump = anyJump or intent.jump or intent.start
+        anyStart = anyStart or intent.start
     end
+    local startPressed = anyStart and not self.prevStart
+    self.prevStart = anyStart
     if self.phase == 'title' then
         if anyJump then
             startRound(self)
         end
     elseif self.phase == 'playing' then
-        stepPlaying(self)
+        if startPressed then
+            self.paused = not self.paused
+        end
+        if not self.paused then
+            stepPlaying(self)
+        end
     else
         -- over: freeze, show the winner, then back to the title
         for _, p in self.players do
@@ -489,6 +502,8 @@ return function(context: Context): Layout<Game>
         overFrames = 0,
         style = 0,
         debug = 0,
+        paused = false,
+        prevStart = false,
         acc = 0,
         blockImage = nil,
         sampler = ImageSampler('clamp', 'clamp', 'nearest'),
