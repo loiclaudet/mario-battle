@@ -5,9 +5,9 @@
         <LayoutComponentStyle name="Spiny Style" id="2:2"/>
 
         <Solo activeComponentId="2:11" name="Frames" id="2:10">
-            <Image assetId="8:201" originX="0" originY="0" name="walk_1" id="2:11"/>
-            <Image assetId="8:202" originX="0" originY="0" name="walk_2" id="2:12"/>
-            <Image assetId="8:203" originX="0" originY="0" name="flipped" id="2:13"/>
+            <Image assetId="8:35278" originX="0" originY="0" name="walk_1" id="2:11"/>
+            <Image assetId="8:4804" originX="0" originY="0" name="walk_2" id="2:12"/>
+            <Image assetId="8:12365" originX="0" originY="0" name="flipped" id="2:13"/>
         </Solo>
 
         <!-- walk cycle: two frames, 8 game frames each -->

@@ -1,26 +1,901 @@
 {
-  "sheets": {
-    "bg": { "file": "tools/sheets/backgrounds_battle_mode.png", "transparent": [153, 153, 153], "originX": 4, "originY": 12 },
-    "bm": { "file": "tools/sheets/battleminigame.png", "transparent": [0, 0, 0], "originX": 0, "originY": 0 }
+ "sheets": {
+  "bg": {
+   "file": "tools/sheets/backgrounds_battle_mode.png",
+   "transparent": [
+    153,
+    153,
+    153
+   ],
+   "originX": 4,
+   "originY": 12
   },
-  "frames": [
-    { "name": "pipe_tl", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 16, "w": 32, "h": 32 },
-    { "name": "pipe_tr", "out": "assets/stage", "sheet": "bg", "x": 224, "y": 16, "w": 32, "h": 32 },
-    { "name": "pipe_bl", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 176, "w": 32, "h": 32 },
-    { "name": "pipe_br", "out": "assets/stage", "sheet": "bg", "x": 224, "y": 176, "w": 32, "h": 32 },
-    { "name": "ledge_ul", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 48, "w": 96, "h": 16 },
-    { "name": "ledge_ur", "out": "assets/stage", "sheet": "bg", "x": 160, "y": 48, "w": 96, "h": 16 },
-    { "name": "platform_c", "out": "assets/stage", "sheet": "bg", "x": 64, "y": 96, "w": 128, "h": 16 },
-    { "name": "stub_l", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 112, "w": 32, "h": 16 },
-    { "name": "stub_r", "out": "assets/stage", "sheet": "bg", "x": 224, "y": 112, "w": 32, "h": 16 },
-    { "name": "ledge_ll", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 160, "w": 96, "h": 16 },
-    { "name": "ledge_lr", "out": "assets/stage", "sheet": "bg", "x": 160, "y": 160, "w": 96, "h": 16 },
-    { "name": "floor", "out": "assets/stage", "sheet": "bg", "x": 0, "y": 208, "w": 256, "h": 32 },
-    { "name": "hud_m", "out": "assets/stage", "sheet": "bg", "x": 52, "y": 12, "w": 65, "h": 17 },
-    { "name": "hud_l", "out": "assets/stage", "sheet": "bg", "x": 140, "y": 12, "w": 65, "h": 17 },
-
-    { "name": "spiny_walk_1", "out": "assets/sprites", "sheet": "bm", "x": 43, "y": 43, "w": 16, "h": 16 },
-    { "name": "spiny_walk_2", "out": "assets/sprites", "sheet": "bm", "x": 63, "y": 43, "w": 16, "h": 16 },
-    { "name": "spiny_flipped", "out": "assets/sprites", "sheet": "bm", "x": 83, "y": 43, "w": 16, "h": 16 }
-  ]
+  "bm": {
+   "file": "tools/sheets/battleminigame.png",
+   "transparent": [
+    0,
+    0,
+    0
+   ],
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_stand": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_stand.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_walk_1": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_walk.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_walk_2": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_walk.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_run_1": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_run.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_run_2": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_run.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_jump": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_jump.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_skid": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_skid.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_kick": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_kick.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_stun": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_stomped.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_mario_dead": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Mario_fail.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_stand": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_stand.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_walk_1": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_walk.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_walk_2": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_walk.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_run_1": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_run.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_run_2": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_run.gif",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_jump": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_jump.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_skid": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_skid.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_kick": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_kick.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_stun": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_stomped.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  },
+  "w_luigi_dead": {
+   "file": "tools/sheets/wiki/SMB3_Battle_Luigi_fail.png",
+   "transparent": null,
+   "originX": 0,
+   "originY": 0
+  }
+ },
+ "frames": [
+  {
+   "name": "pipe_tl",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 0,
+   "y": 16,
+   "w": 32,
+   "h": 32
+  },
+  {
+   "name": "pipe_tr",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 224,
+   "y": 16,
+   "w": 32,
+   "h": 32
+  },
+  {
+   "name": "pipe_bl",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 0,
+   "y": 176,
+   "w": 32,
+   "h": 32
+  },
+  {
+   "name": "pipe_br",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 224,
+   "y": 176,
+   "w": 32,
+   "h": 32
+  },
+  {
+   "name": "ledge_ul",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 0,
+   "y": 48,
+   "w": 96,
+   "h": 16
+  },
+  {
+   "name": "ledge_ur",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 160,
+   "y": 48,
+   "w": 96,
+   "h": 16
+  },
+  {
+   "name": "platform_c",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 64,
+   "y": 96,
+   "w": 128,
+   "h": 16
+  },
+  {
+   "name": "stub_l",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 0,
+   "y": 112,
+   "w": 32,
+   "h": 16
+  },
+  {
+   "name": "stub_r",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 224,
+   "y": 112,
+   "w": 32,
+   "h": 16
+  },
+  {
+   "name": "ledge_ll",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 0,
+   "y": 160,
+   "w": 96,
+   "h": 16
+  },
+  {
+   "name": "ledge_lr",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 160,
+   "y": 160,
+   "w": 96,
+   "h": 16
+  },
+  {
+   "name": "floor",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 0,
+   "y": 208,
+   "w": 256,
+   "h": 32
+  },
+  {
+   "name": "hud_m",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 52,
+   "y": 12,
+   "w": 65,
+   "h": 17
+  },
+  {
+   "name": "hud_l",
+   "out": "assets/stage",
+   "sheet": "bg",
+   "x": 140,
+   "y": 12,
+   "w": 65,
+   "h": 17
+  },
+  {
+   "name": "hud_coin",
+   "out": "assets/stage",
+   "sheet": "bm",
+   "x": 152,
+   "y": 154,
+   "w": 7,
+   "h": 8,
+   "pad": [
+    8,
+    8
+   ]
+  },
+  {
+   "name": "mario_stand",
+   "out": "assets/sprites",
+   "sheet": "w_mario_stand",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "mario_walk_1",
+   "out": "assets/sprites",
+   "sheet": "w_mario_walk_1",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "mario_walk_2",
+   "out": "assets/sprites",
+   "sheet": "w_mario_walk_2",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 1
+  },
+  {
+   "name": "mario_run_1",
+   "out": "assets/sprites",
+   "sheet": "w_mario_run_1",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "mario_run_2",
+   "out": "assets/sprites",
+   "sheet": "w_mario_run_2",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 1
+  },
+  {
+   "name": "mario_jump",
+   "out": "assets/sprites",
+   "sheet": "w_mario_jump",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "mario_skid",
+   "out": "assets/sprites",
+   "sheet": "w_mario_skid",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "mario_kick",
+   "out": "assets/sprites",
+   "sheet": "w_mario_kick",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "mario_stun",
+   "out": "assets/sprites",
+   "sheet": "w_mario_stun",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "mario_dead",
+   "out": "assets/sprites",
+   "sheet": "w_mario_dead",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_stand",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_stand",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_walk_1",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_walk_1",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_walk_2",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_walk_2",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 1
+  },
+  {
+   "name": "luigi_run_1",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_run_1",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_run_2",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_run_2",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 1
+  },
+  {
+   "name": "luigi_jump",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_jump",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_skid",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_skid",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_kick",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_kick",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_stun",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_stun",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "luigi_dead",
+   "out": "assets/sprites",
+   "sheet": "w_luigi_dead",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16,
+   "gifFrame": 0
+  },
+  {
+   "name": "spiny_walk_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 43,
+   "y": 43,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "spiny_walk_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 63,
+   "y": 43,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "spiny_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 83,
+   "y": 43,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "spiny_blue_walk_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 43,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/MBSMB3_Spiny.png",
+    "to": "tools/sheets/wiki/MBSMB3_Spiny_blue.png"
+   }
+  },
+  {
+   "name": "spiny_blue_walk_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 63,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/MBSMB3_Spiny.png",
+    "to": "tools/sheets/wiki/MBSMB3_Spiny_blue.png"
+   }
+  },
+  {
+   "name": "spiny_blue_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 83,
+   "y": 43,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/MBSMB3_Spiny.png",
+    "to": "tools/sheets/wiki/MBSMB3_Spiny_blue.png"
+   }
+  },
+  {
+   "name": "fly_walk_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 103,
+   "y": 44,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fly_walk_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 123,
+   "y": 44,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fly_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 143,
+   "y": 44,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fly_blue_walk_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 103,
+   "y": 44,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3FighterFly.png",
+    "to": "tools/sheets/wiki/SMB3FighterFly_blue.png"
+   }
+  },
+  {
+   "name": "fly_blue_walk_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 123,
+   "y": 44,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3FighterFly.png",
+    "to": "tools/sheets/wiki/SMB3FighterFly_blue.png"
+   }
+  },
+  {
+   "name": "fly_blue_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 143,
+   "y": 44,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3FighterFly.png",
+    "to": "tools/sheets/wiki/SMB3FighterFly_blue.png"
+   }
+  },
+  {
+   "name": "crab_walk_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 64,
+   "y": 65,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "crab_walk_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 83,
+   "y": 65,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "crab_angry_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 102,
+   "y": 65,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "crab_angry_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 121,
+   "y": 65,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "crab_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 64,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "flipY": true
+  },
+  {
+   "name": "crab_angry_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 102,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "flipY": true
+  },
+  {
+   "name": "crab_blue_walk_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 64,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
+    "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
+   }
+  },
+  {
+   "name": "crab_blue_walk_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 83,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
+    "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
+   }
+  },
+  {
+   "name": "crab_blue_angry_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 102,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
+    "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
+   }
+  },
+  {
+   "name": "crab_blue_angry_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 121,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
+    "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
+   }
+  },
+  {
+   "name": "crab_blue_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 64,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "flipY": true,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
+    "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
+   }
+  },
+  {
+   "name": "crab_blue_angry_flipped",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 102,
+   "y": 65,
+   "w": 16,
+   "h": 16,
+   "flipY": true,
+   "palette": {
+    "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
+    "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
+   }
+  },
+  {
+   "name": "fireball_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 22,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fireball_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 42,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fireball_3",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 62,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fireball_4",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 82,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fireball_5",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 102,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fireball_6",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 122,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fireball_7",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 142,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "fireball_8",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 162,
+   "y": 84,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "sparkle_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 82,
+   "y": 130,
+   "w": 11,
+   "h": 11,
+   "pad": [
+    16,
+    16
+   ]
+  },
+  {
+   "name": "sparkle_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 101,
+   "y": 133,
+   "w": 5,
+   "h": 5,
+   "pad": [
+    16,
+    16
+   ]
+  },
+  {
+   "name": "sparkle_3",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 112,
+   "y": 134,
+   "w": 3,
+   "h": 3,
+   "pad": [
+    16,
+    16
+   ]
+  },
+  {
+   "name": "pow_1",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 25,
+   "y": 146,
+   "w": 16,
+   "h": 16
+  },
+  {
+   "name": "pow_2",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 44,
+   "y": 152,
+   "w": 16,
+   "h": 10,
+   "pad": [
+    16,
+    16
+   ],
+   "anchor": "bottom"
+  },
+  {
+   "name": "pow_3",
+   "out": "assets/sprites",
+   "sheet": "bm",
+   "x": 62,
+   "y": 156,
+   "w": 16,
+   "h": 6,
+   "pad": [
+    16,
+    16
+   ],
+   "anchor": "bottom"
+  }
+ ]
 }
