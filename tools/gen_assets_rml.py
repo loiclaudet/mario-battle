@@ -24,6 +24,9 @@ for n in pngs('assets/sprites'):
 lines.append('    <!-- sound effects, the mushroom kingdom rips (docs/rules.md has the credits) -->')
 for n in sorted(f[:-4] for f in os.listdir(os.path.join(root, 'assets/sfx')) if f.endswith('.wav')):
     lines.append(f'    <AudioAsset file="assets/sfx/{n}.wav" name="{n}" id="{stable_id("audio", n)}"/>')
+lines.append('    <!-- music, cut by tools/cut_music.py: the intro plays once, the loop is scheduled gaplessly by scripts/sfx.luau -->')
+for n in sorted(f[:-5] for f in os.listdir(os.path.join(root, 'assets/music')) if f.endswith('.flac')):
+    lines.append(f'    <AudioAsset file="assets/music/{n}.flac" volume="0.5" name="{n}" id="{stable_id("audio", n)}"/>')
 lines.append('    <!-- font, ofl licensed -->')
 lines.append('    <FontAsset file="assets/fonts/PressStart2P-Regular.ttf" name="PressStart2P" id="8:850"/>')
 lines.append('    <!-- scripts: modules first, game last, because require only finds modules declared above. folderPath makes them require("scripts/<name>") -->')

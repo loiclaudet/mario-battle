@@ -79,6 +79,9 @@
     <AudioAsset file="assets/sfx/pipe.wav" name="pipe" id="8:29829"/>
     <AudioAsset file="assets/sfx/player_down.wav" name="player_down" id="8:39224"/>
     <AudioAsset file="assets/sfx/pow.wav" name="pow" id="8:34194"/>
+    <!-- music, cut by tools/cut_music.py: the intro plays once, the loop is scheduled gaplessly by scripts/sfx.luau -->
+    <AudioAsset file="assets/music/battle_intro.flac" volume="0.5" name="battle_intro" id="8:44085"/>
+    <AudioAsset file="assets/music/battle_loop.flac" volume="0.5" name="battle_loop" id="8:12232"/>
     <!-- font, ofl licensed -->
     <FontAsset file="assets/fonts/PressStart2P-Regular.ttf" name="PressStart2P" id="8:850"/>
     <!-- scripts: modules first, game last, because require only finds modules declared above. folderPath makes them require("scripts/<name>") -->

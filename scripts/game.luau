@@ -176,9 +176,17 @@ local function startRound(self: Game)
     self.phase = 'playing'
     self.overFrames = 0
     self.paused = false
+    local bank = self.sfx
+    if bank ~= nil then
+        Sfx.startMusic(bank)
+    end
 end
 
 local function endRound(self: Game, winner: Winner)
+    local bank = self.sfx
+    if bank ~= nil then
+        Sfx.stopMusic(bank)
+    end
     self.phase = 'over'
     self.winner = winner
     self.overFrames = OVER_FRAMES
@@ -198,6 +206,10 @@ local function killPlayer(self: Game, index: number)
         return
     end
     Players.kill(victim)
+    local bank = self.sfx
+    if bank ~= nil then
+        Sfx.stopMusic(bank)
+    end
     play(self, 'player_down')
     for i, p in self.players do
         if i ~= index then
@@ -393,6 +405,10 @@ function advance(self: Game, seconds: number): boolean
         step(self)
     end
     pushVm(self)
+    local bank = self.sfx
+    if bank ~= nil then
+        Sfx.updateMusic(bank)
+    end
     for _, inst in self.playerInst do
         inst:advance(seconds)
     end

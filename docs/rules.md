@@ -123,6 +123,11 @@ returns with the next style.
   the Super Mario Wiki gallery for Mario Bros. (Super Mario Bros. 3). blue skins are palette swaps learned from
   the wiki pairs (`tools/slice_sprites.py`)
 - sounds: The Mushroom Kingdom wav archive (themushroomkingdom.net), ask-first, credit link owed. the pow uses
-  the thwomp sample, no rip of the real pow hit exists. no battle theme rip exists, only a midi, so no music
+  the thwomp sample, no rip of the real pow hit exists
+- music: the super mario all-stars rendition of the smb3 enemy battle theme, 30 s transcode from the Super Mario
+  Wiki (`tools/sheets/battle_theme.mp3`). `tools/cut_music.py` finds the repeat period on the rms envelope
+  (12.684 s, eight bars at 151 bpm) and the intro end at the onset whose period repeats best (2.974 s), then
+  writes `assets/music/battle_intro.flac` and `battle_loop.flac`. `scripts/sfx.luau` plays the intro once at
+  round start and schedules the loop back to back on the audio engine clock, stopped at round end
 - font: Press Start 2P, SIL open font licence, `assets/fonts/OFL.txt`
 - the rips are fine for a personal rive piece, not for a store listing, free or paid

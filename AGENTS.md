@@ -49,7 +49,11 @@ regenerating expect the next push to recreate their objects (harmless, just nois
 
 ```bash
 python3 tools/slice_sprites.py && python3 tools/gen_assets_rml.py && python3 tools/gen_enemy_rml.py
+python3 tools/cut_music.py   # intro + loop flacs from tools/sheets/battle_theme.mp3, needs numpy and ffmpeg
 ```
+
+after `cut_music.py` copy the new sample counts from `tools/music_cuts.json` into `Sfx.INTRO_SECONDS` and
+`Sfx.LOOP_SECONDS` in `scripts/sfx.luau`. only the live window is audible.
 
 ## gotchas met here
 
