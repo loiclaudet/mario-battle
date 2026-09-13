@@ -1,7 +1,7 @@
 {
  "sampleRate": 44100,
- "introSamples": 220500,
- "loopSamples": 617400,
- "introSeconds": 5.0,
- "loopSeconds": 14.0
+ "introSamples": 264600,
+ "loopSamples": 573300,
+ "introSeconds": 6.0,
+ "loopSeconds": 13.0
 }
