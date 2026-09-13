@@ -14,9 +14,9 @@ export type Bank = {
 }
 
 Sfx.NAMES = { 'jump', 'kick', 'coin', 'bump', 'player_down', 'fireball', 'pow', 'pipe' }
--- cut points from tools/music_cuts.json (tools/cut_music.py): intro 2.974 s, loop 12.684 s = 8 bars at 151 bpm
-Sfx.INTRO_SECONDS = 131164 / 44100
-Sfx.LOOP_SECONDS = 559364 / 44100
+-- cut points from tools/music_cuts.json, written by tools/cut_music.py (manual cut: intro 5 s, loop 5 to 19 s)
+Sfx.INTRO_SECONDS = 220500 / 44100
+Sfx.LOOP_SECONDS = 617400 / 44100
 Sfx.LEAD_FRAMES = 2205 -- schedule 50 ms ahead so the first play lands on a clean engine frame
 
 function Sfx.load(context: Context): Bank
