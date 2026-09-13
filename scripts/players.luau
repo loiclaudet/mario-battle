@@ -178,11 +178,13 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     local probe = World.probe(w, b)
     if probe.ceiling then
         p.stick = Physics.ceilingStickFrames(b.vy)
-        World.bump(w, b.x + 8, b.y)
+        if not probe.ceilingBounced then
+            World.bump(w, b.x + 8, b.y)
+            ev.bump = true
+        end
         b.vy = 0
         b.y = (b.y - b.y % 16) + 14
         b.subY = 0
-        ev.bump = true
     end
     p.onGround = false
     if probe.ground then

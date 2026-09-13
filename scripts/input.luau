@@ -4,6 +4,19 @@
 -- the keyboard fills whatever slot has no pad: p1 = W A S D + G jump + F run, p2 = arrows + K jump + L run.
 local Input = {}
 
+-- face buttons by w3c slot: the runtime reports a switch pro controller with its A on the south slot
+-- and X on the west slot, so nes style B jump / Y run is the east and north slots. flip to 'xbox'
+-- for south jump / west run on an xbox or playstation pad.
+Input.PAD_LAYOUT = 'nintendo'
+
+local function padJump(pad: GamepadEvent): boolean
+    return if Input.PAD_LAYOUT == 'nintendo' then pad.east else pad.south
+end
+
+local function padRun(pad: GamepadEvent): boolean
+    return if Input.PAD_LAYOUT == 'nintendo' then pad.north else pad.west
+end
+
 export type Intent = { left: boolean, right: boolean, jump: boolean, run: boolean, start: boolean }
 
 -- glfw key codes, confirmed against samples/input_demo and format.md (262/263 arrows)
@@ -67,8 +80,8 @@ function Input.intent(s: State, player: number): Intent
         local stickX = pad.leftStick.x
         out.left = pad.dpadLeft or stickX < -0.5
         out.right = pad.dpadRight or stickX > 0.5
-        out.jump = pad.south
-        out.run = pad.west
+        out.jump = padJump(pad)
+        out.run = padRun(pad)
         out.start = pad.start
         return out
     end

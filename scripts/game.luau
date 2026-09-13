@@ -55,8 +55,32 @@ type Game = {
     sampler: ImageSampler,
     black: Paint,
     path: Path,
+    pipeMask: Path, -- the screen minus the four pipes: enemies in a pipe draw behind them (SPR_BEHINDBG)
+    showBoxes: boolean, -- F1 or --data=debug=4: draw the collision boxes
+    boxPaint: Paint,
     size: Vector,
 }
+
+local PIPES = { { 0, 16 }, { 224, 16 }, { 0, 176 }, { 224, 176 } }
+
+local function buildPipeMask(path: Path)
+    path:reset()
+    -- the screen, clockwise
+    path:moveTo(Vector.xy(0, 0))
+    path:lineTo(Vector.xy(Stage.WIDTH, 0))
+    path:lineTo(Vector.xy(Stage.WIDTH, Stage.HEIGHT))
+    path:lineTo(Vector.xy(0, Stage.HEIGHT))
+    path:close()
+    -- each pipe the other way round, so the clockwise fill rule subtracts it
+    for _, p in PIPES do
+        local x, y = p[1], p[2]
+        path:moveTo(Vector.xy(x, y))
+        path:lineTo(Vector.xy(x, y + 32))
+        path:lineTo(Vector.xy(x + 32, y + 32))
+        path:lineTo(Vector.xy(x + 32, y))
+        path:close()
+    end
+end
 
 -- view model -------------------------------------------------------------------------------------
 
@@ -134,6 +158,9 @@ local function startRound(self: Game)
     end
     if vm ~= nil then
         self.debug = math.floor(vm.debug.value)
+        if bit32.band(self.debug, 4) ~= 0 then
+            self.showBoxes = true
+        end
     end
     World.reset(self.world)
     Enemies.reset(self.enemies, self.style)
@@ -232,8 +259,8 @@ local function stepPlaying(self: Game)
             Enemies.markLast(self.enemies)
         end
     end
-    if self.debug > 0 and self.world.frame == 30 then
-        if self.debug == 2 then
+    if bit32.band(self.debug, 3) ~= 0 and self.world.frame == 30 then
+        if bit32.band(self.debug, 2) ~= 0 then
             eev.ender = true
         else
             eev.fireball = true
@@ -290,12 +317,16 @@ local function step(self: Game)
             stepPlaying(self)
         end
     else
-        -- over: freeze, show the winner, then back to the title
+        -- over: everything is halted except a dying player and the last kicked enemy, which keep
+        -- flying off like in the rom (Vs_ObjStateDying skips the halt for the last object)
         for _, p in self.players do
             if p.state == Players.STATE_DYING then
                 Players.update(p, self.world, Input.intent(self.input, p.index))
             end
         end
+        World.update(self.world)
+        Enemies.update(self.enemies, self.world, self.players, self.world.frame, true)
+        Fireballs.update(self.fireballs, self.world, self.players, self.world.frame)
         self.overFrames -= 1
         if self.overFrames <= 0 then
             self.phase = 'title'
@@ -341,6 +372,7 @@ local function ensureReady(self: Game)
     self.ready = true
     self.sfx = Sfx.load(context)
     self.blockImage = context:image('block')
+    buildPipeMask(self.pipeMask)
     for i = 1, 2 do
         local pvm = Data.Player.new()
         pvm.character.value = if i == 1 then 'mario' else 'luigi'
@@ -409,13 +441,37 @@ local function rect(self: Game, x: number, y: number, w: number, h: number)
     self.path:close()
 end
 
+-- debug overlay: the rom's collision boxes (player x+4,y+2 8x14; objects x+2,y+6 12x4; the pow)
+local function outline(self: Game, renderer: Renderer, x: number, y: number, w: number, h: number)
+    rect(self, x, y, w + 1, h + 1)
+    renderer:drawPath(self.path, self.boxPaint)
+end
+
+local function drawBoxes(self: Game, renderer: Renderer)
+    for _, p in self.players do
+        outline(self, renderer, World.playerBox(p.body))
+    end
+    for _, e in self.enemies.list do
+        outline(self, renderer, World.enemyBox(e.body))
+    end
+    for _, f in self.fireballs.list do
+        if f.pose == 'flying' then
+            outline(self, renderer, World.enemyBox(f.body))
+        end
+    end
+    local pow = Stage.powRect(self.world.powHits)
+    if pow ~= nil then
+        outline(self, renderer, pow.x, pow.y, pow.w, pow.h)
+    end
+end
+
 function draw(self: Game, renderer: Renderer)
     renderer:save()
     renderer:transform(Mat2D.withTranslation(0, -self.world.shakeY))
     -- bumped blocks: black out the tile, draw the block sprite where it has bounced to
     local block = self.blockImage
     for _, b in self.world.blocks do
-        rect(self, b.x, b.y - b.y % 16, 16, 16)
+        rect(self, b.x, b.cellY, 16, 16)
         renderer:drawPath(self.path, self.black)
         if block ~= nil then
             renderer:save()
@@ -431,13 +487,25 @@ function draw(self: Game, renderer: Renderer)
     for _, e in self.enemies.list do
         local view = self.enemyViews[e.slot]
         if view ~= nil then
-            drawWrapped(renderer, view.inst, e.body.x + e.jitter, e.body.y, e.dir < 0)
+            if e.pipeTimer > 0 then
+                -- in a pipe: 3 px higher and hidden by the pipe art, like the rom's behind-background sprite
+                renderer:save()
+                renderer:clipPath(self.pipeMask)
+                drawWrapped(renderer, view.inst, e.body.x + e.jitter, e.body.y - 3, e.dir < 0)
+                renderer:restore()
+            else
+                drawWrapped(renderer, view.inst, e.body.x + e.jitter, e.body.y, e.dir < 0)
+            end
         end
     end
     for _, f in self.fireballs.list do
         local view = self.fireballViews[f.id]
         if view ~= nil then
-            drawWrapped(renderer, view.inst, f.body.x, f.body.y, f.dir < 0)
+            if f.kind == 'ender' then
+                drawWrapped(renderer, view.inst, f.body.x, f.body.y, f.dir < 0)
+            else
+                drawInstance(renderer, view.inst, Fireballs.drawX(f), f.body.y, f.dir < 0)
+            end
         end
     end
     for i, p in self.players do
@@ -446,12 +514,18 @@ function draw(self: Game, renderer: Renderer)
             drawWrapped(renderer, inst, p.body.x, p.body.y, p.dir < 0)
         end
     end
+    if self.showBoxes then
+        drawBoxes(self, renderer)
+    end
     renderer:restore()
 end
 
 -- input ------------------------------------------------------------------------------------------
 
 function keyboardEvent(self: Game, event: KeyboardEvent): boolean
+    if event.phase == 'down' and event.key == 290 then
+        self.showBoxes = not self.showBoxes -- F1
+    end
     if event.phase == 'down' then
         Input.keyDown(self.input, event.key)
     elseif event.phase == 'up' then
@@ -509,6 +583,9 @@ return function(context: Context): Layout<Game>
         sampler = ImageSampler('clamp', 'clamp', 'nearest'),
         black = Paint.with({ color = Color.rgb(0, 0, 0) }),
         path = Path.new(),
+        pipeMask = Path.new(),
+        showBoxes = false,
+        boxPaint = Paint.with({ color = Color.rgb(0, 255, 0), style = 'stroke', thickness = 1 }),
         size = Vector.xy(256, 240),
         init = init,
         resize = resize,

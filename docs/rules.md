@@ -11,10 +11,13 @@ units: 60 frames per second, velocities in 1/16 px per frame (raw), positions in
 
 | player | gamepad (first pad = p1, second = p2) | keyboard fallback |
 |---|---|---|
-| p1 mario | dpad or left stick, south jump, west run, start pause | A D move, G jump, F run, enter pause |
+| p1 mario | dpad or left stick, B jump, Y run, plus pause (nintendo layout) | A D move, G jump, F run, enter pause |
 | p2 luigi | same on the second pad | arrows, K jump, L run, space pause |
 
 any jump or start press on the title starts a round. start pauses. play with `rive . --fit=contain`.
+`Input.PAD_LAYOUT` in `scripts/input.luau` is `nintendo` (jump on the east slot, run on the north slot, which is
+B and Y on a switch pro controller); set it to `xbox` for south jump / west run. F1 toggles the collision box
+overlay (`--data=debug=4` headless).
 
 ## arena (`PRG/levels/2PVs/Typical.asm`)
 
@@ -47,9 +50,10 @@ the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 1
 - full jump: 33 frames to the apex, 71 px. tap: 14 frames, 30 px. `scripts/physics_test.luau` asserts both
 - collision box x+4, y+2, 8x14. floor probes at (x+4, y+16) and (x+12, y+16) count when the body is within
   6 px of the tile top and not rising; the ceiling probe at (x+8, y) counts when the head is 9 px or more into
-  the tile and rising. a ceiling hit bounces the 16x16 block above (`TILE18_BOUNCEDBLOCK`, 14 frames, block
+  the tile and rising. a ceiling hit bounces the 16x16 block above (`TILE18_BOUNCEDBLOCK` $C2, 14 frames, block
   sprite vy -0x20 then +5 per frame), zeroes vy, pins the player `|vy|/8 + 4` frames and snaps y to the block
-  bottom minus 2
+  bottom minus 2. the bounced tile stays solid: the rom sets the under-hit bit only after the tile passed the
+  solidity check, so nothing ever falls through a bouncing block and a head under it stops without bouncing it again
 - stun (`Vs_PlayerDizzy`): 18 frames, vy -0x38, vx +/-0x08. from a bounced block under the feet, from the pow
   while grounded, or from being stomped. input is ignored while stunned
 - player on player, 8 frame cooldown: vertical gap 8 or more, the top one bounces at -0x30 unless rising and the
@@ -88,7 +92,8 @@ grounded player is stunned, the puncher included if they land in time. players c
   pipe for 96 frames and reappears from a random top pipe at y 32
 - fighter fly: hops at -0x1C after resting 16 frames, only hittable on the ground
 - enemies on the same floor that touch turn around and pause 16 frames (40 frame cooldown). player contact
-  is tested on alternate frames per slot. box x+2, y+6, 12x4
+  is tested on alternate frames per slot. box x+2, y+6, 12x4; box edges that touch count (`Vs_CheckBoxCollision`)
+- inside a pipe the sprite is drawn 3 px higher and behind the pipe art (`SPR_BEHINDBG` in `Vs_ObjectDraw`)
 - animation: a counter grows 1 per frame, +1 for the crab, +1 when angry or last, +1 in a pipe; the frame is
   `(counter / 8) % 2`. the fly counts 4 in the air and holds 8 on the ground
 
@@ -101,7 +106,9 @@ grounded player is stunned, the puncher included if they land in time. players c
   bounced block is under it or the pow is active. the ender keeps +/-0x10 on both axes and reflects off platform
   sides, floors and ceilings
 - fireballs never count for coins and kill on touch
-- lodz's addition, not in the rom: a 32 frame sparkle plays at the spawn edge before the flame enters
+- lodz's additions, not in the rom: a 32 frame sparkle plays at the screen edge before the flame enters, and the
+  flame starts one sprite width off screen and is removed once fully past the far edge (the rom's 8 and 232
+  leave an 8 px safe strip at each side)
 
 ## round
 

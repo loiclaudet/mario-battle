@@ -47,23 +47,17 @@
     <ImageAsset file="assets/sprites/luigi_dead.png" samplerFilter="1" name="luigi_dead" id="8:41764"/>
     <ImageAsset file="assets/sprites/luigi_jump.png" samplerFilter="1" name="luigi_jump" id="8:5558"/>
     <ImageAsset file="assets/sprites/luigi_kick.png" samplerFilter="1" name="luigi_kick" id="8:41925"/>
-    <ImageAsset file="assets/sprites/luigi_run_1.png" samplerFilter="1" name="luigi_run_1" id="8:5342"/>
-    <ImageAsset file="assets/sprites/luigi_run_2.png" samplerFilter="1" name="luigi_run_2" id="8:22292"/>
     <ImageAsset file="assets/sprites/luigi_skid.png" samplerFilter="1" name="luigi_skid" id="8:45920"/>
     <ImageAsset file="assets/sprites/luigi_stand.png" samplerFilter="1" name="luigi_stand" id="8:54015"/>
     <ImageAsset file="assets/sprites/luigi_stun.png" samplerFilter="1" name="luigi_stun" id="8:34206"/>
-    <ImageAsset file="assets/sprites/luigi_walk_1.png" samplerFilter="1" name="luigi_walk_1" id="8:22913"/>
-    <ImageAsset file="assets/sprites/luigi_walk_2.png" samplerFilter="1" name="luigi_walk_2" id="8:21963"/>
+    <ImageAsset file="assets/sprites/luigi_walk.png" samplerFilter="1" name="luigi_walk" id="8:18293"/>
     <ImageAsset file="assets/sprites/mario_dead.png" samplerFilter="1" name="mario_dead" id="8:59434"/>
     <ImageAsset file="assets/sprites/mario_jump.png" samplerFilter="1" name="mario_jump" id="8:40472"/>
     <ImageAsset file="assets/sprites/mario_kick.png" samplerFilter="1" name="mario_kick" id="8:23755"/>
-    <ImageAsset file="assets/sprites/mario_run_1.png" samplerFilter="1" name="mario_run_1" id="8:10408"/>
-    <ImageAsset file="assets/sprites/mario_run_2.png" samplerFilter="1" name="mario_run_2" id="8:50466"/>
     <ImageAsset file="assets/sprites/mario_skid.png" samplerFilter="1" name="mario_skid" id="8:44654"/>
     <ImageAsset file="assets/sprites/mario_stand.png" samplerFilter="1" name="mario_stand" id="8:19689"/>
     <ImageAsset file="assets/sprites/mario_stun.png" samplerFilter="1" name="mario_stun" id="8:25392"/>
-    <ImageAsset file="assets/sprites/mario_walk_1.png" samplerFilter="1" name="mario_walk_1" id="8:41693"/>
-    <ImageAsset file="assets/sprites/mario_walk_2.png" samplerFilter="1" name="mario_walk_2" id="8:45175"/>
+    <ImageAsset file="assets/sprites/mario_walk.png" samplerFilter="1" name="mario_walk" id="8:50619"/>
     <ImageAsset file="assets/sprites/pow_1.png" samplerFilter="1" name="pow_1" id="8:13795"/>
     <ImageAsset file="assets/sprites/pow_2.png" samplerFilter="1" name="pow_2" id="8:33641"/>
     <ImageAsset file="assets/sprites/pow_3.png" samplerFilter="1" name="pow_3" id="8:2143"/>
@@ -98,6 +92,8 @@
     <ScriptAsset file="scripts/fireballs.luau" folderPath="scripts" isModule="true" name="fireballs" id="8:908"/>
     <ScriptAsset file="scripts/game.luau" folderPath="scripts" name="game" id="8:990"/>
     <!-- tests, kept out of the rev by excludeFromRev; declared here so they see the modules above -->
-    <ScriptAsset file="scripts/physics_test.luau" folderPath="scripts" name="physics_test" id="8:951"/>
-    <ScriptAsset file="scripts/stage_test.luau" folderPath="scripts" name="stage_test" id="8:952"/>
+    <ScriptAsset file="scripts/fireballs_test.luau" folderPath="scripts" name="fireballs_test" id="8:951"/>
+    <ScriptAsset file="scripts/physics_test.luau" folderPath="scripts" name="physics_test" id="8:952"/>
+    <ScriptAsset file="scripts/stage_test.luau" folderPath="scripts" name="stage_test" id="8:953"/>
+    <ScriptAsset file="scripts/world_test.luau" folderPath="scripts" name="world_test" id="8:954"/>
 </Rive>

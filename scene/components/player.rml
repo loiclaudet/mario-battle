@@ -7,20 +7,20 @@
         <Solo activeComponentId="1:110" name="Character" id="1:105">
             <Solo activeComponentId="1:200" name="Mario" id="1:110">
                 <Image assetId="8:19689" originX="0" originY="0" name="stand" id="1:200"/>
-                <Image assetId="8:41693" originX="0" originY="0" name="walk" id="1:201"/>
+                <Image assetId="8:50619" originX="0" originY="0" name="walk" id="1:201"/>
                 <Image assetId="8:44654" originX="0" originY="0" name="skid" id="1:202"/>
                 <Image assetId="8:40472" originX="0" originY="0" name="jump" id="1:203"/>
-                <Image assetId="8:41693" originX="0" originY="0" name="fall" id="1:204"/>
+                <Image assetId="8:50619" originX="0" originY="0" name="fall" id="1:204"/>
                 <Image assetId="8:25392" originX="0" originY="0" name="stun" id="1:205"/>
                 <Image assetId="8:23755" originX="0" originY="0" name="kick" id="1:206"/>
                 <Image assetId="8:59434" originX="0" originY="0" name="dead" id="1:207"/>
             </Solo>
             <Solo activeComponentId="1:300" name="Luigi" id="1:120">
                 <Image assetId="8:54015" originX="0" originY="0" name="stand" id="1:300"/>
-                <Image assetId="8:22913" originX="0" originY="0" name="walk" id="1:301"/>
+                <Image assetId="8:18293" originX="0" originY="0" name="walk" id="1:301"/>
                 <Image assetId="8:45920" originX="0" originY="0" name="skid" id="1:302"/>
                 <Image assetId="8:5558" originX="0" originY="0" name="jump" id="1:303"/>
-                <Image assetId="8:22913" originX="0" originY="0" name="fall" id="1:304"/>
+                <Image assetId="8:18293" originX="0" originY="0" name="fall" id="1:304"/>
                 <Image assetId="8:34206" originX="0" originY="0" name="stun" id="1:305"/>
                 <Image assetId="8:41925" originX="0" originY="0" name="kick" id="1:306"/>
                 <Image assetId="8:41764" originX="0" originY="0" name="dead" id="1:307"/>

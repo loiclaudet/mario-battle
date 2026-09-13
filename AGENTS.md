@@ -21,11 +21,12 @@ changing any number.
 rive . --verify                       # compiles rml + luau (strict types), the only thing that reads luau
 rive inspect . --json | jq '.problems' # must print []
 rive . --test                          # physics and stage unit tests
-rive . --screenshot=build/x.png --gamepad=button@south:down --gamepad=button@south:up --advance=5s
+rive . --screenshot=build/x.png --gamepad=button@east:down --gamepad=button@east:up --advance=5s
 ```
 
-the south button starts a round from the title. `--data=style=n` (0..5) picks the enemy set, `--data=debug=1`
-spawns a fireball at once, `--data=debug=2` the game ender. component artboards render alone with
+the east button (jump in the nintendo pad layout) starts a round from the title. spell the `--gamepad` flags out,
+this shell is zsh and an unquoted variable holding several flags is passed as one argument. `--data=style=n` (0..5) picks the enemy set, `--data=debug=1`
+spawns a fireball at once, `--data=debug=2` the game ender, `--data=debug=4` (or F1 live) draws the collision boxes. component artboards render alone with
 `--artboard=Spiny --data=last=true --data=pose=flipped`.
 
 play it: `rive . --fit=contain` (the default fit reflows the artboard to the window; contain keeps 256x240 and

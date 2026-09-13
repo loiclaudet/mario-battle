@@ -292,39 +292,9 @@
    "gifFrame": 0
   },
   {
-   "name": "mario_walk_1",
-   "out": "assets/sprites",
-   "sheet": "w_mario_walk_1",
-   "x": 0,
-   "y": 0,
-   "w": 16,
-   "h": 16,
-   "gifFrame": 0
-  },
-  {
-   "name": "mario_walk_2",
+   "name": "mario_walk",
    "out": "assets/sprites",
    "sheet": "w_mario_walk_2",
-   "x": 0,
-   "y": 0,
-   "w": 16,
-   "h": 16,
-   "gifFrame": 1
-  },
-  {
-   "name": "mario_run_1",
-   "out": "assets/sprites",
-   "sheet": "w_mario_run_1",
-   "x": 0,
-   "y": 0,
-   "w": 16,
-   "h": 16,
-   "gifFrame": 0
-  },
-  {
-   "name": "mario_run_2",
-   "out": "assets/sprites",
-   "sheet": "w_mario_run_2",
    "x": 0,
    "y": 0,
    "w": 16,
@@ -392,39 +362,9 @@
    "gifFrame": 0
   },
   {
-   "name": "luigi_walk_1",
-   "out": "assets/sprites",
-   "sheet": "w_luigi_walk_1",
-   "x": 0,
-   "y": 0,
-   "w": 16,
-   "h": 16,
-   "gifFrame": 0
-  },
-  {
-   "name": "luigi_walk_2",
+   "name": "luigi_walk",
    "out": "assets/sprites",
    "sheet": "w_luigi_walk_2",
-   "x": 0,
-   "y": 0,
-   "w": 16,
-   "h": 16,
-   "gifFrame": 1
-  },
-  {
-   "name": "luigi_run_1",
-   "out": "assets/sprites",
-   "sheet": "w_luigi_run_1",
-   "x": 0,
-   "y": 0,
-   "w": 16,
-   "h": 16,
-   "gifFrame": 0
-  },
-  {
-   "name": "luigi_run_2",
-   "out": "assets/sprites",
-   "sheet": "w_luigi_run_2",
    "x": 0,
    "y": 0,
    "w": 16,

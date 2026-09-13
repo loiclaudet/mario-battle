@@ -6,7 +6,7 @@ local Physics = require('scripts/physics')
 
 local World = {}
 
-export type Block = { x: number, y: number, vy: number, sub: number, frames: number }
+export type Block = { x: number, y: number, cellY: number, vy: number, sub: number, frames: number }
 
 export type State = {
     bounced: { [number]: number }, -- 16px block key -> frames left as a bounced block
@@ -52,7 +52,7 @@ function World.bump(w: State, x: number, y: number)
     local bx = Stage.wrapX(math.floor(x)) - Stage.wrapX(math.floor(x)) % 16
     local by = math.floor(y) - math.floor(y) % 16
     w.bounced[World.blockKey(bx, by)] = World.BLOCK_FRAMES
-    table.insert(w.blocks, { x = bx, y = by, vy = World.BLOCK_VY, sub = 0, frames = World.BLOCK_FRAMES })
+    table.insert(w.blocks, { x = bx, y = by, cellY = by, vy = World.BLOCK_VY, sub = 0, frames = World.BLOCK_FRAMES })
 end
 
 function World.hitPow(w: State)
@@ -89,21 +89,19 @@ function World.update(w: State)
     end
 end
 
--- solid tile probe that also treats a bounced block as air (the rom erases the tile while it bounces)
+-- solid tile probe. a bounced block (TILE18_BOUNCEDBLOCK, $C2) stays solid in the rom: its under-hit bit is
+-- only ever set after the tile passed the solidity check, so nothing falls through a block that is bouncing
 function World.solidAt(w: State, x: number, y: number): boolean
-    if not Stage.solidAt(x, y) then
-        return false
-    end
-    return not World.isBounced(w, x, y)
+    return Stage.solidAt(x, y)
 end
 
-export type Probe = { ground: boolean, ceiling: boolean, underHit: boolean, underHitLeft: boolean, underHitRight: boolean }
+export type Probe = { ground: boolean, ceiling: boolean, ceilingBounced: boolean, underHit: boolean, underHitLeft: boolean, underHitRight: boolean }
 
 -- Vs_CollideAgainstWorld for a 16x16 body: floor probes at (x+4, y+16) and (x+12, y+16) count when
 -- the body is within 6px of the tile top and not rising; the ceiling probe at (x+8, y) counts when
 -- the head is at least 9px into the tile and rising. underHit is true when a foot stands on a bounced block.
 function World.probe(w: State, b: Physics.Body): Probe
-    local out: Probe = { ground = false, ceiling = false, underHit = false, underHitLeft = false, underHitRight = false }
+    local out: Probe = { ground = false, ceiling = false, ceilingBounced = false, underHit = false, underHitLeft = false, underHitRight = false }
     local fy = b.y + 16
     local left = b.x + 4
     local right = b.x + 12
@@ -114,6 +112,7 @@ function World.probe(w: State, b: Physics.Body): Probe
     end
     if b.vy < 0 and b.y % 16 >= 9 and World.solidAt(w, b.x + 8, b.y) then
         out.ceiling = true
+        out.ceilingBounced = World.isBounced(w, b.x + 8, b.y)
     end
     if fy % 16 < 6 then
         out.underHitLeft = Stage.solidAt(left, fy) and World.isBounced(w, left, fy)
@@ -125,7 +124,7 @@ end
 
 -- Vs_CheckBoxCollision: two rectangles given as top-left plus size
 function World.boxOverlap(ax: number, ay: number, aw: number, ah: number, bx: number, by: number, bw: number, bh: number): boolean
-    return ax < bx + bw and bx < ax + aw and ay < by + bh and by < ay + ah
+    return ax <= bx + bw and bx <= ax + aw and ay <= by + bh and by <= ay + ah
 end
 
 -- player box: x+4, y+2, 8x14 (VsPlayer_CalcBoundBox)

@@ -1,6 +1,7 @@
 --!strict
 -- Vs_Fireballs from PRG/prg009.asm: the weaving horizontal fireball and the bouncing game ender.
--- lodz's addition: a 32 frame warning sparkle at the spawn edge before the flame enters.
+-- lodz's additions: a 32 frame warning sparkle at the spawn edge before the flame enters, and the flame
+-- starts fully off screen and leaves fully off screen (the rom uses x 8 and 232, which leaves a safe strip).
 local Stage = require('scripts/stage')
 local Physics = require('scripts/physics')
 local World = require('scripts/world')
@@ -14,6 +15,7 @@ export type Pose = 'warning' | 'flying'
 Fireballs.WARNING_FRAMES = 32
 Fireballs.BURN_START = 0x40
 Fireballs.BURN_END = 0x20
+Fireballs.ENTER_X = { -16, Stage.WIDTH } -- moving right, moving left: one sprite width off screen
 
 export type Fireball = {
     id: number,
@@ -45,7 +47,7 @@ local function spawn(s: State, kind: Kind, side: number, y: number): Fireball
     local f: Fireball = {
         id = s.nextId,
         kind = kind,
-        body = Physics.newBody(Stage.FIREBALL_X[side + 1], y),
+        body = Physics.newBody(Fireballs.ENTER_X[side + 1], y),
         dir = dir,
         vdir = 1,
         warning = Fireballs.WARNING_FRAMES,
@@ -61,6 +63,14 @@ local function spawn(s: State, kind: Kind, side: number, y: number): Fireball
     end
     table.insert(s.list, f)
     return f
+end
+
+-- where to draw: the warning sparkle sits just inside the edge the flame will come from
+function Fireballs.drawX(f: Fireball): number
+    if f.pose == 'warning' then
+        return math.clamp(f.body.x, 0, Stage.WIDTH - 16)
+    end
+    return f.body.x
 end
 
 -- Vs_SpawnCnt2 picks the side: (count / 2) & 1
@@ -97,8 +107,7 @@ end
 
 local function weave(f: Fireball)
     local b = f.body
-    Physics.applyX(b)
-    b.x = Stage.wrapX(b.x)
+    Physics.applyX(b) -- no wrap: the horizontal fireball crosses once and leaves
     Physics.applyY(b)
     Physics.stepFireballY(b, f.vdir > 0)
     if math.abs(b.vy) >= Physics.FIREBALL_VY_LIMIT then
@@ -146,12 +155,6 @@ function Fireballs.update(s: State, w: World.State, players: { Players.Player },
         else
             f.animCnt += 2
             local b = f.body
-            if f.kind == 'horz' then
-                local limit = if f.dir > 0 then Stage.FIREBALL_X[2] else Stage.FIREBALL_X[1]
-                if b.x == limit then
-                    f.burn = Fireballs.BURN_START
-                end
-            end
             collidePlayers(f, players, frame, ev)
             -- a bumped block under it or the pow burns it out
             local probe = World.probe(w, b)
@@ -161,6 +164,10 @@ function Fireballs.update(s: State, w: World.State, players: { Players.Player },
             if f.burn == 0 then
                 if f.kind == 'horz' then
                     weave(f)
+                    -- gone once fully past the far edge
+                    if (f.dir > 0 and b.x >= Stage.WIDTH) or (f.dir < 0 and b.x <= -16) then
+                        alive = false
+                    end
                 else
                     bounce(f, w)
                 end
