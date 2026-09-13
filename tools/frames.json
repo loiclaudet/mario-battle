@@ -566,10 +566,11 @@
    "name": "crab_walk_2",
    "out": "assets/sprites",
    "sheet": "bm",
-   "x": 83,
+   "x": 64,
    "y": 65,
    "w": 16,
-   "h": 16
+   "h": 16,
+   "flipX": true
   },
   {
    "name": "crab_angry_walk_1",
@@ -584,10 +585,11 @@
    "name": "crab_angry_walk_2",
    "out": "assets/sprites",
    "sheet": "bm",
-   "x": 121,
+   "x": 102,
    "y": 65,
    "w": 16,
-   "h": 16
+   "h": 16,
+   "flipX": true
   },
   {
    "name": "crab_flipped",
@@ -626,14 +628,15 @@
    "name": "crab_blue_walk_2",
    "out": "assets/sprites",
    "sheet": "bm",
-   "x": 83,
+   "x": 64,
    "y": 65,
    "w": 16,
    "h": 16,
    "palette": {
     "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
     "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
-   }
+   },
+   "flipX": true
   },
   {
    "name": "crab_blue_angry_walk_1",
@@ -652,14 +655,15 @@
    "name": "crab_blue_angry_walk_2",
    "out": "assets/sprites",
    "sheet": "bm",
-   "x": 121,
+   "x": 102,
    "y": 65,
    "w": 16,
    "h": 16,
    "palette": {
     "from": "tools/sheets/wiki/SMB3_Sidestepper.png",
     "to": "tools/sheets/wiki/SMB3_Sidestepper_blue.png"
-   }
+   },
+   "flipX": true
   },
   {
    "name": "crab_blue_flipped",
@@ -820,8 +824,7 @@
    "pad": [
     16,
     16
-   ],
-   "anchor": "bottom"
+   ]
   },
   {
    "name": "pow_3",
@@ -834,8 +837,7 @@
    "pad": [
     16,
     16
-   ],
-   "anchor": "bottom"
+   ]
   },
   {
    "name": "block",

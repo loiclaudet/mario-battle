@@ -39,51 +39,64 @@ return function(): Tests
             test.case('walking reaches 0x0C in 12 frames and holds', function(expect)
                 local b = Physics.newBody(0, 0)
                 for _ = 1, 12 do
-                    Physics.stepPlayerX(b, 1, false)
+                    Physics.stepPlayerX(b, 1, false, true)
                 end
                 expect(b.vx).is(0x0C)
-                Physics.stepPlayerX(b, 1, false)
+                Physics.stepPlayerX(b, 1, false, true)
                 expect(b.vx).is(0x0C)
             end)
             test.case('running reaches 0x18 in 24 frames', function(expect)
                 local b = Physics.newBody(0, 0)
                 for _ = 1, 24 do
-                    Physics.stepPlayerX(b, 1, true)
+                    Physics.stepPlayerX(b, 1, true, true)
                 end
                 expect(b.vx).is(0x18)
             end)
             test.case('releasing B decays one unit per frame back to walking speed', function(expect)
                 local b = Physics.newBody(0, 0)
                 b.vx = 0x18
-                Physics.stepPlayerX(b, 1, false)
+                Physics.stepPlayerX(b, 1, false, true)
                 expect(b.vx).is(0x17)
                 for _ = 1, 20 do
-                    Physics.stepPlayerX(b, 1, false)
+                    Physics.stepPlayerX(b, 1, false, true)
                 end
                 expect(b.vx).is(0x0C)
             end)
-            test.case('no direction decays to zero from either side', function(expect)
+            test.case('no direction decays to zero from either side on the ground', function(expect)
                 local b = Physics.newBody(0, 0)
                 b.vx = 3
-                Physics.stepPlayerX(b, 0, false)
-                Physics.stepPlayerX(b, 0, false)
-                Physics.stepPlayerX(b, 0, false)
+                Physics.stepPlayerX(b, 0, false, true)
+                Physics.stepPlayerX(b, 0, false, true)
+                Physics.stepPlayerX(b, 0, false, true)
                 expect(b.vx).is(0)
                 b.vx = -2
-                Physics.stepPlayerX(b, 0, false)
-                Physics.stepPlayerX(b, 0, false)
-                Physics.stepPlayerX(b, 0, false)
+                Physics.stepPlayerX(b, 0, false, true)
+                Physics.stepPlayerX(b, 0, false, true)
+                Physics.stepPlayerX(b, 0, false, true)
                 expect(b.vx).is(0)
             end)
-            test.case('turning around from a full run takes 48 frames', function(expect)
+            test.case('a released pad keeps the speed in the air (PRG009_A5D1 only runs when landed)', function(expect)
+                local b = Physics.newBody(0, 0)
+                b.vx = 0x18
+                for _ = 1, 30 do
+                    Physics.stepPlayerX(b, 0, false, false)
+                end
+                expect(b.vx).is(0x18)
+            end)
+            test.case('turning around from a full run: 12 frames to stop at TURN_DECEL 2, then 24 to full speed', function(expect)
                 local b = Physics.newBody(0, 0)
                 b.vx = 0x18
                 local frames = 0
-                while b.vx > -0x18 do
-                    Physics.stepPlayerX(b, -1, true)
+                while b.vx > 0 do
+                    Physics.stepPlayerX(b, -1, true, true)
                     frames += 1
                 end
-                expect(frames).is(48)
+                expect(frames).is(0x18 // Physics.TURN_DECEL)
+                while b.vx > -0x18 do
+                    Physics.stepPlayerX(b, -1, true, true)
+                    frames += 1
+                end
+                expect(frames).is(0x18 // Physics.TURN_DECEL + 24)
             end)
             test.case('walking moves 0.75 px per frame: 3 px every 4 frames', function(expect)
                 local b = Physics.newBody(100, 0)

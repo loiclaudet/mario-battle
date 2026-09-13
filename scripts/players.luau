@@ -102,9 +102,10 @@ local function powCollide(p: Player, w: World.State, ev: Events)
     end
     local yoff = Stage.POW_YOFF[w.powHits + 1]
     if b.y - yoff < Stage.POW_Y - 11 then
-        -- above the block: stand on it
+        -- above the block: stand on it. the floor snap is (y & ~7) + Vs_POWHeight, so the player sits
+        -- 1, 4 then 6 px lower as the block flattens
         if b.vy >= 0 then
-            b.y = Stage.POW_Y - 16
+            b.y = (b.y - b.y % 8) + yoff
             b.subY = 0
             b.vy = 0
             p.onGround = true
@@ -140,26 +141,25 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
         return ev
     end
 
-    -- horizontal control (skipped while dizzy, the rom jumps straight to the y velocity)
+    -- horizontal control. the stun does not lock it: the lockout at PRG009_A4E4 is NOPed out in the shipped rom,
+    -- so a dizzy player keeps steering and may jump; the stun is the launch plus 18 frames of the dizzy sprite
     local dirPressed = 0
-    if p.dizzy == 0 then
-        if intent.left then
-            dirPressed = -1
-        elseif intent.right then
-            dirPressed = 1
-        end
-        if dirPressed ~= 0 then
-            p.dir = dirPressed
-        end
-        Physics.stepPlayerX(b, dirPressed, intent.run)
+    if intent.left then
+        dirPressed = -1
+    elseif intent.right then
+        dirPressed = 1
     end
+    if dirPressed ~= 0 then
+        p.dir = dirPressed
+    end
+    Physics.stepPlayerX(b, dirPressed, intent.run, p.onGround)
     Physics.applyX(b)
     b.x = Stage.wrapX(b.x)
 
     -- jump on a fresh press from the ground
     local jumpPressed = intent.jump and not p.prevJump
     p.prevJump = intent.jump
-    if p.dizzy == 0 and jumpPressed and p.onGround then
+    if jumpPressed and p.onGround then
         Physics.jump(b)
         p.jumped = true
         p.onGround = false
@@ -197,7 +197,7 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     powCollide(p, w, ev)
 
     -- a bounced block under the feet, or the pow while grounded, stuns
-    if p.dizzy == 0 and p.onGround and (probe.underHit or w.powCnt > 0) then
+    if p.onGround and (probe.underHit or w.powCnt > 0) then
         local kickDir = if b.vx < 0 then -1 else 1
         if probe.underHit then
             kickDir = if (b.x + 8) % 16 < 8 then -1 else 1

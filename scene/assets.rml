@@ -97,6 +97,7 @@
     <!-- tests, kept out of the rev by excludeFromRev; declared here so they see the modules above -->
     <ScriptAsset file="scripts/fireballs_test.luau" folderPath="scripts" name="fireballs_test" id="8:951"/>
     <ScriptAsset file="scripts/physics_test.luau" folderPath="scripts" name="physics_test" id="8:952"/>
-    <ScriptAsset file="scripts/stage_test.luau" folderPath="scripts" name="stage_test" id="8:953"/>
-    <ScriptAsset file="scripts/world_test.luau" folderPath="scripts" name="world_test" id="8:954"/>
+    <ScriptAsset file="scripts/players_test.luau" folderPath="scripts" name="players_test" id="8:953"/>
+    <ScriptAsset file="scripts/stage_test.luau" folderPath="scripts" name="stage_test" id="8:954"/>
+    <ScriptAsset file="scripts/world_test.luau" folderPath="scripts" name="world_test" id="8:955"/>
 </Rive>

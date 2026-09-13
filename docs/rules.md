@@ -42,11 +42,14 @@ the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 1
 | walk cap | 0x0C | 0.75 |
 | run cap, B held | 0x18 | 1.5 |
 | acceleration, deceleration, friction | 1 per frame | 0.0625 |
+| turning against the motion | 2 per frame (`Physics.TURN_DECEL`, lodz's tweak: the rom uses 1 here too) | 0.125 |
 | jump | -0x42 | -4.125 (every reachable entry of `Vs_PlayerJumpHeightBySpd`) |
 | gravity | +2 always, +3 more when falling or when A is not held | |
 | terminal fall | 0x40 | 4.0 |
 
 - full air control, no skid state (turning is acceleration the other way), jump only from the ground
+- a released pad only slows the player on the ground: the friction code (`PRG009_A5D1`) sits inside the landed
+  branch, so the air speed is kept until a direction is pressed or the player lands
 - full jump: 33 frames to the apex, 71 px. tap: 14 frames, 30 px. `scripts/physics_test.luau` asserts both
 - collision box x+4, y+2, 8x14. floor probes at (x+4, y+16) and (x+12, y+16) count when the body is within
   6 px of the tile top and not rising; the ceiling probe at (x+8, y) counts when the head is 9 px or more into
@@ -55,7 +58,8 @@ the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 1
   bottom minus 2. the bounced tile stays solid: the rom sets the under-hit bit only after the tile passed the
   solidity check, so nothing ever falls through a bouncing block and a head under it stops without bouncing it again
 - stun (`Vs_PlayerDizzy`): 18 frames, vy -0x38, vx +/-0x08. from a bounced block under the feet, from the pow
-  while grounded, or from being stomped. input is ignored while stunned
+  while grounded, or from being stomped. the shipped rom NOPs out the control lockout (`PRG009_A4E4`), so the
+  stun is the launch plus 18 frames of the dizzy sprite: steering and jumping keep working
 - player on player, 8 frame cooldown: vertical gap 8 or more, the top one bounces at -0x30 unless rising and the
   grounded one is stunned; side by side, both shoved at +/-0x10 and turned apart
 - touching a live enemy or a fireball kills instantly: everything halts, the victim pops up at -0x30 with +2 gravity
@@ -68,7 +72,10 @@ the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 1
 
 hit by rising into it from below: vy 0, y snapped under it, pinned 8 frames, hits++, 16 frames of shake
 (`Vs_POWVertShakes` 0, 1, 4, 3 every 2 frames). while active every grounded enemy is hit as if bumped and every
-grounded player is stunned, the puncher included if they land in time. players can stand on it.
+grounded player is stunned, the puncher included if they land in time. players can stand on it: the floor snap is
+`(y & ~7) + Vs_POWHeight[hits]`, so the feet sit at 152, 155 then 157 as the block flattens, and a head hit snaps
+y to `152 + 17 - Vs_POWHeight[hits]`. the flattened sprites (10 and 6 rows) sit centred in the 16 px cell, which is
+where those contact rows put them; the sheet had them bottom aligned.
 
 ## enemies (`Vs_SpawnEnemies`, `Vs_SpinyAndSidesteppers`, `Vs_FighterFly`, `Vs_ObjStateFlippedOver`)
 
