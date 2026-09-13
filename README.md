@@ -2,7 +2,8 @@
 
 the two player "Mario Bros." battle game hidden in Super Mario Bros. 3 (NES), rebuilt as a single `.riv` file
 with the [Rive CLI](https://rive.app/docs/cli): RML markup for the stage, hud and every component, Luau scripts
-for the simulation. every rule and physics number is transcribed from [the game's disassembly](https://github.com/captainsouthbird/smb3).
+for the simulation. every rule and physics number is transcribed from [the game's disassembly](https://github.com/captainsouthbird/smb3),
+with one deliberate exception, the turn-around deceleration, listed in `docs/rules.md`.
 
 ![gameplay](docs/gameplay.gif)
 

@@ -8,6 +8,7 @@ local Physics = {}
 Physics.WALK_MAX = 0x0C -- 0.75 px/frame
 Physics.RUN_MAX = 0x18 -- 1.5 px/frame
 Physics.ACCEL = 1
+Physics.TURN_DECEL = 2 -- while pressing against the motion. lodz's tweak: the rom uses 1 here too (PRG009_A4EA)
 Physics.JUMP_VY = -0x42 -- -4.125 px/frame, Vs_PlayerJumpHeightBySpd (every reachable entry)
 Physics.GRAVITY = 2 -- always
 Physics.GRAVITY_EXTRA = 3 -- when falling, or rising without A held
@@ -69,10 +70,16 @@ function Physics.applyY(b: Body)
     b.y, b.subY = Physics.applyVel(b.y, b.subY, b.vy)
 end
 
--- horizontal control, from PRG009_A4EA: approach the cap one unit per frame.
--- dir is -1, 0 or 1; run is the B button. works identically in the air.
-function Physics.stepPlayerX(b: Body, dir: number, run: boolean)
+-- horizontal control. dir is -1, 0 or 1; run is the B button; grounded is the floor bit of the previous
+-- frame's collision. with a direction held (PRG009_A4EA, on the ground and in the air alike) the speed
+-- approaches the cap one unit per frame, TURN_DECEL units while it still points the other way. with no
+-- direction (PRG009_A5D1) it decays one unit per frame, but that code sits inside the landed branch:
+-- a released pad keeps the speed while airborne.
+function Physics.stepPlayerX(b: Body, dir: number, run: boolean, grounded: boolean)
     if dir == 0 then
+        if not grounded then
+            return
+        end
         if b.vx > 0 then
             b.vx -= Physics.ACCEL
         elseif b.vx < 0 then
@@ -82,13 +89,17 @@ function Physics.stepPlayerX(b: Body, dir: number, run: boolean)
     end
     local cap = if run then Physics.RUN_MAX else Physics.WALK_MAX
     if dir > 0 then
-        if b.vx < cap then
+        if b.vx < 0 then
+            b.vx += Physics.TURN_DECEL
+        elseif b.vx < cap then
             b.vx += Physics.ACCEL
         elseif b.vx > cap then
             b.vx -= Physics.ACCEL
         end
     else
-        if b.vx > -cap then
+        if b.vx > 0 then
+            b.vx -= Physics.TURN_DECEL
+        elseif b.vx > -cap then
             b.vx -= Physics.ACCEL
         elseif b.vx < -cap then
             b.vx += Physics.ACCEL
