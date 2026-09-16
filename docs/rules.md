@@ -148,6 +148,9 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
   the real player once per row end, from a standstill and at full run, so every launch window and landing spot
   is what the game does. `Nav.bumpFrames` is measured the same way (the floor hits the lower ledge on frame 5).
+  a body stands on a row when a foot probe is on it, so it can hang 12 px past an end, and `Nav.spotFor` finds
+  the x that keeps the head in a block while a foot is on the row: that is how the centre platform's edge bumps
+  the first block an enemy walking out of a pipe steps on, and the opening goes straight there.
 - every frame, threats first: each live enemy is projected 36 frames ahead on its velocity, falling under
   gravity once its walk leaves its row, a resting fly also as if it hopped now; a fireball (sparkle included)
   56 frames ahead along its line with 16 px of weave. a predicted touch triggers a hop over it when the 40 px

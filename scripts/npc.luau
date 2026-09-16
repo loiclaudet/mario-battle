@@ -292,6 +292,24 @@ local function flyLanding(e: Enemies.Enemy): (number?, number, number)
     return nil, 0, 0
 end
 
+-- the row under the block a target at (x, y) on row `er` stands on, and the player x to bump it from:
+-- the nearest row below from which a foot can be on the row while the head is in the block
+local function underSpot(x: number, y: number, er: number): (number?, number)
+    local bx = blockUnder(x)
+    local best: number? = nil
+    local bestSpot = 0
+    for i, r in Nav.ROWS do
+        if r.y > y and (best == nil or r.y < Nav.ROWS[best].y) and Nav.bumpFrames(i, er) ~= nil then
+            local spot = Nav.spotFor(i, bx)
+            if spot ~= nil then
+                best = i
+                bestSpot = spot
+            end
+        end
+    end
+    return best, bestSpot
+end
+
 -- where a walker on row `er` can next be bumped from below: the first block along its walk (up to
 -- 160 px ahead) with a row under it that a jump reaches. returns the row below and the block, or nil
 local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
@@ -302,28 +320,12 @@ local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
         if not Nav.onRow(Nav.ROWS[er], x) then
             break
         end
-        local below = Nav.rowBelow(x, e.body.y)
-        if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
-            local spot = Nav.spotFor(below, blockUnder(x))
-            if spot ~= nil then
-                return below, spot
-            end
+        local below, spot = underSpot(x, e.body.y, er)
+        if below ~= nil then
+            return below, spot
         end
     end
     return nil, 0
-end
-
--- the row under a block and the player x to bump it from, for a target standing on row `er` at x
-local function underSpot(x: number, y: number, er: number): (number?, number)
-    local below = Nav.rowBelow(x, y)
-    if below == nil or Nav.bumpFrames(below, er) == nil then
-        return nil, 0
-    end
-    local spot = Nav.spotFor(below, blockUnder(x))
-    if spot == nil then
-        return nil, 0
-    end
-    return below, spot
 end
 
 -- frames the other players need to reach a spot, the nearest of them
