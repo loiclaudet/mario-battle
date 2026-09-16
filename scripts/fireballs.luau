@@ -94,7 +94,7 @@ local function collidePlayers(f: Fireball, players: { Players.Player }, frame: n
     end
     local fx, fy, fw, fh = World.enemyBox(f.body)
     for i, p in players do
-        if p.state ~= Players.STATE_NORMAL or p.halt > 0 then
+        if p.state ~= Players.STATE_NORMAL or p.halt > 0 or Players.isNpc(p) then
             continue
         end
         local px, py, pw, ph = World.playerBox(p.body)

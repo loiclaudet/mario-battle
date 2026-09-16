@@ -407,7 +407,8 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
     end
     local ex, ey, ew, eh = World.enemyBox(e.body)
     for i, p in players do
-        if p.state ~= Players.STATE_NORMAL or p.halt > 0 then
+        -- an npc is passed through: it can neither die nor kick until it gets an ai
+        if p.state ~= Players.STATE_NORMAL or p.halt > 0 or Players.isNpc(p) then
             continue
         end
         local px, py, pw, ph = World.playerBox(p.body)

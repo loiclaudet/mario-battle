@@ -14,9 +14,11 @@ rive login            # once
 rive . --fit=contain  # opens the viewer, resize it to full screen
 ```
 
-any jump or start press on the title starts a round. two players, gamepads first (first pad is mario, second
-luigi, B jumps, Y runs, plus pauses), keyboard fills the empty slots: mario on `W A S D` + `G` jump + `F` run,
-luigi on the arrows + `K` jump + `L` run. `F1` shows the collision boxes.
+the title is a start menu: each player moves a cursor over the mario and luigi cards, jump locks a brother,
+jump on START (or the start button) launches. a brother nobody locked stands still as an npc that enemies pass
+through, so one player can practise alone and no player at all is a demo. gamepads first (first pad is p1,
+second p2, B jumps, Y runs, plus starts and pauses), keyboard fills the empty slots: p1 on `W A S D` + `G`
+jump + `F` run, p2 on the arrows + `K` jump + `L` run. `F1` shows the collision boxes.
 
 five enemies come out of the top pipes. bump the platform under one to flip it, touch it while it is on its
 back to kick it off and take its coin. three coins win. touching a live enemy or a fireball ends the round.
