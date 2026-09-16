@@ -33,6 +33,7 @@ export type Brain = {
     frame: number, -- frames thought so far, paces the periodic search
     hunt: boolean, -- the coins are lost: no more kicks, only the human's death wins now
     coins: { number },
+    denyFrames: number, -- frames spent sitting under a downed enemy the human has not come for
 }
 
 Npc.REPLAN_FRAMES = 8
@@ -50,6 +51,7 @@ Npc.DANGER_FRAMES = 40 -- how far ahead a live enemy on the target row is projec
 Npc.DANGER_PX = 28
 Npc.DANGER_COST = 15 -- score lost per live enemy that will be near a spot, kept low since the look ahead keeps it alive
 Npc.RIVAL_NEAR = 60 -- frames: a human this close to a downed enemy makes denying it worth more than kicking it
+Npc.DENY_PATIENCE = 90 -- frames to sit under a downed enemy before taking the kick ourselves
 Npc.FAR = 400 -- travel frames beyond which a target is not worth it
 Npc.HORIZON = 48 -- frames the brain runs the battle forward before committing
 Npc.MACRO_FRAMES = 12 -- frames a searched move is held before the policy takes over again
@@ -58,7 +60,7 @@ Npc.DEATH = -10000
 Npc.COINS_TO_WIN = 5
 
 function Npc.new(index: number): Brain
-    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0, override = nil, overrideLeft = 0, frame = 0, hunt = false, coins = { 0, 0 } }
+    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0, override = nil, overrideLeft = 0, frame = 0, hunt = false, coins = { 0, 0 }, denyFrames = 0 }
 end
 
 local function intent(dir: number, run: boolean, jump: boolean): Input.Intent
@@ -315,8 +317,10 @@ end
 local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
     local steps = if e.kind == 'fly' then 0 else 20
     local dir = if e.body.vx < 0 then -1 else 1
+    -- still in the pipe: nothing touches it until it is out, so start where it comes out
+    local start = e.body.x + dir * e.pipeTimer * Physics.ENEMY_PIPE_VX / 16
     for k = 0, steps do
-        local x = Stage.wrapX(e.body.x + dir * k * 8)
+        local x = Stage.wrapX(start + dir * k * 8)
         if not Nav.onRow(Nav.ROWS[er], x) then
             break
         end
@@ -398,7 +402,11 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                 -- the human closer to it than we are, or simply near it: sit under its block and right it as
                 -- they reach for it. their death ends the round, so near them this beats the kick
                 local rival = rivalTravel(brain, players, lr, lx)
-                if lr ~= Nav.FLOOR and (brain.hunt or rival < travel or rival < Npc.RIVAL_NEAR) then
+                local current = brain.plan
+                local waited = current ~= nil and current.kind == 'deny' and current.slot == e.slot and brain.denyFrames > Npc.DENY_PATIENCE
+                if waited and not brain.hunt then
+                    offer(115, { kind = 'kick', row = lr, x = lx, slot = e.slot, targetRow = lr }) -- they are not coming, take it
+                elseif lr ~= Nav.FLOOR and (brain.hunt or rival < travel or rival < Npc.RIVAL_NEAR) then
                     local below, spot = underSpot(lx, Nav.ROWS[lr].y, lr)
                     if below ~= nil then
                         offer(if brain.hunt then 95 elseif rival < Npc.RIVAL_NEAR then 110 else 85, { kind = 'deny', row = below, x = spot, slot = e.slot, targetRow = lr })
@@ -498,7 +506,8 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
     if #enemies.list == 0 then
         -- the pipes alternate, left first: be under the first block the next one can be flipped from
         local side = enemies.count % 2
-        local ex = if side == 0 then 44 else 195
+        local out = Enemies.SPAWN_PIPE_FRAMES * Physics.ENEMY_PIPE_VX / 16
+        local ex = if side == 0 then Stage.SPAWN_X[1] + out else Stage.SPAWN_X[2] - out
         local below, spot = underSpot(ex, Nav.ROWS[Nav.UPPER].y, Nav.UPPER)
         if below ~= nil then
             offer(45, { kind = 'post', row = below, x = spot, slot = 0, targetRow = below })
@@ -696,6 +705,7 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         if math.abs(Nav.dx(row, b.x, plan.x)) > 2 or not stopped(b) then
             return moveTo(row, b, plan.x)
         end
+        brain.denyFrames += 1
         local e = findEnemy(enemies, plan.slot)
         if e == nil or not e.onGround then
             return intent(0, false, false)
@@ -819,6 +829,9 @@ local function policy(brain: Brain, p: Players.Player, w: World.State, enemies: 
     local plan: Plan
     if current == nil or (replan and brain.replanIn <= 0) or not valid(brain, current, p, w, enemies, players) then
         plan = choose(brain, p, w, enemies, fireballs, players)
+        if current == nil or plan.kind ~= current.kind or plan.slot ~= current.slot then
+            brain.denyFrames = 0
+        end
         brain.plan = plan
         brain.replanIn = Npc.REPLAN_FRAMES
     else

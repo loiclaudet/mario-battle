@@ -34,7 +34,7 @@ Nav.SIM_FRAMES = 120
 
 -- a row's own coordinate: x, or x + 256 when the segment wraps past the seam
 function Nav.seg(row: Row, x: number): number
-    local c = x + 8
+    local c = x + 4 -- the left foot probe: the last x that still stands past the seam
     if c < row.x0 and c + 256 < row.x1 then
         return x + 256
     end

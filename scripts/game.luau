@@ -287,7 +287,7 @@ local function stepPlaying(self: Game)
     end
     local eev = Enemies.update(self.enemies, self.world, self.players, self.world.frame, halted)
     ensureEnemyViews(self)
-    if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 30 == 0 then
+    if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 15 == 0 then
         -- a round trace for tuning the cpu: paste it back with what the human was doing
         local line = string.format('%5d c%d-%d', self.world.frame, self.coins[1], self.coins[2])
         for i, p in self.players do
