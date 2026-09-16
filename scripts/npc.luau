@@ -36,7 +36,7 @@ export type Brain = {
 }
 
 Npc.REPLAN_FRAMES = 8
-Npc.LOOKAHEAD = 36 -- frames of enemy motion projected for the threat check (a run from a standstill needs the time)
+Npc.LOOKAHEAD = 24 -- frames of enemy motion projected for the threat check; the look ahead covers the rest
 Npc.FIREBALL_LOOKAHEAD = 56 -- a fireball crosses in a straight line, so it is seen from far, sparkle included
 Npc.IMMINENT = 6 -- inside this many frames a threat overrides even an escape in progress
 Npc.ESCAPE_GAP = 28 -- px between the launch point and the threat when we jump
@@ -48,7 +48,9 @@ Npc.POW_X = 120 -- stand here to punch the pow
 Npc.TRAP_REACH = 20 -- px between the human and a downed enemy when the pow rights it under their feet
 Npc.LAND_PX = 24 -- clearance wanted around a landing spot
 Npc.DANGER_FRAMES = 40 -- how far ahead a live enemy on the target row is projected when scoring a spot
-Npc.DANGER_PX = 40
+Npc.DANGER_PX = 28
+Npc.DANGER_COST = 15 -- score lost per live enemy that will be near a spot, kept low since the look ahead keeps it alive
+Npc.RIVAL_NEAR = 60 -- frames: a human this close to a downed enemy makes denying it worth more than kicking it
 Npc.FAR = 400 -- travel frames beyond which a target is not worth it
 Npc.HORIZON = 48 -- frames the brain runs the battle forward before committing
 Npc.MACRO_FRAMES = 12 -- frames a searched move is held before the policy takes over again
@@ -335,7 +337,7 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             return
         end
         local ignore = if plan.kind == 'flip' or plan.kind == 'kick' then plan.slot else 0
-        local score = value - travel / 4 - 40 * danger(plan.row, plan.x, travel + Npc.DANGER_FRAMES, enemies, fireballs, ignore)
+        local score = value - travel / 4 - Npc.DANGER_COST * danger(plan.row, plan.x, travel + Npc.DANGER_FRAMES, enemies, fireballs, ignore)
         if plan.kind == 'kick' or plan.kind == 'flip' then
             local rival = rivalTravel(brain, players, plan.row, plan.x)
             if plan.kind == 'kick' and rival < travel then
@@ -373,11 +375,13 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                 if not brain.hunt and remaining > travel + Npc.KICK_MARGIN then
                     offer(100 + (if e.last then 20 else 0), { kind = 'kick', row = er, x = e.body.x, slot = e.slot, targetRow = er })
                 end
-                -- the human closer to it than we are: sit under its block and right it as they reach for it
-                if er ~= Nav.FLOOR and (brain.hunt or rivalTravel(brain, players, er, e.body.x) < travel) then
+                -- the human closer to it than we are, or simply near it: sit under its block and right it as
+                -- they reach for it. their death ends the round, so near them this beats the kick
+                local rival = rivalTravel(brain, players, er, e.body.x)
+                if er ~= Nav.FLOOR and (brain.hunt or rival < travel or rival < Npc.RIVAL_NEAR) then
                     local below = Nav.rowBelow(e.body.x, e.body.y)
                     if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
-                        offer(if brain.hunt then 95 else 85, { kind = 'deny', row = below, x = blockUnder(e.body.x), slot = e.slot, targetRow = er })
+                        offer(if brain.hunt then 95 elseif rival < Npc.RIVAL_NEAR then 110 else 85, { kind = 'deny', row = below, x = blockUnder(e.body.x), slot = e.slot, targetRow = er })
                     end
                 end
             end
@@ -452,7 +456,7 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                         near = true
                     end
                 end
-                local value = if near then 80 else 10
+                local value = if near then 100 else 30
                 if brain.hunt then
                     value = if near then 140 else 90
                 end

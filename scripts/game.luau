@@ -53,7 +53,7 @@ type Game = {
     winner: Winner,
     overFrames: number,
     style: number,
-    debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender (headless checks only)
+    debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender, 4 the boxes, 8 a round trace on the console
     paused: boolean,
     prevStart: boolean,
     acc: number,
@@ -287,6 +287,19 @@ local function stepPlaying(self: Game)
     end
     local eev = Enemies.update(self.enemies, self.world, self.players, self.world.frame, halted)
     ensureEnemyViews(self)
+    if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 30 == 0 then
+        -- a round trace for tuning the cpu: paste it back with what the human was doing
+        local line = string.format('%5d c%d-%d', self.world.frame, self.coins[1], self.coins[2])
+        for i, p in self.players do
+            local plan = self.brains[i].plan
+            local who = if Players.isNpc(p) then (if plan then plan.kind .. '>' .. plan.row .. ',' .. plan.x else '-') else 'human'
+            line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', if p.dizzy > 0 then 'D' else '', who)
+        end
+        for _, e in self.enemies.list do
+            line ..= string.format(' | %s%d %d,%d s%d', e.kind, e.slot, e.body.x, e.body.y, e.state)
+        end
+        print(line)
+    end
     if eev.spawned then
         play(self, 'pipe')
     end

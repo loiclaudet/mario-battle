@@ -33,7 +33,7 @@ at once, and `--data-dump` after `--advance=90s` shows the coins the two brains 
 keystroke through the Playfield's `FocusData`, so p2's keyboard paths are checkable headlessly too, and
 `--data-dump` prints the whole bound view model (the nested cursors included). spell the `--gamepad` flags out,
 this shell is zsh and an unquoted variable holding several flags is passed as one argument. `--data=style=n` (0..5) picks the enemy set, `--data=debug=1`
-spawns a fireball at once, `--data=debug=2` the game ender, `--data=debug=4` (or F1 live) draws the collision boxes. component artboards render alone with
+spawns a fireball at once, `--data=debug=2` the game ender, `--data=debug=4` (or F1 live) draws the collision boxes, `--data=debug=8` prints a round trace every 30 frames (coins, both players with the cpu's plan, every enemy), which is how a lost round against the cpu gets diagnosed: `rive . --fit=contain --data=debug=8` and paste the terminal. component artboards render alone with
 `--artboard=Spiny --data=last=true --data=pose=flipped`.
 
 play it: `rive . --fit=contain` (the default fit reflows the artboard to the window; contain keeps 256x240 and
