@@ -15,8 +15,9 @@ local Sim = require('scripts/sim')
 local Npc = {}
 
 export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'shadow' | 'post' | 'escape'
--- row and x: where to stand. slot: the enemy slot or player index it is about. targetRow: the row the target walks
-export type Plan = { kind: Kind, row: number, x: number, slot: number, targetRow: number }
+-- row and x: where to stand. slot: the enemy slot or player index it is about. targetRow: the row the target walks.
+-- block: for a deny, the block bumped when it is not the downed enemy's own but one on the rival's way to it
+export type Plan = { kind: Kind, row: number, x: number, slot: number, targetRow: number, block: number? }
 export type Brain = {
     index: number,
     plan: Plan?,
@@ -48,11 +49,17 @@ Npc.EVADE_FRAMES = 10
 Npc.POSTS = { { 1, 100 }, { 1, 148 }, { 2, 48 }, { 2, 208 } } -- row and x of the waiting spots, each with room to hop
 Npc.POW_X = 120 -- stand here to punch the pow
 Npc.TRAP_REACH = 20 -- px between the human and a downed enemy when the pow rights it under their feet
+Npc.POW_FRAMES = 8 -- frames from the jump under the pow to the hit, measured by npc_test
 Npc.LAND_PX = 24 -- clearance wanted around a landing spot
 Npc.DANGER_FRAMES = 40 -- how far ahead a live enemy on the target row is projected when scoring a spot
 Npc.DANGER_PX = 28
 Npc.DANGER_COST = 15 -- score lost per live enemy that will be near a spot, kept low since the look ahead keeps it alive
 Npc.RIVAL_NEAR = 60 -- frames: a human this close to a downed enemy makes denying it worth more than kicking it
+Npc.REACTION = 24 -- frames added to a rival's trip when they are not already moving along it, twice that moving away
+Npc.GUARD_SLACK = 8 -- frames of margin allowed when picking a block on the rival's way that we can reach in time
+Npc.THROW_MARGIN = 4 -- px a landing must be inside the far half of a guard block, its spot is only a guess
+Npc.TRAP_FAR = 150 -- a rival this many frames from a downed enemy is still worth waiting for under the pow
+Npc.KEEP_BONUS = 15 -- score kept by the plan already in hand, so the choice does not flip on a small shift
 Npc.DENY_PATIENCE = 90 -- frames to sit under a downed enemy before taking the kick ourselves
 Npc.LINGER_PX = 64 -- a human this close to a downed enemy we sit under, not coming, gets it righted at them
 Npc.FAR = 400 -- travel frames beyond which a target is not worth it
@@ -205,7 +212,8 @@ local function escapePlan(brain: Brain, b: Physics.Body, threat: Threat): Plan?
         local gap = math.abs(ax - (ex + threat.vx * mine))
         if gap >= Npc.ESCAPE_GAP and mine < bestFrames then
             bestFrames = mine
-            best = { kind = 'escape', row = l.to, x = l.landX, slot = 0, targetRow = l.to }
+            local plan: Plan = { kind = 'escape', row = l.to, x = l.landX, slot = 0, targetRow = l.to }
+            best = plan
         end
     end
     return best
@@ -368,18 +376,110 @@ local function playerLanding(h: Players.Player): (number?, number, number)
     return nil, 0, 0
 end
 
--- frames the other players need to reach a spot, the nearest of them, from where they land if in the air
+-- frames a player needs to reach a spot, from where they land if in the air. a grounded one not already
+-- moving the way their route starts gets a reaction time added, one moving the other way twice that: a
+-- trip they have not begun is longer than the map says. nil for one out of the round
+local function playerTrip(h: Players.Player, row: number, x: number): number?
+    if h.state ~= Players.STATE_NORMAL or h.halt > 0 then
+        return nil
+    end
+    local hr, hx, ht = playerLanding(h)
+    if hr == nil then
+        return nil
+    end
+    local trip = ht + Nav.travel(hr, hx, row, x)
+    if h.onGround then
+        local step = Nav.step(hr, hx, row, x)
+        if step ~= nil then
+            local dx = Nav.dx(hr, hx, step.x)
+            local way = if math.abs(dx) > 2 then sign(dx) else step.dir
+            local v = h.body.vx / 16
+            if way ~= 0 and math.abs(v) < 0.5 then
+                trip += Npc.REACTION
+            elseif way ~= 0 and sign(v) ~= way then
+                trip += 2 * Npc.REACTION
+            end
+        end
+    end
+    return trip
+end
+
+-- frames the other players need to reach a spot, the nearest of them
 local function rivalTravel(brain: Brain, players: { Players.Player }, row: number, x: number): number
     local best = math.huge
     for i, h in players do
-        if i ~= brain.index and h.state == Players.STATE_NORMAL and h.halt == 0 then
-            local hr, hx, ht = playerLanding(h)
-            if hr ~= nil then
-                best = math.min(best, ht + Nav.travel(hr, hx, row, x))
+        if i ~= brain.index then
+            local trip = playerTrip(h, row, x)
+            if trip ~= nil then
+                best = math.min(best, trip)
             end
         end
     end
     return best
+end
+
+-- does a bounced block throw a player whose centre is at cx away from ex, with `margin` px of the centre
+-- still in that half either way: the half of the block it is over decides (PRG009_A58D, the same rule as
+-- Players.update), and a landing spot is only a guess to a few px
+local function throwsAway(cx: number, ex: number, margin: number): boolean
+    local half = cx % 16
+    local away = sign(wrapDx(ex, cx))
+    if away > 0 then
+        return half >= 8 + margin
+    end
+    return half < 8 - margin
+end
+
+-- the block whose bounce catches a rival on their way to a downed enemy at (er, ex), the rival's feet on it
+-- soonest after we can be under it: the block has a row under it we reach, jump included, before they get
+-- there. the enemy's own block is worth a little lateness (it rights the enemy too) and throws them
+-- wherever; another block must throw them back, not onto the enemy, so one they land on the wrong half
+-- of is skipped. returns the block, the row under it and the spot, or nil when none is in time
+local function guardBlock(brain: Brain, b: Physics.Body, players: { Players.Player }, er: number, ex: number): (number?, number, number)
+    local row = brain.lastRow
+    local ey = Nav.ROWS[er].y
+    local bestBlock: number? = nil
+    local bestBelow, bestSpot = 0, 0
+    local bestMargin = -math.huge
+    for i, h in players do
+        if i == brain.index or h.state ~= Players.STATE_NORMAL or h.halt > 0 then
+            continue
+        end
+        local hr, hx, ht = playerLanding(h)
+        if hr == nil then
+            continue
+        end
+        local entryX, entryFrames = Nav.approach(hr, hx, er, ex)
+        -- the blocks their feet cross from where they arrive on the row to the enemy, the enemy's own last
+        local dir = sign(Nav.dx(er, entryX, ex))
+        if dir == 0 then
+            dir = 1
+        end
+        local from = blockUnder(entryX)
+        local to = blockUnder(ex)
+        local n = math.abs(Nav.dx(er, from, to)) // 16
+        for k = 0, n do
+            local bx = Stage.wrapX(from + dir * k * 16)
+            local below, spot = underSpot(bx + 4, ey, er)
+            if below == nil then
+                continue
+            end
+            local hit = Nav.bumpFrames(below, er) or 0
+            local theirs = ht + entryFrames + math.abs(Nav.dx(er, entryX, bx + 4)) / Nav.RUN_PX
+            local mine = Nav.travel(row, b.x, below, spot) + hit
+            local margin = theirs + Npc.GUARD_SLACK - mine
+            if bx == to then
+                margin += 2 * Npc.GUARD_SLACK
+            elseif k == 0 and (not h.onGround or entryFrames > 0) and not throwsAway(entryX + 8, ex, Npc.THROW_MARGIN) then
+                continue -- they land on this block's near half: the bounce would throw them onto the enemy
+            end
+            if margin >= 0 and margin > bestMargin then
+                bestMargin = margin
+                bestBlock, bestBelow, bestSpot = bx, below, spot
+            end
+        end
+    end
+    return bestBlock, bestBelow, bestSpot
 end
 
 local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }): Plan
@@ -396,6 +496,10 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         end
         local ignore = if plan.kind == 'flip' or plan.kind == 'kick' then plan.slot else 0
         local score = value - travel / 4 - Npc.DANGER_COST * danger(plan.row, plan.x, travel + Npc.DANGER_FRAMES, enemies, fireballs, ignore)
+        local held = brain.plan
+        if held ~= nil and held.kind == plan.kind and held.slot == plan.slot and plan.kind ~= 'post' then
+            score += Npc.KEEP_BONUS -- the plan in hand keeps a little credit, a trip half made is not thrown away for a sliver
+        end
         if plan.kind == 'kick' or plan.kind == 'flip' then
             local rival = rivalTravel(brain, players, plan.row, plan.x)
             if plan.kind == 'kick' and rival < travel then
@@ -443,9 +547,11 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                 if waited and not brain.hunt then
                     offer(115, { kind = 'kick', row = lr, x = lx, slot = e.slot, targetRow = lr }) -- they are not coming, take it
                 elseif lr ~= Nav.FLOOR and (brain.hunt or rival < travel or rival < Npc.RIVAL_NEAR) then
-                    local below, spot = underSpot(lx, Nav.ROWS[lr].y, lr)
-                    if below ~= nil then
-                        offer(if brain.hunt then 95 elseif rival < Npc.RIVAL_NEAR then 110 else 85, { kind = 'deny', row = below, x = spot, slot = e.slot, targetRow = lr })
+                    local value = if brain.hunt then 95 elseif rival < Npc.RIVAL_NEAR then 110 else 85
+                    -- the block we can be under in time on their way to it, its own when there is time for that
+                    local gb, gBelow, gSpot = guardBlock(brain, b, players, lr, lx)
+                    if gb ~= nil then
+                        offer(value, { kind = 'deny', row = gBelow, x = gSpot, slot = e.slot, targetRow = lr, block = gb })
                     end
                 end
             end
@@ -492,15 +598,32 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         end
     end
 
-    -- the trap: a human going for a downed enemy, and the pow rights it under their feet. a kill ends the round
+    -- the trap: a human going for a downed enemy, and the pow rights it under their feet. a kill ends the round.
+    -- one on its row, or coming down onto it, is worth the most; one still on the way is worth waiting for
+    -- under the pow when we get there first
     if Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 then
+        local powTrip = Nav.travel(row, b.x, Nav.FLOOR, Npc.POW_X)
         for i, h in players do
-            if i == brain.index or h.state ~= Players.STATE_NORMAL or not h.onGround then
+            if i == brain.index or h.state ~= Players.STATE_NORMAL or h.halt > 0 then
+                continue
+            end
+            local hr, hx, _ = playerLanding(h)
+            if hr == nil then
                 continue
             end
             for _, e in enemies.list do
-                if e.state == Enemies.STATE_FLIPPED and e.onGround and math.abs(e.body.y - h.body.y) < 8 and math.abs(wrapDx(h.body.x, e.body.x)) < 80 then
-                    offer(if brain.hunt then 95 else 90, { kind = 'trap', row = Nav.FLOOR, x = Npc.POW_X, slot = e.slot, targetRow = i })
+                if e.state ~= Enemies.STATE_FLIPPED or not e.onGround then
+                    continue
+                end
+                local er = enemyRow(e)
+                if er == nil then
+                    continue
+                end
+                -- only when we are under the pow before they are on it
+                local theirs = playerTrip(h, er, e.body.x) or math.huge
+                if theirs < Npc.TRAP_FAR and powTrip + Npc.POW_FRAMES <= theirs then
+                    local onIt = hr == er and math.abs(wrapDx(hx, e.body.x)) < 80
+                    offer(if brain.hunt then (if onIt then 95 else 85) else (if onIt then 90 else 80), { kind = 'trap', row = Nav.FLOOR, x = Npc.POW_X, slot = e.slot, targetRow = i })
                 end
             end
         end
@@ -591,7 +714,11 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
     elseif plan.kind == 'trap' then
         local e = findEnemy(enemies, plan.slot)
         local h = players[plan.targetRow]
-        return Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 and e ~= nil and e.state == Enemies.STATE_FLIPPED and h.state == Players.STATE_NORMAL and math.abs(wrapDx(h.body.x, e.body.x)) < 80
+        if Stage.powRect(w.powHits) == nil or w.powCnt > 0 or e == nil or e.state ~= Enemies.STATE_FLIPPED or h.state ~= Players.STATE_NORMAL then
+            return false
+        end
+        local er = enemyRow(e)
+        return er ~= nil and rivalTravel(brain, players, er, e.body.x) < Npc.TRAP_FAR
     elseif plan.kind == 'escape' then
         return brain.lastRow ~= plan.row
     elseif plan.kind == 'bump' then
@@ -690,6 +817,11 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
                 end
                 return jump(brain, step.dir, 60)
             end
+            -- the walk stops within 2 px of its target; a step short of the window is walked, not waited out
+            local dx = Nav.dx(row, b.x, step.x)
+            if math.abs(dx) <= 2 then
+                return intent(sign(dx), false, false)
+            end
             return moveTo(row, b, step.x)
         end
         -- a drop: run off the end
@@ -757,11 +889,40 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         if e == nil or not e.onGround then
             return intent(0, false, false)
         end
-        -- the nearest other player heading for it: jump so the block bounces as they touch. one that
-        -- lingers next to it, waiting for us to leave, gets it righted at them once our patience is out
+        -- the nearest other player heading for it: jump so the block bounces as they touch, or as their feet
+        -- come down on it. one that lingers next to it, waiting for us to leave, gets it righted at them once
+        -- our patience is out. under a block on their way rather than the enemy's, jump as they step onto it
         local hit = Nav.bumpFrames(plan.row, plan.targetRow) or 0
+        local bx = blockUnder(plan.x)
+        local own = plan.block == nil or plan.block == blockUnder(e.body.x)
         for i, h in players do
-            if i == brain.index or h.state ~= Players.STATE_NORMAL or math.abs(h.body.y - e.body.y) > 8 then
+            if i == brain.index or h.state ~= Players.STATE_NORMAL then
+                continue
+            end
+            if not h.onGround then
+                -- coming down onto the block: bounce it under their landing
+                local lr, lx, lt = playerLanding(h)
+                if lr == plan.targetRow and lt >= hit - 1 and lt <= hit + 12 then
+                    local l, r = wrapDx(bx, lx + 4), wrapDx(bx, lx + 12)
+                    local onBlock = (l >= 0 and l < 16) or (r >= 0 and r < 16)
+                    local nearEnemy = own and math.abs(wrapDx(lx, e.body.x)) - 16 <= Npc.TRAP_REACH
+                    local away = own or throwsAway(lx + 8, e.body.x, Npc.THROW_MARGIN)
+                    if (onBlock or nearEnemy) and away and columnClear(b, enemies, fireballs) then
+                        return jump(brain, 0, hit + 2)
+                    end
+                end
+                continue
+            end
+            if math.abs(h.body.y - e.body.y) > 8 then
+                continue
+            end
+            if not own then
+                -- bounce it as their centre crosses the far half, so the throw sends them back
+                local cx = h.body.x + h.body.vx / 16 * hit + 8
+                local d = wrapDx(bx, cx)
+                if d >= 0 and d < 16 and throwsAway(cx, e.body.x, 1) and columnClear(b, enemies, fireballs) then
+                    return jump(brain, 0, hit + 2)
+                end
                 continue
             end
             local d = wrapDx(h.body.x, e.body.x)
@@ -785,10 +946,19 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
             return intent(0, false, false)
         end
         if plan.kind == 'trap' then
-            -- wait under the pow until the human is a step from the downed enemy, then punch
+            -- wait under the pow until the human is a step from the downed enemy, or about to come down next
+            -- to it, then punch: the pow takes POW_FRAMES to reach from the floor
             local e = findEnemy(enemies, plan.slot)
             local h = players[plan.targetRow]
             if e == nil then
+                return intent(0, false, false)
+            end
+            if not h.onGround then
+                local lr, lx, lt = playerLanding(h)
+                local er = enemyRow(e)
+                if lr ~= nil and lr == er and math.abs(wrapDx(lx, e.body.x)) - 16 <= Npc.TRAP_REACH and lt <= Npc.POW_FRAMES + 1 then
+                    return jump(brain, 0, 1)
+                end
                 return intent(0, false, false)
             end
             local d = wrapDx(h.body.x, e.body.x)

@@ -76,7 +76,6 @@
     <AudioAsset file="assets/sfx/fireball.wav" name="fireball" id="8:49304"/>
     <AudioAsset file="assets/sfx/jump.wav" name="jump" id="8:49293"/>
     <AudioAsset file="assets/sfx/kick.wav" name="kick" id="8:9950"/>
-    <AudioAsset file="assets/sfx/pipe.wav" name="pipe" id="8:29829"/>
     <AudioAsset file="assets/sfx/player_down.wav" name="player_down" id="8:39224"/>
     <AudioAsset file="assets/sfx/pow.wav" name="pow" id="8:34194"/>
     <!-- music, cut by tools/cut_music.py: the intro plays once, the loop is scheduled gaplessly by scripts/sfx.luau -->
