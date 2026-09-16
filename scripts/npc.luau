@@ -13,7 +13,7 @@ local Nav = require('scripts/nav')
 
 local Npc = {}
 
-export type Kind = 'kick' | 'flip' | 'pow' | 'bump' | 'stomp' | 'post' | 'escape'
+export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'bump' | 'stomp' | 'post' | 'escape'
 -- row and x: where to stand. slot: the enemy slot or player index it is about. targetRow: the row the target walks
 export type Plan = { kind: Kind, row: number, x: number, slot: number, targetRow: number }
 export type Brain = {
@@ -30,12 +30,17 @@ export type Brain = {
 }
 
 Npc.REPLAN_FRAMES = 8
-Npc.LOOKAHEAD = 16 -- frames of enemy motion projected for the threat check
+Npc.LOOKAHEAD = 36 -- frames of enemy motion projected for the threat check (a run from a standstill needs the time)
+Npc.FIREBALL_LOOKAHEAD = 56 -- a fireball crosses in a straight line, so it is seen from far, sparkle included
 Npc.IMMINENT = 6 -- inside this many frames a threat overrides even an escape in progress
 Npc.ESCAPE_GAP = 28 -- px between the launch point and the threat when we jump
 Npc.KICK_MARGIN = 24 -- frames a flipped enemy must still be down after the trip to it
 Npc.EVADE_FRAMES = 10
-Npc.POSTS = { { 1, 80 }, { 1, 168 }, { 2, 40 }, { 2, 216 } } -- row and x of the waiting spots: the floor under the lower ledges, and the ledges
+Npc.POSTS = { { 1, 100 }, { 1, 148 }, { 2, 48 }, { 2, 208 } } -- row and x of the waiting spots, each with room to hop
+Npc.OPENING = { { 4, 8 }, { 4, 240 } } -- with nothing out yet, wait on a stub: the first spawn walks right over it
+Npc.POW_X = 120 -- stand here to punch the pow
+Npc.TRAP_REACH = 20 -- px between the human and a downed enemy when the pow rights it under their feet
+Npc.LAND_PX = 24 -- clearance wanted around a landing spot
 Npc.DANGER_FRAMES = 40 -- how far ahead a live enemy on the target row is projected when scoring a spot
 Npc.DANGER_PX = 40
 Npc.FAR = 400 -- travel frames beyond which a target is not worth it
@@ -95,44 +100,68 @@ end
 
 type Threat = { dir: number, above: boolean, x: number, vx: number, soon: boolean }
 
--- does a 12x4 box moving from (ex, ey) meet our box within `frames`, both on their current velocity
-local function meets(b: Physics.Body, ex: number, ey: number, evx: number, evy: number, frames: number): boolean
+-- does a 12x4 box moving from (ex, ey) meet our box within `frames`. it keeps its velocity, and it falls
+-- under gravity once airborne, or once its walk carries it off the end of its row
+local function meets(b: Physics.Body, ex: number, ey: number, evx: number, evy: number, grounded: boolean, gravity: number, frames: number): boolean
     local pvx = b.vx / 16
     local rx = b.x + wrapDx(b.x, ex)
+    local row = if grounded then Nav.rowAt(ex, ey) else nil
+    local fallFrom = if grounded and row ~= nil then math.huge else 0
+    if gravity == 0 then
+        fallFrom = math.huge -- a fireball weaves on its own, it never falls
+    end
+    local g = gravity / 16
     for t = 1, frames do
         local px = b.x + pvx * t
         local tx = rx + evx * t
-        local ty = ey + evy * t
-        if World.boxOverlap(px + 4, b.y + 2, 8, 14, tx + 2, ty + 6, 12, 4) then
+        if row ~= nil and t < fallFrom and not Nav.onRow(Nav.ROWS[row], Stage.wrapX(tx)) then
+            fallFrom = t
+        end
+        local ty = ey
+        local pad = 0
+        if gravity == 0 then
+            -- a fireball weaves 16 px either way around its line, so its whole band counts
+            ty = ey + evy * t
+            pad = 16
+        elseif t >= fallFrom then
+            local dt = t - fallFrom
+            ty = ey + evy * dt + g * dt * dt / 2
+        end
+        if World.boxOverlap(px + 4, b.y + 2, 8, 14, tx + 2, ty + 6 - pad, 12, 4 + 2 * pad) then
             return true
         end
     end
     return false
 end
 
-local function threatFrom(b: Physics.Body, x: number, y: number, vx: number, vy: number): Threat?
-    if not meets(b, x, y, vx, vy, Npc.LOOKAHEAD) then
+local function threatFrom(b: Physics.Body, x: number, y: number, vx: number, vy: number, grounded: boolean, gravity: number): Threat?
+    local frames = if gravity == 0 then Npc.FIREBALL_LOOKAHEAD else Npc.LOOKAHEAD
+    if not meets(b, x, y, vx, vy, grounded, gravity, frames) then
         return nil
     end
-    return { dir = sign(wrapDx(b.x, x)), above = y < b.y - 12, x = x, vx = vx, soon = meets(b, x, y, vx, vy, Npc.IMMINENT) }
+    return { dir = sign(wrapDx(b.x, x)), above = y < b.y - 4, x = x, vx = vx, soon = meets(b, x, y, vx, vy, grounded, gravity, Npc.IMMINENT) }
 end
 
 local function findThreat(p: Players.Player, enemies: Enemies.State, fireballs: Fireballs.State): Threat?
     local b = p.body
     for _, e in enemies.list do
         if e.state == Enemies.STATE_NORMAL and e.pipeTimer == 0 then
-            local t = threatFrom(b, e.body.x, e.body.y, e.body.vx / 16, e.body.vy / 16)
+            local g = if e.kind == 'fly' then Physics.FLY_GRAVITY else Physics.ENEMY_GRAVITY
+            local t = threatFrom(b, e.body.x, e.body.y, e.body.vx / 16, e.body.vy / 16, e.onGround, g)
+            if t == nil and e.kind == 'fly' and e.onGround then
+                -- a resting fly is also about to hop: check that flight too
+                t = threatFrom(b, e.body.x, e.body.y, e.body.vx / 16, Physics.FLY_HOP_VY / 16, false, g)
+            end
             if t ~= nil then
                 return t
             end
         end
     end
     for _, f in fireballs.list do
-        if f.pose == 'flying' then
-            local t = threatFrom(b, f.body.x, f.body.y, f.body.vx / 16, f.body.vy / 16)
-            if t ~= nil then
-                return t
-            end
+        -- the sparkle counts too: the flame follows it in a straight line
+        local t = threatFrom(b, f.body.x, f.body.y, f.body.vx / 16, f.body.vy / 16, false, 0)
+        if t ~= nil then
+            return t
         end
     end
     return nil
@@ -145,7 +174,7 @@ local function escapePlan(brain: Brain, b: Physics.Body, threat: Threat): Plan?
     local best: Plan? = nil
     local bestFrames = math.huge
     for _, l in Nav.LINKS do
-        if l.from ~= row or l.kind ~= 'jump' then
+        if l.from ~= row then
             continue
         end
         local ax = math.clamp(sx, l.lo, l.hi)
@@ -166,28 +195,39 @@ local function escapePlan(brain: Brain, b: Physics.Body, threat: Threat): Plan?
 end
 
 -- live enemies and fireballs that will be within reach of (row, x) in `frames`, on their current motion
-local function danger(row: number, x: number, frames: number, enemies: Enemies.State, fireballs: Fireballs.State): number
+local function danger(row: number, x: number, frames: number, enemies: Enemies.State, fireballs: Fireballs.State, ignore: number, radius: number?): number
     local y = Nav.ROWS[row].y
+    local px = radius or Npc.DANGER_PX
     local n = 0
-    local function near(ex: number, ey: number, evx: number)
-        if math.abs(ey - y) >= 24 then
-            return
+    local function near(ex: number, ey: number, evx: number, grounded: boolean)
+        if ey > y + 24 then
+            return -- below the spot, it cannot reach us
         end
         local d = wrapDx(x, ex)
         local later = d + evx * frames
-        if math.abs(d) < Npc.DANGER_PX or math.abs(later) < Npc.DANGER_PX or sign(d) ~= sign(later) then
+        local close = math.abs(d) < px or math.abs(later) < px or sign(d) ~= sign(later)
+        if not close then
+            return
+        end
+        if math.abs(ey - y) < 24 then
             n += 1
+        elseif ey < y then
+            -- above: counts when it is falling, or its walk leaves its row and lands on ours
+            local er = if grounded then Nav.rowAt(ex, ey) else nil
+            if er == nil or not Nav.onRow(Nav.ROWS[er], Stage.wrapX(ex + evx * frames)) then
+                if Nav.rowBelow(x, ey) == row then
+                    n += 1
+                end
+            end
         end
     end
     for _, e in enemies.list do
-        if e.state == Enemies.STATE_NORMAL and e.pipeTimer == 0 then
-            near(e.body.x, e.body.y, e.body.vx / 16)
+        if e.state == Enemies.STATE_NORMAL and e.pipeTimer == 0 and e.slot ~= ignore then
+            near(e.body.x, e.body.y, e.body.vx / 16, e.onGround)
         end
     end
     for _, f in fireballs.list do
-        if f.pose == 'flying' then
-            near(f.body.x, f.body.y, f.body.vx / 16)
-        end
+        near(f.body.x, f.body.y, f.body.vx / 16, false)
     end
     return n
 end
@@ -215,18 +255,84 @@ local function blockUnder(x: number): number
     return math.floor((x + 8) / 16) * 16
 end
 
+-- where a fighter fly comes down: the row, x and frames until it lands. a resting fly is already there
+local function flyLanding(e: Enemies.Enemy): (number?, number, number)
+    if e.onGround then
+        return Nav.rowAt(e.body.x, e.body.y), e.body.x, 0
+    end
+    local x, y = e.body.x, e.body.y
+    local vx, vy = e.body.vx / 16, e.body.vy / 16
+    local g = Physics.FLY_GRAVITY / 16
+    for t = 1, 120 do
+        vy += g
+        local ny = y + vy
+        x = Stage.wrapX(x + vx)
+        if vy > 0 then
+            for i, r in Nav.ROWS do
+                if y <= r.y and ny >= r.y and Nav.onRow(r, x) then
+                    return i, x, t
+                end
+            end
+        end
+        y = ny
+    end
+    return nil, 0, 0
+end
+
+-- where a walker on row `er` can next be bumped from below: the first block along its walk (up to
+-- 160 px ahead) with a row under it that a jump reaches. returns the row below and the block, or nil
+local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
+    local steps = if e.kind == 'fly' then 0 else 20
+    local dir = if e.body.vx < 0 then -1 else 1
+    for k = 0, steps do
+        local x = Stage.wrapX(e.body.x + dir * k * 8)
+        if not Nav.onRow(Nav.ROWS[er], x) then
+            break
+        end
+        local below = Nav.rowBelow(x, e.body.y)
+        if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
+            return below, blockUnder(x)
+        end
+    end
+    return nil, 0
+end
+
+-- frames the other players need to reach a spot, the nearest of them
+local function rivalTravel(brain: Brain, players: { Players.Player }, row: number, x: number): number
+    local best = math.huge
+    for i, h in players do
+        if i ~= brain.index and h.state == Players.STATE_NORMAL and h.halt == 0 then
+            local hr = if h.onGround then Nav.rowAt(h.body.x, h.body.y) else nil
+            if hr ~= nil then
+                best = math.min(best, Nav.travel(hr, h.body.x, row, x))
+            end
+        end
+    end
+    return best
+end
+
 local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }): Plan
     local b = p.body
     local row = brain.lastRow
     local bestScore = -math.huge
     local best: Plan? = nil
-    -- every spot is worth less the longer the trip and the more live enemies it will have around it
+    -- every spot is worth less the longer the trip, the more live enemies it will have around it, and
+    -- when a rival gets there first (a kick is theirs then, a flip is a gift to them)
     local function offer(value: number, plan: Plan)
         local travel = Nav.travel(row, b.x, plan.row, plan.x)
         if travel >= Npc.FAR then
             return
         end
-        local score = value - travel / 4 - 40 * danger(plan.row, plan.x, travel + Npc.DANGER_FRAMES, enemies, fireballs)
+        local ignore = if plan.kind == 'flip' or plan.kind == 'kick' then plan.slot else 0
+        local score = value - travel / 4 - 40 * danger(plan.row, plan.x, travel + Npc.DANGER_FRAMES, enemies, fireballs, ignore)
+        if plan.kind == 'kick' or plan.kind == 'flip' then
+            local rival = rivalTravel(brain, players, plan.row, plan.x)
+            if plan.kind == 'kick' and rival < travel then
+                score -= 70
+            elseif plan.kind == 'flip' and rival < travel then
+                score -= 20
+            end
+        end
         if score > bestScore then
             bestScore = score
             best = plan
@@ -235,10 +341,20 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
 
     local grounded = 0
     for _, e in enemies.list do
-        if e.pipeTimer > 0 or e.state == Enemies.STATE_DYING then
+        if e.state == Enemies.STATE_DYING then
             continue
         end
         local er = enemyRow(e)
+        if e.pipeTimer > 0 then
+            -- still in a pipe: it will walk out onto this row, be under its path already
+            if er ~= nil and e.state == Enemies.STATE_NORMAL then
+                local below, bx = flipSpot(e, er)
+                if below ~= nil then
+                    offer(50, { kind = 'flip', row = below, x = bx, slot = e.slot, targetRow = er })
+                end
+            end
+            continue
+        end
         if e.state == Enemies.STATE_FLIPPED then
             if er ~= nil then
                 local travel = Nav.travel(row, b.x, er, e.body.x)
@@ -250,18 +366,41 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         elseif e.state == Enemies.STATE_NORMAL then
             if er ~= nil then
                 grounded += 1
-                if er ~= Nav.FLOOR then
-                    local below = Nav.rowBelow(e.body.x, e.body.y)
-                    if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
-                        offer(60, { kind = 'flip', row = below, x = blockUnder(e.body.x), slot = e.slot, targetRow = er })
+            end
+            if e.kind == 'fly' then
+                -- a fly is flipped where it lands: be under that block when it touches down
+                local lr, lx, _ = flyLanding(e)
+                if lr ~= nil and lr ~= Nav.FLOOR then
+                    local below = Nav.rowBelow(lx, Nav.ROWS[lr].y)
+                    if below ~= nil and Nav.bumpFrames(below, lr) ~= nil then
+                        offer(60, { kind = 'flip', row = below, x = blockUnder(lx), slot = e.slot, targetRow = lr })
                     end
+                end
+            elseif er ~= nil and er ~= Nav.FLOOR then
+                local below, bx = flipSpot(e, er)
+                if below ~= nil then
+                    offer(60, { kind = 'flip', row = below, x = bx, slot = e.slot, targetRow = er })
                 end
             end
         end
     end
 
     if Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 and grounded >= 2 then
-        offer(30 * grounded, { kind = 'pow', row = Nav.FLOOR, x = 120, slot = 0, targetRow = Nav.FLOOR })
+        offer(30 * grounded, { kind = 'pow', row = Nav.FLOOR, x = Npc.POW_X, slot = 0, targetRow = Nav.FLOOR })
+    end
+
+    -- the trap: a human going for a downed enemy, and the pow rights it under their feet. a kill ends the round
+    if Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 then
+        for i, h in players do
+            if i == brain.index or h.state ~= Players.STATE_NORMAL or not h.onGround then
+                continue
+            end
+            for _, e in enemies.list do
+                if e.state == Enemies.STATE_FLIPPED and e.onGround and math.abs(e.body.y - h.body.y) < 8 and math.abs(wrapDx(h.body.x, e.body.x)) < 80 then
+                    offer(90, { kind = 'trap', row = Nav.FLOOR, x = Npc.POW_X, slot = e.slot, targetRow = i })
+                end
+            end
+        end
     end
 
     for i, h in players do
@@ -278,7 +417,7 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                         near = true
                     end
                 end
-                offer(if near then 80 else 30, { kind = 'bump', row = below, x = blockUnder(h.body.x), slot = i, targetRow = hr })
+                offer(if near then 80 else 10, { kind = 'bump', row = below, x = blockUnder(h.body.x), slot = i, targetRow = hr })
             end
         end
         if h.dizzy > 0 and hr == row and math.abs(Nav.dx(row, b.x, h.body.x)) < 48 then
@@ -288,6 +427,11 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
 
     for _, spot in Npc.POSTS do
         offer(0, { kind = 'post', row = spot[1], x = spot[2], slot = 0, targetRow = spot[1] })
+    end
+    if #enemies.list == 0 then
+        for _, spot in Npc.OPENING do
+            offer(5, { kind = 'post', row = spot[1], x = spot[2], slot = 0, targetRow = spot[1] })
+        end
     end
     local chosen = best -- a plain local narrows, the upvalue the offers write does not
     if chosen == nil then
@@ -303,9 +447,20 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
         return e ~= nil and e.state == Enemies.STATE_FLIPPED and e.getUpTimer * 2 > Npc.KICK_MARGIN
     elseif plan.kind == 'flip' then
         local e = findEnemy(enemies, plan.slot)
-        return e ~= nil and e.state == Enemies.STATE_NORMAL and e.pipeTimer == 0 and (not e.onGround or enemyRow(e) == plan.targetRow)
+        if e == nil or e.state ~= Enemies.STATE_NORMAL then
+            return false
+        end
+        if e.kind == 'fly' then
+            local lr, _, _ = flyLanding(e)
+            return lr == plan.targetRow
+        end
+        return not e.onGround or enemyRow(e) == plan.targetRow
     elseif plan.kind == 'pow' then
         return Stage.powRect(w.powHits) ~= nil and w.powCnt == 0
+    elseif plan.kind == 'trap' then
+        local e = findEnemy(enemies, plan.slot)
+        local h = players[plan.targetRow]
+        return Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 and e ~= nil and e.state == Enemies.STATE_FLIPPED and h.state == Players.STATE_NORMAL and math.abs(wrapDx(h.body.x, e.body.x)) < 80
     elseif plan.kind == 'escape' then
         return brain.lastRow ~= plan.row
     elseif plan.kind == 'bump' then
@@ -331,6 +486,23 @@ local function bumpNow(brain: Brain, plan: Plan, b: Physics.Body, tx: number, tv
         end
     end
     return false
+end
+
+-- is the air above us clear of live enemies and fireballs, so a jump does not rise into one
+local function columnClear(b: Physics.Body, enemies: Enemies.State, fireballs: Fireballs.State): boolean
+    for _, e in enemies.list do
+        -- a walker on the platform above is behind that platform; an airborne one is in our air
+        local airborne = not e.onGround or e.kind == 'fly'
+        if e.state == Enemies.STATE_NORMAL and e.pipeTimer == 0 and airborne and math.abs(wrapDx(b.x, e.body.x)) < 28 and e.body.y >= b.y - 80 and e.body.y < b.y + 8 then
+            return false
+        end
+    end
+    for _, f in fireballs.list do
+        if f.pose == 'flying' and math.abs(wrapDx(b.x, f.body.x)) < 32 and f.body.y >= b.y - 80 and f.body.y < b.y + 8 then
+            return false
+        end
+    end
+    return true
 end
 
 -- press jump now. the button then stays up for two frames so a press that did not take can repeat,
@@ -367,7 +539,10 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         end
         -- never leap or drop onto a live enemy: wait for the landing spot to clear
         local toRow, landX, frames = landing(row, step)
-        local clear = danger(toRow, landX, frames, enemies, fireballs) == 0
+        local clear = danger(toRow, landX, frames, enemies, fireballs, 0, Npc.LAND_PX) == 0 and columnClear(b, enemies, fireballs)
+        if not clear and danger(row, b.x, Npc.LOOKAHEAD, enemies, fireballs, 0) > 0 then
+            brain.replanIn = 0 -- waiting here is no better than the landing, find something else
+        end
         if step.kind == 'jump' then
             if Nav.inWindow(row, b.x, step) then
                 if not clear then
@@ -401,11 +576,25 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         local tx, tvx = 0, 0
         if plan.kind == 'flip' then
             local e = findEnemy(enemies, plan.slot)
-            if e == nil or not e.onGround then
+            if e == nil then
+                return intent(0, false, false)
+            end
+            if e.kind == 'fly' then
+                -- jump so the block bounces while it rests on it, or as it lands on it
+                local hit = Nav.bumpFrames(plan.row, plan.targetRow) or 0
+                local lr, lx, lt = flyLanding(e)
+                local onBlock = lr == plan.targetRow and math.abs(wrapDx(plan.x, lx)) <= 11
+                local timed = if e.onGround then e.getUpTimer >= hit + 2 else (lt >= hit - 1 and lt <= hit + 12)
+                if onBlock and timed and columnClear(b, enemies, fireballs) then
+                    return jump(brain, 0, hit + 2)
+                end
+                return intent(0, false, false)
+            end
+            if not e.onGround then
                 return intent(0, false, false)
             end
             tx = e.body.x
-            tvx = if e.kind == 'fly' then 0 else e.body.vx / 16
+            tvx = e.body.vx / 16
         else
             local h = players[plan.slot]
             if not h.onGround then
@@ -414,14 +603,30 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
             tx = h.body.x
             tvx = h.body.vx / 16
         end
-        if bumpNow(brain, plan, b, tx, tvx) then
+        if bumpNow(brain, plan, b, tx, tvx) and columnClear(b, enemies, fireballs) then
             local hit = Nav.bumpFrames(plan.row, plan.targetRow) or 0
             return jump(brain, 0, hit + 2)
         end
         return intent(0, false, false)
-    elseif plan.kind == 'pow' then
+    elseif plan.kind == 'pow' or plan.kind == 'trap' then
         if math.abs(Nav.dx(row, b.x, plan.x)) > 2 or not stopped(b) then
             return moveTo(row, b, plan.x)
+        end
+        if not columnClear(b, enemies, fireballs) then
+            return intent(0, false, false)
+        end
+        if plan.kind == 'trap' then
+            -- wait under the pow until the human is a step from the downed enemy, then punch
+            local e = findEnemy(enemies, plan.slot)
+            local h = players[plan.targetRow]
+            if e == nil then
+                return intent(0, false, false)
+            end
+            local d = wrapDx(h.body.x, e.body.x)
+            local closing = sign(h.body.vx) == sign(d)
+            if math.abs(d) - 16 > Npc.TRAP_REACH or (not closing and math.abs(d) - 16 > 4) then
+                return intent(0, false, false)
+            end
         end
         return jump(brain, 0, 1)
     elseif plan.kind == 'stomp' then
@@ -452,10 +657,14 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
             return intent(0, false, false)
         end
     else
-        -- airborne: finish the move the brain started, otherwise just fall
+        -- airborne: finish the move the brain started; thrown up by a stun or a stomp, steer clear of what is coming
         if brain.jumping then
             brain.jumpHold -= 1
             return intent(brain.airDir, true, brain.jumpHold > 0)
+        end
+        local threat = findThreat(p, enemies, fireballs)
+        if threat ~= nil then
+            return intent(if threat.dir == 0 then -p.dir else -threat.dir, true, false)
         end
         return Input.NONE
     end
@@ -464,9 +673,15 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
     local escaping = brain.plan ~= nil and (brain.plan :: Plan).kind == 'escape'
     if threat ~= nil and (threat.soon or not escaping) then
         local away = if threat.dir == 0 then -p.dir else -threat.dir
+        local gap = math.abs(wrapDx(b.x, threat.x)) - 16
+        local toward = sign(threat.vx) == -threat.dir
         if threat.above then
             brain.evadeFrames = Npc.EVADE_FRAMES
             brain.evadeDir = away
+        elseif not toward and gap >= 28 then
+            -- it walks away ahead of us and we are the one closing: ease off and follow at a distance
+            brain.evadeFrames = 0
+            return intent(0, false, false)
         elseif headroom(w, b, threat.dir) then
             brain.evadeFrames = 0
             return jump(brain, threat.dir, 24)

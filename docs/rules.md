@@ -139,17 +139,23 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
   the real player once per row end, from a standstill and at full run, so every launch window and landing spot
   is what the game does. `Nav.bumpFrames` is measured the same way (the floor hits the lower ledge on frame 5).
-- every frame, threats first: each live enemy and flying fireball is projected forward 16 frames on its
-  velocity. a predicted touch triggers a hop over it when the 40 px above the head are free over the next 24 px,
-  else an escape by the nearest jump off the row that the threat cannot reach first, else a run the other way.
-  a threat within 6 frames overrides even an escape in progress. it never leaps or drops onto a live enemy.
+- every frame, threats first: each live enemy is projected 36 frames ahead on its velocity, falling under
+  gravity once its walk leaves its row, a resting fly also as if it hopped now; a fireball (sparkle included)
+  56 frames ahead along its line with 16 px of weave. a predicted touch triggers a hop over it when the 40 px
+  above the head are free over the next 24 px and it is close or coming, easing off when it walks away ahead,
+  else an escape by the nearest jump or drop off the row that the threat cannot reach first, else a run the
+  other way. a threat within 6 frames overrides even an escape in progress. it never leaps or drops onto a live
+  enemy or into an occupied column, and thrown up by a stun it steers clear of what is coming.
 - then the plan, rescored every 8 frames and on every landing. each target is worth its value minus a quarter
-  of the travel frames minus 40 per live enemy that will be near the spot: kick a flipped enemy that stays down
-  long enough (100, +20 for the blue last one); flip a walker by bumping the block under it from the row below,
-  jumping when its feet will be on the block while it bounces (60); the pow when two or more live enemies are
-  grounded (30 each); bump the block under the human (30, 80 with a live enemy within 40 px of them); stomp the
-  human while they are dizzy on the same row (25); otherwise wait at one of four posts (the floor under each
-  lower ledge, or the ledges themselves), whichever is safest.
+  of the travel frames, minus 40 per live enemy that will be near the spot, minus 70 for a kick the other
+  player reaches first and 20 for a flip they would kick: kick a flipped enemy that stays down long enough
+  (100, +20 for the blue last one); flip a walker by bumping the block under its path from the row below (60,
+  50 while it is still in the pipe), jumping when its feet will be on the block while it bounces, a fly where
+  it will land, as it rests or touches down; the pow when two or more live enemies are grounded (30 each); the
+  trap (90): the human within reach of a downed enemy on the floor, so the pow rights it under their feet;
+  bump the block under the human (10, 80 with a live enemy within 40 px of them); stomp the human while they
+  are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
+  or a stub while nothing has spawned yet, where the first enemy walks out right above).
 - a press is one frame, then the button stays up two frames so the next press is fresh. a jump that started a
   move is held and steered until landing.
 

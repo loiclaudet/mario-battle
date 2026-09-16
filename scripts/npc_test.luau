@@ -119,6 +119,34 @@ return function(): Tests
                 expect(sc.kicks).is(0)
                 expect(sc.killed).is(0)
             end)
+            test.case('rights a downed enemy with the pow as the human reaches for it', function(expect)
+                local sc = scene(Npc.POW_X)
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 128 -- closer to the downed enemy than the npc is, so the kick is theirs and the trap is ours
+                h.body.y = 192
+                h.onGround = true
+                table.insert(sc.s.list, spiny(9, 150, 192, 0, true, 0xFF))
+                local right: Input.Intent = { left = false, right = true, up = false, down = false, jump = false, run = true, start = false }
+                local p = sc.players[1]
+                local powHits = 0
+                local killed = 0
+                for _ = 1, 120 do
+                    World.update(sc.w)
+                    local ev = Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, right)
+                    if ev.pow then
+                        powHits += 1
+                    end
+                    local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    if eev.killed > 0 then
+                        killed = eev.killed
+                        break
+                    end
+                end
+                expect(powHits).is(1)
+                expect(killed).is(2)
+            end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))
