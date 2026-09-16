@@ -195,22 +195,29 @@ local function walk(row: number, x: number, tx: number): number
     return math.abs(Nav.dx(row, x, tx)) / Nav.RUN_PX
 end
 
--- cheapest route: total frames and the first step to take from (row, x)
-local function route(row: number, x: number, toRow: number, tx: number, seen: { [number]: boolean }): (number, Step?)
+-- cheapest route: total frames, the first step to take from (row, x), and where it first arrives on the
+-- target row (the entry x and the frames to get there). a launch point is taken 2 px inside the window
+-- when it is wide enough, so the walk that stops within 2 px still ends inside it
+local function route(row: number, x: number, toRow: number, tx: number, seen: { [number]: boolean }): (number, Step?, number, number)
     if row == toRow then
-        return walk(row, x, tx), { kind = 'move', x = tx, dir = 0 }
+        return walk(row, x, tx), { kind = 'move', x = tx, dir = 0 }, x, 0
     end
     local best = math.huge
     local bestStep: Step? = nil
+    local entryX, entryFrames = x, 0
     seen[row] = true
     for _, l in LINKS do
         if l.from ~= row or seen[l.to] then
             continue
         end
-        -- the nearest point of the launch window
-        local ax = math.clamp(Nav.seg(ROWS[row], x), l.lo, l.hi)
-        local rest, _ = route(l.to, l.landX, toRow, tx, seen)
-        local cost = walk(row, x, ax) + l.frames + rest
+        local lo, hi = l.lo, l.hi
+        if hi - lo >= 4 then
+            lo, hi = lo + 2, hi - 2
+        end
+        local ax = math.clamp(Nav.seg(ROWS[row], x), lo, hi)
+        local rest, _, ex, ef = route(l.to, l.landX, toRow, tx, seen)
+        local here = walk(row, x, ax) + l.frames
+        local cost = here + rest
         if cost < best then
             best = cost
             if l.kind == 'jump' then
@@ -218,20 +225,28 @@ local function route(row: number, x: number, toRow: number, tx: number, seen: { 
             else
                 bestStep = { kind = 'drop', x = ax, dir = l.dir }
             end
+            entryX, entryFrames = ex, here + ef
         end
     end
     seen[row] = nil
-    return best, bestStep
+    return best, bestStep, entryX, entryFrames
 end
 
 function Nav.travel(row: number, x: number, toRow: number, tx: number): number
-    local cost, _ = route(row, x, toRow, tx, {})
+    local cost, _, _, _ = route(row, x, toRow, tx, {})
     return cost
 end
 
 function Nav.step(row: number, x: number, toRow: number, tx: number): Step?
-    local _, step = route(row, x, toRow, tx, {})
+    local _, step, _, _ = route(row, x, toRow, tx, {})
     return step
+end
+
+-- where the route from (row, x) first sets foot on toRow, and after how many frames: the start of its
+-- last walk. on the target row already, that is here and now
+function Nav.approach(row: number, x: number, toRow: number, tx: number): (number, number)
+    local _, _, ex, ef = route(row, x, toRow, tx, {})
+    return ex, ef
 end
 
 -- is x inside the launch window of the jump step (the window is in row coordinates)

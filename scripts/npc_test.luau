@@ -234,6 +234,59 @@ return function(): Tests
                 end
                 expect(righted).is(true)
             end)
+            test.case('takes a launch window it stopped a step short of', function(expect)
+                local sc = scene(207) -- on the lower ring, 1 px past the jump window to the stub, the way to the centre platform
+                sc.players[1].body.y = 144
+                local e = spiny(9, 20, 32, Physics.ENEMY_SPAWN_VX, false, 0)
+                e.pipeTimer = 40 -- walking out of the left pipe: the flip spot is under its first block, two rows up
+                table.insert(sc.s.list, e)
+                run(sc, 260)
+                expect(sc.flips).greaterThanOrEqual(1) -- it used to stand there while the spiny walked the whole ring
+                expect(sc.kicks).greaterThanOrEqual(1)
+                expect(sc.killed).is(0)
+            end)
+            test.case('goes for the kick when the human near it only stands there', function(expect)
+                local sc = scene(52) -- under the block it flipped the spiny from; the spiny bounced onto the block left of it
+                sc.players[1].body.y = 80
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 100 -- in the launch window to the upper ring, a shorter trip than ours, but not moving
+                table.insert(sc.s.list, spiny(9, 28, 32, 0, true, 0xFF - 60))
+                run(sc, 150)
+                expect(sc.kicks).is(1) -- it used to leave for a 130 frame trip to sit under it from the stub
+                expect(sc.killed).is(0)
+            end)
+            test.case('punches the pow before the human drops onto a downed enemy on the ring', function(expect)
+                local sc = scene(148) -- on the floor, a short walk from the pow
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 104 -- on the centre platform, running left: off its end and onto the ring next to the spiny
+                h.body.y = 80
+                table.insert(sc.s.list, spiny(9, 27, 144, 0, true, 0xFF))
+                local left: Input.Intent = { left = true, right = false, up = false, down = false, jump = false, run = true, start = false }
+                local p = sc.players[1]
+                local powHits = 0
+                local theirs = 0
+                for _ = 1, 120 do
+                    World.update(sc.w)
+                    local ev = Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, left)
+                    if ev.pow then
+                        powHits += 1
+                    end
+                    local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    for _, who in eev.kicks do
+                        if who == 2 then
+                            theirs += 1
+                        end
+                    end
+                    if eev.killed > 0 then
+                        break
+                    end
+                end
+                expect(powHits).is(1)
+                expect(theirs).is(0)
+            end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))

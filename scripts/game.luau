@@ -300,9 +300,6 @@ local function stepPlaying(self: Game)
         end
         print(line)
     end
-    if eev.spawned then
-        play(self, 'pipe')
-    end
     if eev.flip then
         play(self, 'bump')
     end

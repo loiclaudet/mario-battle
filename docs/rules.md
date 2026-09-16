@@ -146,12 +146,17 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   counted from where a jump in progress comes down. a chosen move is held while it still comes out alive,
   and a jump in progress is only second guessed when it ends in a death. cost is about 2 ms a frame per brain.
 - it reads the other player where they will land, not where they float: a human mid jump towards a downed
-  enemy counts as closer to it, which is what turns a kick plan into a deny in time.
+  enemy counts as closer to it, which is what turns a kick plan into a deny in time. one standing still gets
+  24 frames of reaction time added to their trip, one moving the other way 48: a trip not begun is longer
+  than the map says, and a cpu that sat under a block for 130 frames because the human "could" get there
+  first lost to a human who simply waited.
 
 - `nav.luau` sees the arena as five rows: floor, lower ring (the two lower ledges join through the wrap), centre
   platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
   the real player once per row end, from a standstill and at full run, so every launch window and landing spot
-  is what the game does. `Nav.bumpFrames` is measured the same way (the floor hits the lower ledge on frame 5).
+  is what the game does; a route aims 2 px inside a window, and the last step to it is walked, not waited out
+  (the walk stops within 2 px of its target, which once left the cpu a pixel short of a window for 120 frames).
+  `Nav.bumpFrames` is measured the same way (the floor hits the lower ledge on frame 5).
   a body stands on a row when a foot probe is on it, so it can hang 12 px past an end, and `Nav.spotFor` finds
   the x that keeps the head in a block while a foot is on the row: that is how the centre platform's edge bumps
   the first block an enemy walking out of a pipe steps on, and the opening goes straight there.
@@ -164,17 +169,23 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   enemy or into an occupied column, and thrown up by a stun it steers clear of what is coming.
 - then the plan, rescored every 8 frames and on every landing. each target is worth its value minus a quarter
   of the travel frames, minus 40 per live enemy that will be near the spot, minus 70 for a kick the other
-  player reaches first and 20 for a flip they would kick: kick a flipped enemy that stays down long enough
+  player reaches first and 20 for a flip they would kick, plus 15 for the plan already in hand so a trip half
+  made is not thrown away for a sliver: kick a flipped enemy that stays down long enough
   (100, +20 for the blue last one); flip a walker by bumping the block under its path from the row below (60,
   50 while it is still in the pipe), jumping as the walker steps onto the block with one foot, so the hit
   throws it back onto the block it just left, next to the cpu, where it is kicked or denied (hit on the way
   out it would land a block on, a gift to whoever waits there); a fly where
   it will land, as it rests or touches down; the pow when two or more live enemies are grounded (30 each); the
-  trap (90): the human within reach of a downed enemy on the floor, so the pow rights it under their feet;
+  trap (90, 80 while the human is still on their way): the human heading for a downed enemy, anywhere, when
+  the cpu reaches the pow before they reach the enemy, so the pow rights it under their feet, punched as they
+  close on it or as they are about to come down next to it (the pow is 8 frames from the floor);
   deny (85, 110 when the human is within 60 frames of it): a downed enemy on a ledge the human is closer
-  to than we are, or simply near, so it sits under its block and bumps it as they reach for it, the enemy
-  rights itself into them, which beats kicking it; a human who lingers within 64 px of it instead, waiting
-  for the cpu to leave, gets it righted at them once 90 frames of patience are out;
+  to than we are, or simply near, so it sits under a block on their way to it and bumps it as their feet
+  reach it, or as they land on it: the enemy's own block when it can be there in time (it rights the enemy
+  into them, which beats kicking it), else the block they arrive on or cross, bounced as their centre is over
+  the far half so the throw sends them back, never onto the enemy (a landing is only a guess, so it wants
+  4 px of margin). no block in time means no deny, the kick is tried instead; a human who lingers within
+  64 px of it, waiting for the cpu to leave, gets it righted at them once 90 frames of patience are out;
   bump the block under the human (30, 100 with a live enemy within 40 px of them); stomp the human while they
   are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
   or a stub while nothing has spawned yet, where the first enemy walks out right above).
