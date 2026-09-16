@@ -162,6 +162,8 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   50 while it is still in the pipe), jumping when its feet will be on the block while it bounces, a fly where
   it will land, as it rests or touches down; the pow when two or more live enemies are grounded (30 each); the
   trap (90): the human within reach of a downed enemy on the floor, so the pow rights it under their feet;
+  deny (85): a downed enemy on a ledge the human is closer to than we are, so it sits under its block and
+  bumps it as they reach for it, the enemy rights itself into them;
   bump the block under the human (10, 80 with a live enemy within 40 px of them); stomp the human while they
   are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
   or a stub while nothing has spawned yet, where the first enemy walks out right above).

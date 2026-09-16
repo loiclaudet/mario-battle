@@ -147,6 +147,34 @@ return function(): Tests
                 expect(powHits).is(1)
                 expect(killed).is(2)
             end)
+            test.case('rights a downed enemy on a ledge under the human reaching for it', function(expect)
+                local sc = scene(60) -- under the ledge already, but the kick would take a jump at 92 and a walk back
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 236 -- on the lower ring, running right through the seam towards the downed spiny at 40, closer than the npc's trip
+                h.body.y = 144
+                h.onGround = true
+                table.insert(sc.s.list, spiny(9, 40, 144, 0, true, 0xFF))
+                local right: Input.Intent = { left = false, right = true, up = false, down = false, jump = false, run = true, start = false }
+                local p = sc.players[1]
+                local killed = 0
+                local kicked = false
+                for _ = 1, 200 do
+                    World.update(sc.w)
+                    Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, right)
+                    local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    if eev.kick then
+                        kicked = true
+                    end
+                    if eev.killed > 0 then
+                        killed = eev.killed
+                        break
+                    end
+                end
+                expect(kicked).is(false)
+                expect(killed).is(2)
+            end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))

@@ -14,7 +14,7 @@ local Sim = require('scripts/sim')
 
 local Npc = {}
 
-export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'bump' | 'stomp' | 'post' | 'escape'
+export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'post' | 'escape'
 -- row and x: where to stand. slot: the enemy slot or player index it is about. targetRow: the row the target walks
 export type Plan = { kind: Kind, row: number, x: number, slot: number, targetRow: number }
 export type Brain = {
@@ -370,6 +370,13 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                 if remaining > travel + Npc.KICK_MARGIN then
                     offer(100 + (if e.last then 20 else 0), { kind = 'kick', row = er, x = e.body.x, slot = e.slot, targetRow = er })
                 end
+                -- the human closer to it than we are: sit under its block and right it as they reach for it
+                if er ~= Nav.FLOOR and rivalTravel(brain, players, er, e.body.x) < travel then
+                    local below = Nav.rowBelow(e.body.x, e.body.y)
+                    if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
+                        offer(85, { kind = 'deny', row = below, x = blockUnder(e.body.x), slot = e.slot, targetRow = er })
+                    end
+                end
             end
         elseif e.state == Enemies.STATE_NORMAL then
             if er ~= nil then
@@ -465,6 +472,9 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
         return not e.onGround or enemyRow(e) == plan.targetRow
     elseif plan.kind == 'pow' then
         return Stage.powRect(w.powHits) ~= nil and w.powCnt == 0
+    elseif plan.kind == 'deny' then
+        local e = findEnemy(enemies, plan.slot)
+        return e ~= nil and e.state == Enemies.STATE_FLIPPED and e.getUpTimer * 2 > Npc.KICK_MARGIN and (not e.onGround or enemyRow(e) == plan.targetRow)
     elseif plan.kind == 'trap' then
         local e = findEnemy(enemies, plan.slot)
         local h = players[plan.targetRow]
@@ -614,6 +624,32 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         if bumpNow(brain, plan, b, tx, tvx) and columnClear(b, enemies, fireballs) then
             local hit = Nav.bumpFrames(plan.row, plan.targetRow) or 0
             return jump(brain, 0, hit + 2)
+        end
+        return intent(0, false, false)
+    elseif plan.kind == 'deny' then
+        if math.abs(Nav.dx(row, b.x, plan.x)) > 2 or not stopped(b) then
+            return moveTo(row, b, plan.x)
+        end
+        local e = findEnemy(enemies, plan.slot)
+        if e == nil or not e.onGround then
+            return intent(0, false, false)
+        end
+        -- the nearest other player heading for it: jump so the block bounces as they touch
+        local hit = Nav.bumpFrames(plan.row, plan.targetRow) or 0
+        for i, h in players do
+            if i == brain.index or h.state ~= Players.STATE_NORMAL or math.abs(h.body.y - e.body.y) > 8 then
+                continue
+            end
+            local d = wrapDx(h.body.x, e.body.x)
+            local gap = math.abs(d) - 16
+            local v = h.body.vx / 16
+            local closing = sign(v) == sign(d) and math.abs(v) > 0.2
+            local tt = if closing then gap / math.abs(v) else math.huge
+            if gap <= 2 or (tt >= hit - 1 and tt <= hit + 12) then
+                if columnClear(b, enemies, fireballs) then
+                    return jump(brain, 0, hit + 2)
+                end
+            end
         end
         return intent(0, false, false)
     elseif plan.kind == 'pow' or plan.kind == 'trap' then
