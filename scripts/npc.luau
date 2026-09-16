@@ -54,6 +54,7 @@ Npc.DANGER_PX = 28
 Npc.DANGER_COST = 15 -- score lost per live enemy that will be near a spot, kept low since the look ahead keeps it alive
 Npc.RIVAL_NEAR = 60 -- frames: a human this close to a downed enemy makes denying it worth more than kicking it
 Npc.DENY_PATIENCE = 90 -- frames to sit under a downed enemy before taking the kick ourselves
+Npc.LINGER_PX = 64 -- a human this close to a downed enemy we sit under, not coming, gets it righted at them
 Npc.FAR = 400 -- travel frames beyond which a target is not worth it
 Npc.HORIZON = 48 -- frames the brain runs the battle forward before committing
 Npc.MACRO_FRAMES = 12 -- frames a searched move is held before the policy takes over again
@@ -756,7 +757,8 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         if e == nil or not e.onGround then
             return intent(0, false, false)
         end
-        -- the nearest other player heading for it: jump so the block bounces as they touch
+        -- the nearest other player heading for it: jump so the block bounces as they touch. one that
+        -- lingers next to it, waiting for us to leave, gets it righted at them once our patience is out
         local hit = Nav.bumpFrames(plan.row, plan.targetRow) or 0
         for i, h in players do
             if i == brain.index or h.state ~= Players.STATE_NORMAL or math.abs(h.body.y - e.body.y) > 8 then
@@ -767,7 +769,8 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
             local v = h.body.vx / 16
             local closing = sign(v) == sign(d) and math.abs(v) > 0.2
             local tt = if closing then gap / math.abs(v) else math.huge
-            if gap <= 2 or (tt >= hit - 1 and tt <= hit + 12) then
+            local lingering = brain.denyFrames > Npc.DENY_PATIENCE and gap <= Npc.LINGER_PX
+            if gap <= 2 or (tt >= hit - 1 and tt <= hit + 12) or lingering then
                 if columnClear(b, enemies, fireballs) then
                     return jump(brain, 0, hit + 2)
                 end
@@ -946,7 +949,21 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
         if hunt then
             score += 40 * ev.righted - 40 * ev.flips
         else
-            score += 40 * ev.flips - 80 * ev.righted
+            score += 40 * ev.flips
+            if ev.righted > 0 then
+                -- righted next to a rival it is a threat to them, righted for nothing it is a coin thrown away
+                local threat = false
+                for i, h in snap.players do
+                    if i ~= me and h.state == Players.STATE_NORMAL then
+                        for _, e in snap.s.list do
+                            if e.state == Enemies.STATE_NORMAL and math.abs(e.body.y - h.body.y) <= 8 and math.abs(wrapDx(h.body.x, e.body.x)) < Npc.LINGER_PX + 16 then
+                                threat = true
+                            end
+                        end
+                    end
+                end
+                score += if threat then 40 * ev.righted else -80 * ev.righted
+            end
         end
         for i, stunned in ev.stunned do
             if stunned then

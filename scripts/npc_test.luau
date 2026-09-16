@@ -207,6 +207,33 @@ return function(): Tests
                 expect(kicks).is(0)
                 expect(stuns).greaterThan(0)
             end)
+            test.case('a human lingering next to a downed enemy it sits under gets it righted at them', function(expect)
+                local sc = scene(52) -- under block 48 of the upper ring, from the centre platform's edge
+                local p = sc.players[1]
+                p.body.y = 80
+                sc.brain.lastRow = 3
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 88 -- on the upper ring, 30 px from the downed spiny, standing still
+                h.body.y = 32
+                h.onGround = true
+                table.insert(sc.s.list, spiny(9, 46, 32, 0, true, 0xFF))
+                local righted = false
+                for _ = 1, 200 do
+                    World.update(sc.w)
+                    Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, Input.NONE)
+                    local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    if sc.s.list[1].state == Enemies.STATE_NORMAL then
+                        righted = true
+                        break
+                    end
+                    if eev.killed > 0 then
+                        break
+                    end
+                end
+                expect(righted).is(true)
+            end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))

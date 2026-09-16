@@ -173,7 +173,8 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   trap (90): the human within reach of a downed enemy on the floor, so the pow rights it under their feet;
   deny (85, 110 when the human is within 60 frames of it): a downed enemy on a ledge the human is closer
   to than we are, or simply near, so it sits under its block and bumps it as they reach for it, the enemy
-  rights itself into them, which beats kicking it;
+  rights itself into them, which beats kicking it; a human who lingers within 64 px of it instead, waiting
+  for the cpu to leave, gets it righted at them once 90 frames of patience are out;
   bump the block under the human (30, 100 with a live enemy within 40 px of them); stomp the human while they
   are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
   or a stub while nothing has spawned yet, where the first enemy walks out right above).
