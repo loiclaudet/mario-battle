@@ -61,7 +61,7 @@ function Players.setController(p: Player, slot: number?)
     p.controller = slot
 end
 
--- an npc stands where it started this iteration: no input, and enemies pass through it
+-- an npc is driven by scripts/npc.luau instead of a pad, under the same rules
 function Players.isNpc(p: Player): boolean
     return p.controller == nil
 end

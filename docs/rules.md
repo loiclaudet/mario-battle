@@ -18,10 +18,9 @@ the title is a start menu in the smb3 style: a card per brother, START below, on
 p2 blue, each with its 1P or 2P marker). left and right move between the cards, down goes to START, up comes
 back. jump on a card locks that brother (the marker stays on it and the brother hops), jump on your own card
 unlocks it, a card the other player took refuses. jump on START, or the start button anywhere, launches. a
-brother nobody locked is an npc: it stands where it starts and enemies and fireballs pass through it (no ai
-yet, so a solo round does not end on the first spiny). start pauses a round with a human in it and ends a demo
-with none. after a round the menu returns with the locks kept and the cursors on START, so a jump replays.
-play with `rive . --fit=contain`.
+brother nobody locked is played by the cpu (see the npc section), under the same rules as you. start pauses a
+round with a human in it and ends a cpu vs cpu demo. after a round the menu returns with the locks kept and
+the cursors on START, so a jump replays. play with `rive . --fit=contain`.
 `Input.PAD_LAYOUT` in `scripts/input.luau` is `nintendo` (jump on the east slot, run on the north slot, which is
 B and Y on a switch pro controller); set it to `xbox` for south jump / west run. F1 toggles the collision box
 overlay (`--data=debug=4` headless).
@@ -126,9 +125,68 @@ where those contact rows put them; the sheet had them bottom aligned.
 
 ## round
 
-five coins exist, one per kicked enemy. the round ends when the two counts reach five (most coins wins, mario on
+five coins exist, one per kicked enemy, and two enemies kicked in the same frame are two coins (the kick event
+lists its kickers, a single flag once lost one and left the round unfinishable). the round ends when the two counts reach five (most coins wins, mario on
 a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the menu
 returns with the next style, the locks kept.
+
+## npc (scripts/npc.luau, scripts/nav.luau, scripts/sim.luau)
+
+the rom has no cpu player, so this one is ours. it is a pure function of the game state that outputs the same
+intent a pad would, every frame, and `Players.update` moves it under the exact physics above. deterministic, no
+random numbers, so a lockstep multiplayer can run it on every peer.
+
+- it looks ahead. `sim.luau` clones the whole battle (world, enemies, fireballs, players) and steps it with the
+  same modules the game uses. every frame the brain runs its own policy 48 frames forward on the clone, the
+  human kept on their current motion, the other cpu on its policy; if that stretch ends in its death, or every
+  6 frames anyway, it also tries six plain moves (stand, run left, run right, jump, jump running left or
+  right), each held 12 frames then the policy, and when doomed each held the whole way. the best stretch
+  wins: a death is -10000, the other player's death +5000, a coin +200, a coin for them -100, an enemy
+  flipped +40, one righted -80, a stun taken -60, one given +30, minus the trip left to the plan's spot,
+  counted from where a jump in progress comes down. a chosen move is held while it still comes out alive,
+  and a jump in progress is only second guessed when it ends in a death. cost is about 2 ms a frame per brain.
+- it reads the other player where they will land, not where they float: a human mid jump towards a downed
+  enemy counts as closer to it, which is what turns a kick plan into a deny in time.
+
+- `nav.luau` sees the arena as five rows: floor, lower ring (the two lower ledges join through the wrap), centre
+  platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
+  the real player once per row end, from a standstill and at full run, so every launch window and landing spot
+  is what the game does. `Nav.bumpFrames` is measured the same way (the floor hits the lower ledge on frame 5).
+  a body stands on a row when a foot probe is on it, so it can hang 12 px past an end, and `Nav.spotFor` finds
+  the x that keeps the head in a block while a foot is on the row: that is how the centre platform's edge bumps
+  the first block an enemy walking out of a pipe steps on, and the opening goes straight there.
+- every frame, threats first: each live enemy is projected 36 frames ahead on its velocity, falling under
+  gravity once its walk leaves its row, a resting fly also as if it hopped now; a fireball (sparkle included)
+  56 frames ahead along its line with 16 px of weave. a predicted touch triggers a hop over it when the 40 px
+  above the head are free over the next 24 px and it is close or coming, easing off when it walks away ahead,
+  else an escape by the nearest jump or drop off the row that the threat cannot reach first, else a run the
+  other way. a threat within 6 frames overrides even an escape in progress. it never leaps or drops onto a live
+  enemy or into an occupied column, and thrown up by a stun it steers clear of what is coming.
+- then the plan, rescored every 8 frames and on every landing. each target is worth its value minus a quarter
+  of the travel frames, minus 40 per live enemy that will be near the spot, minus 70 for a kick the other
+  player reaches first and 20 for a flip they would kick: kick a flipped enemy that stays down long enough
+  (100, +20 for the blue last one); flip a walker by bumping the block under its path from the row below (60,
+  50 while it is still in the pipe), jumping as the walker steps onto the block with one foot, so the hit
+  throws it back onto the block it just left, next to the cpu, where it is kicked or denied (hit on the way
+  out it would land a block on, a gift to whoever waits there); a fly where
+  it will land, as it rests or touches down; the pow when two or more live enemies are grounded (30 each); the
+  trap (90): the human within reach of a downed enemy on the floor, so the pow rights it under their feet;
+  deny (85, 110 when the human is within 60 frames of it): a downed enemy on a ledge the human is closer
+  to than we are, or simply near, so it sits under its block and bumps it as they reach for it, the enemy
+  rights itself into them, which beats kicking it; a human who lingers within 64 px of it instead, waiting
+  for the cpu to leave, gets it righted at them once 90 frames of patience are out;
+  bump the block under the human (30, 100 with a live enemy within 40 px of them); stomp the human while they
+  are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
+  or a stub while nothing has spawned yet, where the first enemy walks out right above).
+- the hunt: when no coin left can put it ahead (you have 3, or 2 to its 0 with... in short, the arithmetic says
+  the coins are lost), it stops kicking and flipping altogether, since a coin only ends the round and a downed
+  enemy is a harmless one. it goes for your death instead: bump the block under you (90, 140 with a live enemy
+  near you), stomp you dizzy (60), the trap and the deny (95), the pow while you are grounded (40, +40 per
+  downed enemy it rights, -20 per live one it would down), and otherwise shadows you on your row (20) for
+  whatever shove, stomp or block the look ahead finds. the look ahead scores the same way: your stun +80, a
+  righted enemy +40, a flipped one -40, its own coin -200.
+- a press is one frame, then the button stays up two frames so the next press is fresh. a jump that started a
+  move is held and steered until landing.
 
 ## assets and credits
 

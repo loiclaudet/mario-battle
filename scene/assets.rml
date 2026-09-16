@@ -93,15 +93,20 @@
     <ScriptAsset file="scripts/players.luau" folderPath="scripts" isModule="true" name="players" id="8:906"/>
     <ScriptAsset file="scripts/enemies.luau" folderPath="scripts" isModule="true" name="enemies" id="8:907"/>
     <ScriptAsset file="scripts/fireballs.luau" folderPath="scripts" isModule="true" name="fireballs" id="8:908"/>
-    <ScriptAsset file="scripts/menu.luau" folderPath="scripts" isModule="true" name="menu" id="8:909"/>
+    <ScriptAsset file="scripts/sim.luau" folderPath="scripts" isModule="true" name="sim" id="8:909"/>
+    <ScriptAsset file="scripts/nav.luau" folderPath="scripts" isModule="true" name="nav" id="8:910"/>
+    <ScriptAsset file="scripts/npc.luau" folderPath="scripts" isModule="true" name="npc" id="8:911"/>
+    <ScriptAsset file="scripts/menu.luau" folderPath="scripts" isModule="true" name="menu" id="8:912"/>
     <ScriptAsset file="scripts/game.luau" folderPath="scripts" name="game" id="8:990"/>
     <!-- tests, kept out of the rev by excludeFromRev; declared here so they see the modules above -->
     <ScriptAsset file="scripts/enemies_test.luau" folderPath="scripts" name="enemies_test" id="8:951"/>
     <ScriptAsset file="scripts/fireballs_test.luau" folderPath="scripts" name="fireballs_test" id="8:952"/>
     <ScriptAsset file="scripts/input_test.luau" folderPath="scripts" name="input_test" id="8:953"/>
     <ScriptAsset file="scripts/menu_test.luau" folderPath="scripts" name="menu_test" id="8:954"/>
-    <ScriptAsset file="scripts/physics_test.luau" folderPath="scripts" name="physics_test" id="8:955"/>
-    <ScriptAsset file="scripts/players_test.luau" folderPath="scripts" name="players_test" id="8:956"/>
-    <ScriptAsset file="scripts/stage_test.luau" folderPath="scripts" name="stage_test" id="8:957"/>
-    <ScriptAsset file="scripts/world_test.luau" folderPath="scripts" name="world_test" id="8:958"/>
+    <ScriptAsset file="scripts/nav_test.luau" folderPath="scripts" name="nav_test" id="8:955"/>
+    <ScriptAsset file="scripts/npc_test.luau" folderPath="scripts" name="npc_test" id="8:956"/>
+    <ScriptAsset file="scripts/physics_test.luau" folderPath="scripts" name="physics_test" id="8:957"/>
+    <ScriptAsset file="scripts/players_test.luau" folderPath="scripts" name="players_test" id="8:958"/>
+    <ScriptAsset file="scripts/stage_test.luau" folderPath="scripts" name="stage_test" id="8:959"/>
+    <ScriptAsset file="scripts/world_test.luau" folderPath="scripts" name="world_test" id="8:960"/>
 </Rive>

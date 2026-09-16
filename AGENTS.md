@@ -21,18 +21,19 @@ rom's turn-around slid too long for him); keep it labelled as such.
 ```bash
 rive . --verify                       # compiles rml + luau (strict types), the only thing that reads luau
 rive inspect . --json | jq '.problems' # must print []
-rive . --test                          # physics, stage, players, enemies, fireballs, input and menu unit tests
+rive . --test                          # physics, stage, players, enemies, fireballs, input, menu, nav and npc unit tests
 rive . --screenshot=build/x.png --gamepad=button@east:down --advance=2 --gamepad=button@east:up --advance=10 --gamepad=button@east:down --advance=2 --gamepad=button@east:up --advance=5s
 rive . --data-dump=build/d.json --key=left --advance=2 --key=k --advance=5   # p2 on the keyboard takes mario
 ```
 
 the title is the start menu, so reaching a round headlessly takes two east presses (jump in the nintendo pad
-layout): the first locks p1 on mario, the second on START launches. `button@start` launches a demo with two npcs
-at once. the menu edge detects, so leave an `--advance` between a down and its up. `--key=<name>` sends a
+layout): the first locks p1 on mario, the second on START launches. `button@start` launches a cpu vs cpu demo
+at once, and `--data-dump` after `--advance=90s` shows the coins the two brains scored (`scripts/npc.luau`,
+`scripts/nav.luau`; the nav links are printed by a throwaway test when they need checking). the menu edge detects, so leave an `--advance` between a down and its up. `--key=<name>` sends a
 keystroke through the Playfield's `FocusData`, so p2's keyboard paths are checkable headlessly too, and
 `--data-dump` prints the whole bound view model (the nested cursors included). spell the `--gamepad` flags out,
 this shell is zsh and an unquoted variable holding several flags is passed as one argument. `--data=style=n` (0..5) picks the enemy set, `--data=debug=1`
-spawns a fireball at once, `--data=debug=2` the game ender, `--data=debug=4` (or F1 live) draws the collision boxes. component artboards render alone with
+spawns a fireball at once, `--data=debug=2` the game ender, `--data=debug=4` (or F1 live) draws the collision boxes, `--data=debug=8` prints a round trace every 30 frames (coins, both players with the cpu's plan, every enemy), which is how a lost round against the cpu gets diagnosed: `rive . --fit=contain --data=debug=8` and paste the terminal. component artboards render alone with
 `--artboard=Spiny --data=last=true --data=pose=flipped`.
 
 play it: `rive . --fit=contain` (the default fit reflows the artboard to the window; contain keeps 256x240 and

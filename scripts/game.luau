@@ -9,6 +9,7 @@ local Players = require('scripts/players')
 local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
 local Menu = require('scripts/menu')
+local Npc = require('scripts/npc')
 
 type Phase = 'title' | 'playing' | 'over'
 type Winner = 'none' | 'mario' | 'luigi'
@@ -33,6 +34,7 @@ type Game = {
     cursorP1: Input<Data.MenuCursor>?, -- the menu cursors, nested in the Game view model
     cursorP2: Input<Data.MenuCursor>?,
     menu: Menu.State,
+    brains: { Npc.Brain }, -- one per player, used when the player has no controller
     ready: boolean,
     context: Context?,
     vm: Data.Game?,
@@ -51,7 +53,7 @@ type Game = {
     winner: Winner,
     overFrames: number,
     style: number,
-    debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender (headless checks only)
+    debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender, 4 the boxes, 8 a round trace on the console
     paused: boolean,
     prevStart: boolean,
     acc: number,
@@ -189,8 +191,9 @@ local function startRound(self: Game)
     self.enemyViews = {}
     Fireballs.reset(self.fireballs)
     self.fireballViews = {}
-    for _, p in self.players do
+    for i, p in self.players do
         Players.reset(p)
+        self.brains[i] = Npc.new(i)
     end
     self.coins = { 0, 0 }
     self.bumpCooldown = 0
@@ -244,11 +247,11 @@ end
 
 -- one 1/60 step ----------------------------------------------------------------------------------
 
--- what drives a player this frame: its input slot, or nothing for an npc
+-- what drives a player this frame: its input slot, or the cpu brain
 local function intentFor(self: Game, p: Players.Player): Input.Intent
     local slot = p.controller
     if slot == nil then
-        return Input.NONE
+        return Npc.think(self.brains[p.index], p, self.world, self.enemies, self.fireballs, self.players, self.brains, self.coins)
     end
     return Input.intent(self.input, slot)
 end
@@ -284,6 +287,19 @@ local function stepPlaying(self: Game)
     end
     local eev = Enemies.update(self.enemies, self.world, self.players, self.world.frame, halted)
     ensureEnemyViews(self)
+    if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 15 == 0 then
+        -- a round trace for tuning the cpu: paste it back with what the human was doing
+        local line = string.format('%5d c%d-%d', self.world.frame, self.coins[1], self.coins[2])
+        for i, p in self.players do
+            local plan = self.brains[i].plan
+            local who = if Players.isNpc(p) then (if plan then plan.kind .. '>' .. plan.row .. ',' .. plan.x else '-') else 'human'
+            line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', if p.dizzy > 0 then 'D' else '', who)
+        end
+        for _, e in self.enemies.list do
+            line ..= string.format(' | %s%d %d,%d s%d', e.kind, e.slot, e.body.x, e.body.y, e.state)
+        end
+        print(line)
+    end
     if eev.spawned then
         play(self, 'pipe')
     end
@@ -297,7 +313,9 @@ local function stepPlaying(self: Game)
     if eev.kick then
         play(self, 'kick')
         play(self, 'coin')
-        self.coins[eev.coin] += 1
+        for _, who in eev.kicks do
+            self.coins[who] += 1
+        end
         if self.coins[1] + self.coins[2] == 4 then
             Enemies.markLast(self.enemies)
         end
@@ -651,6 +669,7 @@ return function(context: Context): Layout<Game>
         cursorP1 = nil,
         cursorP2 = nil,
         menu = Menu.new(2),
+        brains = { Npc.new(1), Npc.new(2) },
         ready = false,
         context = nil,
         vm = nil,

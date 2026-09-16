@@ -30,7 +30,7 @@ for n in sorted(f[:-5] for f in os.listdir(os.path.join(root, 'assets/music')) i
 lines.append('    <!-- font, ofl licensed -->')
 lines.append('    <FontAsset file="assets/fonts/PressStart2P-Regular.ttf" name="PressStart2P" id="8:850"/>')
 lines.append('    <!-- scripts: modules first, game last, because require only finds modules declared above. folderPath makes them require("scripts/<name>") -->')
-modules = ['stage', 'physics', 'input', 'sfx', 'world', 'players', 'enemies', 'fireballs', 'menu']
+modules = ['stage', 'physics', 'input', 'sfx', 'world', 'players', 'enemies', 'fireballs', 'sim', 'nav', 'npc', 'menu']
 for i, m in enumerate(modules):
     lines.append(f'    <ScriptAsset file="scripts/{m}.luau" folderPath="scripts" isModule="true" name="{m}" id="8:{901+i}"/>')
 lines.append('    <ScriptAsset file="scripts/game.luau" folderPath="scripts" name="game" id="8:990"/>')
