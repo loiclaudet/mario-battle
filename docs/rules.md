@@ -18,10 +18,9 @@ the title is a start menu in the smb3 style: a card per brother, START below, on
 p2 blue, each with its 1P or 2P marker). left and right move between the cards, down goes to START, up comes
 back. jump on a card locks that brother (the marker stays on it and the brother hops), jump on your own card
 unlocks it, a card the other player took refuses. jump on START, or the start button anywhere, launches. a
-brother nobody locked is an npc: it stands where it starts and enemies and fireballs pass through it (no ai
-yet, so a solo round does not end on the first spiny). start pauses a round with a human in it and ends a demo
-with none. after a round the menu returns with the locks kept and the cursors on START, so a jump replays.
-play with `rive . --fit=contain`.
+brother nobody locked is played by the cpu (see the npc section), under the same rules as you. start pauses a
+round with a human in it and ends a cpu vs cpu demo. after a round the menu returns with the locks kept and
+the cursors on START, so a jump replays. play with `rive . --fit=contain`.
 `Input.PAD_LAYOUT` in `scripts/input.luau` is `nintendo` (jump on the east slot, run on the north slot, which is
 B and Y on a switch pro controller); set it to `xbox` for south jump / west run. F1 toggles the collision box
 overlay (`--data=debug=4` headless).
@@ -129,6 +128,30 @@ where those contact rows put them; the sheet had them bottom aligned.
 five coins exist, one per kicked enemy. the round ends when the two counts reach five (most coins wins, mario on
 a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the menu
 returns with the next style, the locks kept.
+
+## npc (scripts/npc.luau, scripts/nav.luau)
+
+the rom has no cpu player, so this one is ours. it is a pure function of the game state that outputs the same
+intent a pad would, every frame, and `Players.update` moves it under the exact physics above. deterministic, no
+random numbers, so a lockstep multiplayer can run it on every peer.
+
+- `nav.luau` sees the arena as five rows: floor, lower ring (the two lower ledges join through the wrap), centre
+  platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
+  the real player once per row end, from a standstill and at full run, so every launch window and landing spot
+  is what the game does. `Nav.bumpFrames` is measured the same way (the floor hits the lower ledge on frame 5).
+- every frame, threats first: each live enemy and flying fireball is projected forward 16 frames on its
+  velocity. a predicted touch triggers a hop over it when the 40 px above the head are free over the next 24 px,
+  else an escape by the nearest jump off the row that the threat cannot reach first, else a run the other way.
+  a threat within 6 frames overrides even an escape in progress. it never leaps or drops onto a live enemy.
+- then the plan, rescored every 8 frames and on every landing. each target is worth its value minus a quarter
+  of the travel frames minus 40 per live enemy that will be near the spot: kick a flipped enemy that stays down
+  long enough (100, +20 for the blue last one); flip a walker by bumping the block under it from the row below,
+  jumping when its feet will be on the block while it bounces (60); the pow when two or more live enemies are
+  grounded (30 each); bump the block under the human (30, 80 with a live enemy within 40 px of them); stomp the
+  human while they are dizzy on the same row (25); otherwise wait at one of four posts (the floor under each
+  lower ledge, or the ledges themselves), whichever is safest.
+- a press is one frame, then the button stays up two frames so the next press is fresh. a jump that started a
+  move is held and steered until landing.
 
 ## assets and credits
 

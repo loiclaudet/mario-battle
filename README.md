@@ -15,8 +15,9 @@ rive . --fit=contain  # opens the viewer, resize it to full screen
 ```
 
 the title is a start menu: each player moves a cursor over the mario and luigi cards, jump locks a brother,
-jump on START (or the start button) launches. a brother nobody locked stands still as an npc that enemies pass
-through, so one player can practise alone and no player at all is a demo. gamepads first (first pad is p1,
+jump on START (or the start button) launches. a brother nobody locked is played by the cpu, a strong one: it
+flips enemies from below with frame-exact bumps, kicks them, hits the pow, bumps the block under you and stomps
+you when you are dizzy. one player fights it, no player at all is a cpu vs cpu demo. gamepads first (first pad is p1,
 second p2, B jumps, Y runs, plus starts and pauses), keyboard fills the empty slots: p1 on `W A S D` + `G`
 jump + `F` run, p2 on the arrows + `K` jump + `L` run. `F1` shows the collision boxes.
 

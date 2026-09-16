@@ -46,8 +46,8 @@ return function(): Tests
                 expect(#s.list).is(0)
             end)
         end)
-        test.group('npc', function()
-            test.case('a flying fireball passes through a player with no controller, burns a driven one', function(expect)
+        test.group('touch', function()
+            test.case('a flying fireball burns the player it touches', function(expect)
                 local s = Fireballs.new()
                 local w = World.new()
                 Fireballs.spawnHorz(s, 8, Stage.FLOOR_TOP - 16)
@@ -56,9 +56,6 @@ return function(): Tests
                 f.pose = 'flying'
                 f.body.x = 60
                 local p = Players.new(1)
-                expect(Fireballs.update(s, w, { p }, f.id).killed).is(0)
-                Players.setController(p, 1)
-                f.body.x = 60
                 expect(Fireballs.update(s, w, { p }, f.id).killed).is(1)
             end)
         end)

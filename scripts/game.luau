@@ -9,6 +9,7 @@ local Players = require('scripts/players')
 local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
 local Menu = require('scripts/menu')
+local Npc = require('scripts/npc')
 
 type Phase = 'title' | 'playing' | 'over'
 type Winner = 'none' | 'mario' | 'luigi'
@@ -33,6 +34,7 @@ type Game = {
     cursorP1: Input<Data.MenuCursor>?, -- the menu cursors, nested in the Game view model
     cursorP2: Input<Data.MenuCursor>?,
     menu: Menu.State,
+    brains: { Npc.Brain }, -- one per player, used when the player has no controller
     ready: boolean,
     context: Context?,
     vm: Data.Game?,
@@ -189,8 +191,9 @@ local function startRound(self: Game)
     self.enemyViews = {}
     Fireballs.reset(self.fireballs)
     self.fireballViews = {}
-    for _, p in self.players do
+    for i, p in self.players do
         Players.reset(p)
+        self.brains[i] = Npc.new(i)
     end
     self.coins = { 0, 0 }
     self.bumpCooldown = 0
@@ -244,11 +247,11 @@ end
 
 -- one 1/60 step ----------------------------------------------------------------------------------
 
--- what drives a player this frame: its input slot, or nothing for an npc
+-- what drives a player this frame: its input slot, or the cpu brain
 local function intentFor(self: Game, p: Players.Player): Input.Intent
     local slot = p.controller
     if slot == nil then
-        return Input.NONE
+        return Npc.think(self.brains[p.index], p, self.world, self.enemies, self.fireballs, self.players)
     end
     return Input.intent(self.input, slot)
 end
@@ -651,6 +654,7 @@ return function(context: Context): Layout<Game>
         cursorP1 = nil,
         cursorP2 = nil,
         menu = Menu.new(2),
+        brains = { Npc.new(1), Npc.new(2) },
         ready = false,
         context = nil,
         vm = nil,
