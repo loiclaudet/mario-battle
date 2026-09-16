@@ -41,10 +41,28 @@ function Nav.seg(row: Row, x: number): number
     return x
 end
 
--- is a 16 px body at x standing over this row (by its centre)
+-- is a 16 px body at x standing over this row: a foot probe (x+4 or x+12, like the collision) is on it,
+-- so a body can hang 12 px past an end, which is where the edge blocks get bumped from
 function Nav.onRow(row: Row, x: number): boolean
-    local c = Nav.seg(row, x) + 8
-    return c >= row.x0 and c < row.x1
+    local sx = Nav.seg(row, x)
+    local a, b = sx + 4, sx + 12
+    return (a >= row.x0 and a < row.x1) or (b >= row.x0 and b < row.x1)
+end
+
+-- the player x that puts the head probe (x+8) in the 16 px block at bx while still standing on the row
+function Nav.spotFor(row: number, bx: number): number?
+    local r = ROWS[row]
+    for x = bx, bx + 7 do
+        if Nav.onRow(r, Stage.wrapX(x)) then
+            return Stage.wrapX(x)
+        end
+    end
+    for x = bx - 1, bx - 8, -1 do
+        if Nav.onRow(r, Stage.wrapX(x)) then
+            return Stage.wrapX(x)
+        end
+    end
+    return nil
 end
 
 function Nav.rowAt(x: number, y: number): number?

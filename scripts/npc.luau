@@ -43,7 +43,6 @@ Npc.ESCAPE_GAP = 28 -- px between the launch point and the threat when we jump
 Npc.KICK_MARGIN = 24 -- frames a flipped enemy must still be down after the trip to it
 Npc.EVADE_FRAMES = 10
 Npc.POSTS = { { 1, 100 }, { 1, 148 }, { 2, 48 }, { 2, 208 } } -- row and x of the waiting spots, each with room to hop
-Npc.OPENING = { { 4, 8 }, { 4, 240 } } -- with nothing out yet, wait on a stub: the first spawn walks right over it
 Npc.POW_X = 120 -- stand here to punch the pow
 Npc.TRAP_REACH = 20 -- px between the human and a downed enemy when the pow rights it under their feet
 Npc.LAND_PX = 24 -- clearance wanted around a landing spot
@@ -268,14 +267,15 @@ local function blockUnder(x: number): number
     return math.floor((x + 8) / 16) * 16
 end
 
--- where a fighter fly comes down: the row, x and frames until it lands. a resting fly is already there
+-- where an airborne enemy comes down (a fly's hop, a flipped one's bounce): the row, x and frames until
+-- it lands. one on the ground is already there
 local function flyLanding(e: Enemies.Enemy): (number?, number, number)
     if e.onGround then
         return Nav.rowAt(e.body.x, e.body.y), e.body.x, 0
     end
     local x, y = e.body.x, e.body.y
     local vx, vy = e.body.vx / 16, e.body.vy / 16
-    local g = Physics.FLY_GRAVITY / 16
+    local g = (if e.kind == 'fly' then Physics.FLY_GRAVITY else Physics.ENEMY_GRAVITY) / 16
     for t = 1, 120 do
         vy += g
         local ny = y + vy
@@ -304,10 +304,26 @@ local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
         end
         local below = Nav.rowBelow(x, e.body.y)
         if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
-            return below, blockUnder(x)
+            local spot = Nav.spotFor(below, blockUnder(x))
+            if spot ~= nil then
+                return below, spot
+            end
         end
     end
     return nil, 0
+end
+
+-- the row under a block and the player x to bump it from, for a target standing on row `er` at x
+local function underSpot(x: number, y: number, er: number): (number?, number)
+    local below = Nav.rowBelow(x, y)
+    if below == nil or Nav.bumpFrames(below, er) == nil then
+        return nil, 0
+    end
+    local spot = Nav.spotFor(below, blockUnder(x))
+    if spot == nil then
+        return nil, 0
+    end
+    return below, spot
 end
 
 -- frames the other players need to reach a spot, the nearest of them
@@ -369,19 +385,21 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             continue
         end
         if e.state == Enemies.STATE_FLIPPED then
-            if er ~= nil then
-                local travel = Nav.travel(row, b.x, er, e.body.x)
+            -- still bouncing from the hit: plan for where it lands
+            local lr, lx, _ = flyLanding(e)
+            if lr ~= nil then
+                local travel = Nav.travel(row, b.x, lr, lx)
                 local remaining = e.getUpTimer * 2
                 if not brain.hunt and remaining > travel + Npc.KICK_MARGIN then
-                    offer(100 + (if e.last then 20 else 0), { kind = 'kick', row = er, x = e.body.x, slot = e.slot, targetRow = er })
+                    offer(100 + (if e.last then 20 else 0), { kind = 'kick', row = lr, x = lx, slot = e.slot, targetRow = lr })
                 end
                 -- the human closer to it than we are, or simply near it: sit under its block and right it as
                 -- they reach for it. their death ends the round, so near them this beats the kick
-                local rival = rivalTravel(brain, players, er, e.body.x)
-                if er ~= Nav.FLOOR and (brain.hunt or rival < travel or rival < Npc.RIVAL_NEAR) then
-                    local below = Nav.rowBelow(e.body.x, e.body.y)
-                    if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
-                        offer(if brain.hunt then 95 elseif rival < Npc.RIVAL_NEAR then 110 else 85, { kind = 'deny', row = below, x = blockUnder(e.body.x), slot = e.slot, targetRow = er })
+                local rival = rivalTravel(brain, players, lr, lx)
+                if lr ~= Nav.FLOOR and (brain.hunt or rival < travel or rival < Npc.RIVAL_NEAR) then
+                    local below, spot = underSpot(lx, Nav.ROWS[lr].y, lr)
+                    if below ~= nil then
+                        offer(if brain.hunt then 95 elseif rival < Npc.RIVAL_NEAR then 110 else 85, { kind = 'deny', row = below, x = spot, slot = e.slot, targetRow = lr })
                     end
                 end
             end
@@ -395,9 +413,9 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                 -- a fly is flipped where it lands: be under that block when it touches down
                 local lr, lx, _ = flyLanding(e)
                 if lr ~= nil and lr ~= Nav.FLOOR then
-                    local below = Nav.rowBelow(lx, Nav.ROWS[lr].y)
-                    if below ~= nil and Nav.bumpFrames(below, lr) ~= nil then
-                        offer(60, { kind = 'flip', row = below, x = blockUnder(lx), slot = e.slot, targetRow = lr })
+                    local below, spot = underSpot(lx, Nav.ROWS[lr].y, lr)
+                    if below ~= nil then
+                        offer(60, { kind = 'flip', row = below, x = spot, slot = e.slot, targetRow = lr })
                     end
                 end
             elseif er ~= nil and er ~= Nav.FLOOR then
@@ -448,19 +466,19 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         end
         local hr = if h.onGround then Nav.rowAt(h.body.x, h.body.y) else nil
         if hr ~= nil and hr ~= Nav.FLOOR then
-            local below = Nav.rowBelow(h.body.x, h.body.y)
-            if below ~= nil and Nav.bumpFrames(below, hr) ~= nil then
+            local below, spot = underSpot(h.body.x, h.body.y, hr)
+            if below ~= nil then
                 local near = false
                 for _, e in enemies.list do
                     if e.state == Enemies.STATE_NORMAL and e.pipeTimer == 0 and enemyRow(e) == hr and math.abs(wrapDx(h.body.x, e.body.x)) < 40 then
                         near = true
                     end
                 end
-                local value = if near then 100 else 30
+                local value = if near then 100 else 10
                 if brain.hunt then
                     value = if near then 140 else 90
                 end
-                offer(value, { kind = 'bump', row = below, x = blockUnder(h.body.x), slot = i, targetRow = hr })
+                offer(value, { kind = 'bump', row = below, x = spot, slot = i, targetRow = hr })
             end
         end
         if h.dizzy > 0 and hr == row and math.abs(Nav.dx(row, b.x, h.body.x)) < 48 then
@@ -476,8 +494,12 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         offer(0, { kind = 'post', row = spot[1], x = spot[2], slot = 0, targetRow = spot[1] })
     end
     if #enemies.list == 0 then
-        for _, spot in Npc.OPENING do
-            offer(5, { kind = 'post', row = spot[1], x = spot[2], slot = 0, targetRow = spot[1] })
+        -- the pipes alternate, left first: be under the first block the next one can be flipped from
+        local side = enemies.count % 2
+        local ex = if side == 0 then 44 else 195
+        local below, spot = underSpot(ex, Nav.ROWS[Nav.UPPER].y, Nav.UPPER)
+        if below ~= nil then
+            offer(45, { kind = 'post', row = below, x = spot, slot = 0, targetRow = below })
         end
     end
     local chosen = best -- a plain local narrows, the upvalue the offers write does not
@@ -491,7 +513,11 @@ end
 local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State, enemies: Enemies.State, players: { Players.Player }): boolean
     if plan.kind == 'kick' then
         local e = findEnemy(enemies, plan.slot)
-        return e ~= nil and e.state == Enemies.STATE_FLIPPED and e.getUpTimer * 2 > Npc.KICK_MARGIN
+        if e == nil or e.state ~= Enemies.STATE_FLIPPED or e.getUpTimer * 2 <= Npc.KICK_MARGIN then
+            return false
+        end
+        local lr, _, _ = flyLanding(e)
+        return lr == plan.targetRow
     elseif plan.kind == 'flip' then
         local e = findEnemy(enemies, plan.slot)
         if e == nil or e.state ~= Enemies.STATE_NORMAL then
@@ -506,7 +532,11 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
         return Stage.powRect(w.powHits) ~= nil and w.powCnt == 0
     elseif plan.kind == 'deny' then
         local e = findEnemy(enemies, plan.slot)
-        return e ~= nil and e.state == Enemies.STATE_FLIPPED and e.getUpTimer * 2 > Npc.KICK_MARGIN and (not e.onGround or enemyRow(e) == plan.targetRow)
+        if e == nil or e.state ~= Enemies.STATE_FLIPPED or e.getUpTimer * 2 <= Npc.KICK_MARGIN then
+            return false
+        end
+        local lr, _, _ = flyLanding(e)
+        return lr == plan.targetRow
     elseif plan.kind == 'shadow' then
         return players[plan.slot].state == Players.STATE_NORMAL
     elseif plan.kind == 'trap' then
