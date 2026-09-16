@@ -1,6 +1,6 @@
 <Rive version="1" kind="fragment">
     <!-- view models are the contract between scripts/game.luau (writer) and the markup (reader).
-         ids: 9:1xx enums, 9:2xx Game, 9:3xx Player, 9:4xx Enemy, 9:5xx Pow, 9:6xx Fireball. -->
+         ids: 9:1xx enums, 9:2xx Game, 9:3xx Player, 9:4xx Enemy, 9:5xx Pow, 9:6xx Fireball, 9:7xx MenuCursor. -->
 
     <DataEnumCustom name="Phase" id="9:100">
         <DataEnumValue key="title" value="Title" id="9:101"/>
@@ -30,6 +30,11 @@
         <ViewModelPropertyNumber name="style" id="9:215"/>
         <ViewModelPropertyNumber name="debug" id="9:216"/>
         <ViewModelPropertyBoolean name="paused" id="9:217"/>
+        <!-- start menu: one cursor per input slot, and whether each card is taken -->
+        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursorP1" id="9:230"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursorP2" id="9:231"/>
+        <ViewModelPropertyBoolean name="marioLocked" id="9:232"/>
+        <ViewModelPropertyBoolean name="luigiLocked" id="9:233"/>
         <ViewModelInstance exports="true" name="Default" id="9:201">
             <ViewModelInstanceEnum propertyValue="9:101" viewModelPropertyId="9:210" id="9:220"/>
             <ViewModelInstanceEnum propertyValue="9:111" viewModelPropertyId="9:211" id="9:221"/>
@@ -39,6 +44,37 @@
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:215" id="9:225"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:216" id="9:226"/>
             <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:217" id="9:227"/>
+            <ViewModelInstanceViewModel propertyValue="9:701" viewModelPropertyId="9:230" id="9:240"/>
+            <ViewModelInstanceViewModel propertyValue="9:702" viewModelPropertyId="9:231" id="9:241"/>
+            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:232" id="9:242"/>
+            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:233" id="9:243"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <!-- a menu cursor: the outline rect and the "nP" marker, written by scripts/menu.luau's layout.
+         x y are the stroke on pixel centres (+0.5), w h the rect minus 1 -->
+    <ViewModel defaultInstanceId="9:701" name="MenuCursor" id="9:700">
+        <ViewModelPropertyNumber name="x" id="9:710"/>
+        <ViewModelPropertyNumber name="y" id="9:711"/>
+        <ViewModelPropertyNumber name="w" id="9:712"/>
+        <ViewModelPropertyNumber name="h" id="9:713"/>
+        <ViewModelPropertyNumber name="markerX" id="9:714"/>
+        <ViewModelPropertyNumber name="markerY" id="9:715"/>
+        <ViewModelInstance exports="true" name="P1" id="9:701">
+            <ViewModelInstanceNumber propertyValue="44.5" viewModelPropertyId="9:710" id="9:720"/>
+            <ViewModelInstanceNumber propertyValue="76.5" viewModelPropertyId="9:711" id="9:721"/>
+            <ViewModelInstanceNumber propertyValue="71" viewModelPropertyId="9:712" id="9:722"/>
+            <ViewModelInstanceNumber propertyValue="87" viewModelPropertyId="9:713" id="9:723"/>
+            <ViewModelInstanceNumber propertyValue="72" viewModelPropertyId="9:714" id="9:724"/>
+            <ViewModelInstanceNumber propertyValue="64" viewModelPropertyId="9:715" id="9:725"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="P2" id="9:702">
+            <ViewModelInstanceNumber propertyValue="142.5" viewModelPropertyId="9:710" id="9:730"/>
+            <ViewModelInstanceNumber propertyValue="78.5" viewModelPropertyId="9:711" id="9:731"/>
+            <ViewModelInstanceNumber propertyValue="67" viewModelPropertyId="9:712" id="9:732"/>
+            <ViewModelInstanceNumber propertyValue="83" viewModelPropertyId="9:713" id="9:733"/>
+            <ViewModelInstanceNumber propertyValue="168" viewModelPropertyId="9:714" id="9:734"/>
+            <ViewModelInstanceNumber propertyValue="64" viewModelPropertyId="9:715" id="9:735"/>
         </ViewModelInstance>
     </ViewModel>
 

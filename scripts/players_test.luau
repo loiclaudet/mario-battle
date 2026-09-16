@@ -6,7 +6,7 @@ local Physics = require('scripts/physics')
 local Input = require('scripts/input')
 
 local function intent(left: boolean, right: boolean, jump: boolean, run: boolean): Input.Intent
-    return { left = left, right = right, jump = jump, run = run, start = false }
+    return { left = left, right = right, up = false, down = false, jump = jump, run = run, start = false }
 end
 
 local IDLE = intent(false, false, false, false)
@@ -94,6 +94,26 @@ return function(): Tests
                 end
                 expect(p.onGround).is(true)
                 expect(p.body.vx).is(0)
+            end)
+        end)
+        test.group('npc', function()
+            test.case('a fresh player has no controller until the menu gives it one, reset keeps it', function(expect)
+                local p = Players.new(1)
+                expect(Players.isNpc(p)).is(true)
+                Players.setController(p, 2)
+                expect(Players.isNpc(p)).is(false)
+                Players.reset(p)
+                expect(p.controller).is(2)
+            end)
+            test.case('an npc stands where it started', function(expect)
+                local p = Players.new(2)
+                local w = World.new()
+                for _ = 1, 60 do
+                    Players.update(p, w, Input.NONE)
+                end
+                expect(p.body.x).is(Stage.PLAYER_START_X[2])
+                expect(p.body.y).is(Stage.FLOOR_TOP - 16)
+                expect(p.pose).is('stand')
             end)
         end)
     end

@@ -17,6 +17,7 @@ export type Pose = 'stand' | 'walk' | 'skid' | 'jump' | 'fall' | 'stun' | 'kick'
 
 export type Player = {
     index: number, -- 1 mario, 2 luigi
+    controller: number?, -- the input slot driving this player, nil for an npc
     body: Physics.Body,
     dir: number, -- facing, 1 right or -1 left
     state: number,
@@ -37,6 +38,7 @@ export type Events = { jump: boolean, bump: boolean, stun: boolean, pow: boolean
 function Players.new(index: number): Player
     local p: Player = {
         index = index,
+        controller = nil,
         body = Physics.newBody(Stage.PLAYER_START_X[index], Stage.FLOOR_TOP - 16),
         dir = if index == 1 then 1 else -1,
         state = Players.STATE_NORMAL,
@@ -52,6 +54,16 @@ function Players.new(index: number): Player
         prevJump = true, -- the press that started the round must not also jump
     }
     return p
+end
+
+-- who drives this player. the menu assigns it before a round, reset keeps it
+function Players.setController(p: Player, slot: number?)
+    p.controller = slot
+end
+
+-- an npc stands where it started this iteration: no input, and enemies pass through it
+function Players.isNpc(p: Player): boolean
+    return p.controller == nil
 end
 
 function Players.reset(p: Player)

@@ -11,10 +11,17 @@ units: 60 frames per second, velocities in 1/16 px per frame (raw), positions in
 
 | player | gamepad (first pad = p1, second = p2) | keyboard fallback |
 |---|---|---|
-| p1 mario | dpad or left stick, B jump, Y run, plus pause (nintendo layout) | A D move, G jump, F run, enter pause |
-| p2 luigi | same on the second pad | arrows, K jump, L run, space pause |
+| p1 | dpad or left stick, B jump, Y run, plus start (nintendo layout) | W A S D, G jump, F run, enter start |
+| p2 | same on the second pad | arrows, K jump, L run, space start |
 
-any jump or start press on the title starts a round. start pauses. play with `rive . --fit=contain`.
+the title is a start menu in the smb3 style: a card per brother, START below, one cursor per slot (p1 white,
+p2 blue, each with its 1P or 2P marker). left and right move between the cards, down goes to START, up comes
+back. jump on a card locks that brother (the marker stays on it and the brother hops), jump on your own card
+unlocks it, a card the other player took refuses. jump on START, or the start button anywhere, launches. a
+brother nobody locked is an npc: it stands where it starts and enemies and fireballs pass through it (no ai
+yet, so a solo round does not end on the first spiny). start pauses a round with a human in it and ends a demo
+with none. after a round the menu returns with the locks kept and the cursors on START, so a jump replays.
+play with `rive . --fit=contain`.
 `Input.PAD_LAYOUT` in `scripts/input.luau` is `nintendo` (jump on the east slot, run on the north slot, which is
 B and Y on a switch pro controller); set it to `xbox` for south jump / west run. F1 toggles the collision box
 overlay (`--data=debug=4` headless).
@@ -120,8 +127,8 @@ where those contact rows put them; the sheet had them bottom aligned.
 ## round
 
 five coins exist, one per kicked enemy. the round ends when the two counts reach five (most coins wins, mario on
-a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the title
-returns with the next style.
+a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the menu
+returns with the next style, the locks kept.
 
 ## assets and credits
 

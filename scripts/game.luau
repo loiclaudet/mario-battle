@@ -8,6 +8,7 @@ local World = require('scripts/world')
 local Players = require('scripts/players')
 local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
+local Menu = require('scripts/menu')
 
 type Phase = 'title' | 'playing' | 'over'
 type Winner = 'none' | 'mario' | 'luigi'
@@ -29,6 +30,9 @@ type Game = {
     powInst: Artboard<Data.Pow>?,
     powVm: Data.Pow?,
     fireballViews: { [number]: FireballView },
+    cursorP1: Input<Data.MenuCursor>?, -- the menu cursors, nested in the Game view model
+    cursorP2: Input<Data.MenuCursor>?,
+    menu: Menu.State,
     ready: boolean,
     context: Context?,
     vm: Data.Game?,
@@ -96,6 +100,24 @@ local function pushVm(self: Game)
     vm.shakeY.value = -self.world.shakeY
     vm.style.value = self.style
     vm.paused.value = self.paused
+    -- the menu: taken cards hop, the cursor outlines and markers follow scripts/menu.luau's layout
+    vm.marioLocked.value = Menu.isLocked(self.menu, 1)
+    vm.luigiLocked.value = Menu.isLocked(self.menu, 2)
+    if self.phase == 'title' then
+        local cursors: { Input<Data.MenuCursor>? } = { self.cursorP1, self.cursorP2 }
+        for i, view in Menu.layout(self.menu) do
+            local c = cursors[i]
+            if c ~= nil then
+                -- a 1 px stroke sits on pixel centres, so the rect is offset half a pixel and shrunk by one
+                c.x.value = view.cursor.x + 0.5
+                c.y.value = view.cursor.y + 0.5
+                c.w.value = view.cursor.w - 1
+                c.h.value = view.cursor.h - 1
+                c.markerX.value = view.marker.x
+                c.markerY.value = view.marker.y
+            end
+        end
+    end
     for i, p in self.players do
         local pvm = self.playerVm[i]
         if pvm ~= nil then
@@ -222,10 +244,19 @@ end
 
 -- one 1/60 step ----------------------------------------------------------------------------------
 
+-- what drives a player this frame: its input slot, or nothing for an npc
+local function intentFor(self: Game, p: Players.Player): Input.Intent
+    local slot = p.controller
+    if slot == nil then
+        return Input.NONE
+    end
+    return Input.intent(self.input, slot)
+end
+
 local function stepPlaying(self: Game)
     World.update(self.world)
     for i, p in self.players do
-        local ev = Players.update(p, self.world, Input.intent(self.input, i))
+        local ev = Players.update(p, self.world, intentFor(self, p))
         if ev.jump then
             play(self, 'jump')
         end
@@ -307,23 +338,76 @@ local function stepPlaying(self: Game)
     end
 end
 
+-- back to the menu with the next enemy set queued. the locks survive, the cursors sit on START
+local function backToTitle(self: Game)
+    local bank = self.sfx
+    if bank ~= nil then
+        Sfx.stopMusic(bank)
+    end
+    self.phase = 'title'
+    self.winner = 'none'
+    self.paused = false
+    self.style = (self.style + 1) % 6
+    World.reset(self.world)
+    Enemies.reset(self.enemies, self.style)
+    self.enemyViews = {}
+    Fireballs.reset(self.fireballs)
+    self.fireballViews = {}
+    for _, p in self.players do
+        Players.reset(p)
+    end
+    self.coins = { 0, 0 }
+    Menu.rearm(self.menu)
+end
+
+local function hasHuman(self: Game): boolean
+    for _, p in self.players do
+        if not Players.isNpc(p) then
+            return true
+        end
+    end
+    return false
+end
+
+-- the menu: each slot steers its cursor, a lock hops the brother, START (or the start button) launches
+local function stepTitle(self: Game)
+    local intents: { Input.Intent } = {}
+    for i = 1, #self.menu.slots do
+        intents[i] = Input.intent(self.input, i)
+    end
+    local ev = Menu.update(self.menu, intents)
+    if ev.locked then
+        play(self, 'jump')
+    end
+    if ev.unlocked or ev.refused then
+        play(self, 'bump')
+    end
+    if ev.launch then
+        for i, p in self.players do
+            Players.setController(p, Menu.controllerFor(self.menu, i))
+        end
+        startRound(self)
+    end
+end
+
 local function step(self: Game)
-    local anyJump = false
     local anyStart = false
-    for i = 1, 2 do
-        local intent = Input.intent(self.input, i)
-        anyJump = anyJump or intent.jump or intent.start
-        anyStart = anyStart or intent.start
+    for i = 1, #self.menu.slots do
+        anyStart = anyStart or Input.intent(self.input, i).start
     end
     local startPressed = anyStart and not self.prevStart
     self.prevStart = anyStart
     if self.phase == 'title' then
-        if anyJump then
-            startRound(self)
-        end
+        stepTitle(self)
     elseif self.phase == 'playing' then
         if startPressed then
-            self.paused = not self.paused
+            -- start pauses a real round; a demo with two npcs goes back to the menu instead
+            if hasHuman(self) then
+                self.paused = not self.paused
+            else
+                backToTitle(self)
+                return
+            end
         end
         if not self.paused then
             stepPlaying(self)
@@ -333,7 +417,7 @@ local function step(self: Game)
         -- flying off like in the rom (Vs_ObjStateDying skips the halt for the last object)
         for _, p in self.players do
             if p.state == Players.STATE_DYING then
-                Players.update(p, self.world, Input.intent(self.input, p.index))
+                Players.update(p, self.world, intentFor(self, p))
             end
         end
         World.update(self.world)
@@ -341,19 +425,7 @@ local function step(self: Game)
         Fireballs.update(self.fireballs, self.world, self.players, self.world.frame)
         self.overFrames -= 1
         if self.overFrames <= 0 then
-            self.phase = 'title'
-            self.winner = 'none'
-            self.style = (self.style + 1) % 6
-            -- clear the arena behind the title
-            World.reset(self.world)
-            Enemies.reset(self.enemies, self.style)
-            self.enemyViews = {}
-            Fireballs.reset(self.fireballs)
-            self.fireballViews = {}
-            for _, p in self.players do
-                Players.reset(p)
-            end
-            self.coins = { 0, 0 }
+            backToTitle(self)
         end
     end
 end
@@ -482,6 +554,9 @@ local function drawBoxes(self: Game, renderer: Renderer)
 end
 
 function draw(self: Game, renderer: Renderer)
+    if self.phase == 'title' then
+        return -- the menu is markup, and the arena is hidden behind it
+    end
     renderer:save()
     renderer:transform(Mat2D.withTranslation(0, -self.world.shakeY))
     -- bumped blocks: black out the tile, draw the block sprite where it has bounced to
@@ -573,6 +648,9 @@ return function(context: Context): Layout<Game>
         powInst = nil,
         powVm = nil,
         fireballViews = {},
+        cursorP1 = nil,
+        cursorP2 = nil,
+        menu = Menu.new(2),
         ready = false,
         context = nil,
         vm = nil,

@@ -2,6 +2,7 @@
 -- turns keyboard and gamepad events into one intent table per player.
 -- gamepads first: the first pad connected takes player 1, the second takes player 2.
 -- the keyboard fills whatever slot has no pad: p1 = W A S D + G jump + F run, p2 = arrows + K jump + L run.
+-- up and down (W S, up and down arrows, the dpad or the stick) only steer the start menu.
 local Input = {}
 
 -- face buttons by w3c slot: the runtime reports a switch pro controller with its A on the south slot
@@ -17,7 +18,19 @@ local function padRun(pad: GamepadEvent): boolean
     return if Input.PAD_LAYOUT == 'nintendo' then pad.north else pad.west
 end
 
-export type Intent = { left: boolean, right: boolean, jump: boolean, run: boolean, start: boolean }
+export type Intent = {
+    left: boolean,
+    right: boolean,
+    up: boolean, -- up and down only matter on the menu
+    down: boolean,
+    jump: boolean,
+    run: boolean,
+    start: boolean,
+}
+
+-- the intent of a slot with no one on it (an npc). shared, nobody writes into an intent
+local NONE: Intent = { left = false, right = false, up = false, down = false, jump = false, run = false, start = false }
+Input.NONE = NONE
 
 -- glfw key codes, confirmed against samples/input_demo and format.md (262/263 arrows)
 Input.KEYS = {
@@ -68,7 +81,7 @@ function Input.padEvent(s: State, event: GamepadEvent)
 end
 
 local function emptyIntent(): Intent
-    return { left = false, right = false, jump = false, run = false, start = false }
+    return { left = false, right = false, up = false, down = false, jump = false, run = false, start = false }
 end
 
 -- intent for player 1 or 2 this frame
@@ -78,8 +91,11 @@ function Input.intent(s: State, player: number): Intent
     local pad = if padId ~= nil then s.padState[padId] else nil
     if pad ~= nil then
         local stickX = pad.leftStick.x
+        local stickY = pad.leftStick.y
         out.left = pad.dpadLeft or stickX < -0.5
         out.right = pad.dpadRight or stickX > 0.5
+        out.up = pad.dpadUp or stickY < -0.5
+        out.down = pad.dpadDown or stickY > 0.5
         out.jump = padJump(pad)
         out.run = padRun(pad)
         out.start = pad.start
@@ -88,6 +104,8 @@ function Input.intent(s: State, player: number): Intent
     local keys = Input.KEYS[player]
     out.left = s.held[keys.left] == true
     out.right = s.held[keys.right] == true
+    out.up = s.held[keys.up] == true
+    out.down = s.held[keys.down] == true
     out.jump = s.held[keys.jump] == true
     out.run = s.held[keys.run] == true
     out.start = s.held[keys.start] == true

@@ -2,6 +2,7 @@
 local Fireballs = require('scripts/fireballs')
 local World = require('scripts/world')
 local Stage = require('scripts/stage')
+local Players = require('scripts/players')
 
 return function(): Tests
     return function(test: Tester)
@@ -43,6 +44,22 @@ return function(): Tests
                 expect(f.body.x).is(-15)
                 Fireballs.update(s, w, {}, 0)
                 expect(#s.list).is(0)
+            end)
+        end)
+        test.group('npc', function()
+            test.case('a flying fireball passes through a player with no controller, burns a driven one', function(expect)
+                local s = Fireballs.new()
+                local w = World.new()
+                Fireballs.spawnHorz(s, 8, Stage.FLOOR_TOP - 16)
+                local f = s.list[1]
+                f.warning = 0
+                f.pose = 'flying'
+                f.body.x = 60
+                local p = Players.new(1)
+                expect(Fireballs.update(s, w, { p }, f.id).killed).is(0)
+                Players.setController(p, 1)
+                f.body.x = 60
+                expect(Fireballs.update(s, w, { p }, f.id).killed).is(1)
             end)
         end)
     end
