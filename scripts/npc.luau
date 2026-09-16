@@ -705,8 +705,6 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         return jump(brain, 0, 1)
     elseif plan.kind == 'shadow' then
         return moveTo(row, b, players[plan.slot].body.x)
-    elseif plan.kind == 'shadow' then
-        return moveTo(row, b, players[plan.slot].body.x)
     elseif plan.kind == 'stomp' then
         local h = players[plan.slot]
         local dx = Nav.dx(row, b.x, h.body.x)
