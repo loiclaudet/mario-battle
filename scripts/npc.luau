@@ -10,6 +10,7 @@ local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
 local Input = require('scripts/input')
 local Nav = require('scripts/nav')
+local Sim = require('scripts/sim')
 
 local Npc = {}
 
@@ -27,6 +28,9 @@ export type Brain = {
     evadeFrames: number, -- keep running from the last threat this long
     evadeDir: number,
     release: number, -- frames to keep the jump button up after a press, so the next press is fresh
+    override: Input.Intent?, -- a move the search chose over the policy, held for overrideLeft frames
+    overrideLeft: number,
+    frame: number, -- frames thought so far, paces the periodic search
 }
 
 Npc.REPLAN_FRAMES = 8
@@ -44,9 +48,13 @@ Npc.LAND_PX = 24 -- clearance wanted around a landing spot
 Npc.DANGER_FRAMES = 40 -- how far ahead a live enemy on the target row is projected when scoring a spot
 Npc.DANGER_PX = 40
 Npc.FAR = 400 -- travel frames beyond which a target is not worth it
+Npc.HORIZON = 48 -- frames the brain runs the battle forward before committing
+Npc.MACRO_FRAMES = 12 -- frames a searched move is held before the policy takes over again
+Npc.SEARCH_EVERY = 6 -- frames between searches for a better move while the policy is safe
+Npc.DEATH = -10000
 
 function Npc.new(index: number): Brain
-    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0 }
+    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0, override = nil, overrideLeft = 0, frame = 0 }
 end
 
 local function intent(dir: number, run: boolean, jump: boolean): Input.Intent
@@ -640,8 +648,9 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
     return moveTo(row, b, plan.x)
 end
 
--- one frame of thought for player brain.index
-function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }): Input.Intent
+-- the policy: threats first, then the plan. one frame of the hand written player, no look ahead.
+-- with replan false (inside a rollout) the plan is kept unless it has become impossible
+local function policy(brain: Brain, p: Players.Player, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }, replan: boolean): Input.Intent
     local b = p.body
     if p.state ~= Players.STATE_NORMAL then
         return Input.NONE
@@ -704,7 +713,7 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
     brain.replanIn -= 1
     local current = brain.plan
     local plan: Plan
-    if current == nil or brain.replanIn <= 0 or not valid(brain, current, p, w, enemies, players) then
+    if current == nil or (replan and brain.replanIn <= 0) or not valid(brain, current, p, w, enemies, players) then
         plan = choose(brain, p, w, enemies, fireballs, players)
         brain.plan = plan
         brain.replanIn = Npc.REPLAN_FRAMES
@@ -712,6 +721,125 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
         plan = current
     end
     return execute(brain, plan, p, w, enemies, fireballs, players)
+end
+
+-- what a human will most likely keep doing: the same thing
+local function humanIntent(h: Players.Player): Input.Intent
+    local v = h.body.vx
+    local dir = if v >= 4 then 1 elseif v <= -4 then -1 else 0
+    return intent(dir, math.abs(v) > Physics.WALK_MAX, not h.onGround and h.body.vy < 0)
+end
+
+local MACROS: { Input.Intent } = {
+    intent(0, false, false),
+    intent(-1, true, false),
+    intent(1, true, false),
+    intent(0, false, true),
+    intent(-1, true, true),
+    intent(1, true, true),
+}
+
+-- run the battle forward from here: `macro` held for MACRO_FRAMES then the policy, the other players on
+-- their own policy or their current motion. returns how good the stretch was for brain.index
+local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }, brains: { Brain }?): number
+    local snap = Sim.snapshot(w, enemies, fireballs, players)
+    local me = brain.index
+    local minds: { [number]: Brain } = {}
+    for i, p in snap.players do
+        if i == me then
+            minds[i] = Sim.copy(brain)
+        elseif Players.isNpc(p) and brains ~= nil and brains[i] ~= nil then
+            minds[i] = Sim.copy(brains[i])
+        end
+    end
+    local score = 0
+    for t = 1, Npc.HORIZON do
+        local intents: { Input.Intent } = {}
+        for i, p in snap.players do
+            local mind = minds[i]
+            if i == me and macro ~= nil and t <= hold then
+                intents[i] = macro
+            elseif mind ~= nil then
+                intents[i] = policy(mind, p, snap.w, snap.s, snap.f, snap.players, false)
+            else
+                intents[i] = humanIntent(p)
+            end
+        end
+        local ev = Sim.step(snap, intents)
+        if ev.killed == me then
+            return Npc.DEATH + t
+        elseif ev.killed > 0 then
+            return 5000 - t
+        end
+        if ev.coin == me then
+            score += 200
+        elseif ev.coin > 0 then
+            score -= 100
+        end
+        score += 40 * ev.flips - 80 * ev.righted
+        for i, stunned in ev.stunned do
+            if stunned then
+                score += if i == me then -60 else 30
+            end
+        end
+    end
+    -- what is left of the trip to the plan's spot
+    local mind = minds[me]
+    local plan = mind.plan
+    local body = snap.players[me].body
+    if plan ~= nil then
+        score -= Nav.travel(mind.lastRow, body.x, plan.row, plan.x) / 4
+    end
+    return score
+end
+
+-- one frame of thought for player brain.index. the policy decides, the rollout checks it survives the next
+-- frames and, now and then, whether one of a few plain moves does better; the best move wins
+function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }, brains: { Brain }?): Input.Intent
+    if p.state ~= Players.STATE_NORMAL then
+        return Input.NONE
+    end
+    brain.frame += 1
+    local override = brain.override
+    if override ~= nil and brain.overrideLeft > 0 then
+        -- keep a chosen move as long as it still comes out alive
+        local held = Sim.copy(override)
+        if rollout(brain, held, brain.overrideLeft, w, enemies, fireballs, players, brains) > Npc.DEATH + Npc.HORIZON then
+            brain.overrideLeft -= 1
+            return override
+        end
+        brain.override = nil
+        brain.overrideLeft = 0
+    end
+    local chosen = policy(brain, p, w, enemies, fireballs, players, true)
+    local base = rollout(brain, nil, 0, w, enemies, fireballs, players, brains)
+    local doomed = base <= Npc.DEATH + Npc.HORIZON
+    if not doomed and brain.frame % Npc.SEARCH_EVERY ~= 0 then
+        return chosen
+    end
+    -- a short move then the policy; when the policy dies, also each move held the whole way (a long run)
+    local best = base
+    local bestMacro: Input.Intent? = nil
+    local bestHold = 0
+    for _, hold in { Npc.MACRO_FRAMES, Npc.HORIZON } do
+        if hold == Npc.HORIZON and not doomed then
+            break
+        end
+        for _, macro in MACROS do
+            local score = rollout(brain, macro, hold, w, enemies, fireballs, players, brains)
+            if score > best + 20 then
+                best = score
+                bestMacro = macro
+                bestHold = hold
+            end
+        end
+    end
+    if bestMacro == nil then
+        return chosen
+    end
+    brain.override = bestMacro
+    brain.overrideLeft = bestHold - 1
+    return bestMacro
 end
 
 return Npc

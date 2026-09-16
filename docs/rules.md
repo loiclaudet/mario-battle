@@ -129,11 +129,20 @@ five coins exist, one per kicked enemy. the round ends when the two counts reach
 a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the menu
 returns with the next style, the locks kept.
 
-## npc (scripts/npc.luau, scripts/nav.luau)
+## npc (scripts/npc.luau, scripts/nav.luau, scripts/sim.luau)
 
 the rom has no cpu player, so this one is ours. it is a pure function of the game state that outputs the same
 intent a pad would, every frame, and `Players.update` moves it under the exact physics above. deterministic, no
 random numbers, so a lockstep multiplayer can run it on every peer.
+
+- it looks ahead. `sim.luau` clones the whole battle (world, enemies, fireballs, players) and steps it with the
+  same modules the game uses. every frame the brain runs its own policy 48 frames forward on the clone, the
+  human kept on their current motion, the other cpu on its policy; if that stretch ends in its death, or every
+  6 frames anyway, it also tries six plain moves (stand, run left, run right, jump, jump running left or
+  right), each held 12 frames then the policy, and when doomed each held the whole way. the best stretch
+  wins: a death is -10000, the other player's death +5000, a coin +200, a coin for them -100, an enemy
+  flipped +40, one righted -80, a stun taken -60, one given +30, minus the trip left to the plan's spot. a
+  chosen move is held while it still comes out alive. cost is about 2 ms a frame per brain.
 
 - `nav.luau` sees the arena as five rows: floor, lower ring (the two lower ledges join through the wrap), centre
   platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
