@@ -64,10 +64,10 @@ export type State = {
     random: number,
 }
 
-export type Events = { flip: boolean, kick: boolean, coin: number, killed: number, fireball: boolean, ender: boolean, spawned: boolean }
+export type Events = { flip: boolean, kick: boolean, coin: number, kicks: { number }, killed: number, fireball: boolean, ender: boolean, spawned: boolean }
 
 local function noEvents(): Events
-    return { flip = false, kick = false, coin = 0, killed = 0, fireball = false, ender = false, spawned = false }
+    return { flip = false, kick = false, coin = 0, kicks = {}, killed = 0, fireball = false, ender = false, spawned = false }
 end
 
 function Enemies.new(): State
@@ -420,9 +420,10 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
             e.dir = if p.body.x >= e.body.x then 1 else -1
             return
         end
-        -- kicked off
+        -- kicked off. two enemies can go in one frame, so every kick is listed with its kicker
         ev.kick = true
         ev.coin = i
+        table.insert(ev.kicks, i)
         e.body.vx = if p.body.vx < 0 then -Physics.ENEMY_KICK_VX else Physics.ENEMY_KICK_VX
         e.body.vy = Physics.ENEMY_KICK_VY
         e.state = Enemies.STATE_DYING

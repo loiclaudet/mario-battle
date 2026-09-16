@@ -97,7 +97,9 @@ function Sim.step(snap: Snap, intents: { Input.Intent }): Events
     end
     if eev.kick then
         ev.coin = eev.coin
-        snap.coins[eev.coin] += 1
+        for _, who in eev.kicks do
+            snap.coins[who] += 1
+        end
         local total = 0
         for _, c in snap.coins do
             total += c

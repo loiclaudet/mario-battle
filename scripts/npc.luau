@@ -317,8 +317,9 @@ end
 local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
     local steps = if e.kind == 'fly' then 0 else 20
     local dir = if e.body.vx < 0 then -1 else 1
-    -- still in the pipe: nothing touches it until it is out, so start where it comes out
-    local start = e.body.x + dir * e.pipeTimer * Physics.ENEMY_PIPE_VX / 16
+    -- still in the pipe: nothing touches it until it is out, so start one block past where it comes out,
+    -- the exit block's bounce would carry it off the block
+    local start = e.body.x + dir * (e.pipeTimer * Physics.ENEMY_PIPE_VX / 16 + 8)
     for k = 0, steps do
         local x = Stage.wrapX(start + dir * k * 8)
         if not Nav.onRow(Nav.ROWS[er], x) then
@@ -326,7 +327,12 @@ local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
         end
         local below, spot = underSpot(x, e.body.y, er)
         if below ~= nil then
-            return below, spot
+            -- a walker must still be on its way into the block, flipped on entry it comes down on it
+            local bx = blockUnder(x)
+            local entering = if e.kind == 'fly' then true elseif dir > 0 then wrapDx(bx, e.body.x) < 0 else wrapDx(bx, e.body.x) >= 0
+            if entering then
+                return below, spot
+            end
         end
     end
     return nil, 0
@@ -504,10 +510,10 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         offer(0, { kind = 'post', row = spot[1], x = spot[2], slot = 0, targetRow = spot[1] })
     end
     if #enemies.list == 0 then
-        -- the pipes alternate, left first: be under the first block the next one can be flipped from
+        -- the pipes alternate, left first: be under the block the next one is flipped from and kept on, the
+        -- centre platform's edge (the stub is earlier but the bounce carries the enemy off its block)
         local side = enemies.count % 2
-        local out = Enemies.SPAWN_PIPE_FRAMES * Physics.ENEMY_PIPE_VX / 16
-        local ex = if side == 0 then Stage.SPAWN_X[1] + out else Stage.SPAWN_X[2] - out
+        local ex = if side == 0 then 48 else 192
         local below, spot = underSpot(ex, Nav.ROWS[Nav.UPPER].y, Nav.UPPER)
         if below ~= nil then
             offer(45, { kind = 'post', row = below, x = spot, slot = 0, targetRow = below })
@@ -565,16 +571,25 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
     return true
 end
 
--- jump now if the target's feet will be on our block while it bounces (14 frames from the hit)
-local function bumpNow(brain: Brain, plan: Plan, b: Physics.Body, tx: number, tvx: number): boolean
+-- jump now if the target's feet will be on our block while it bounces (14 frames from the hit). with `keep`
+-- (a flip we mean to follow up) the hit must land as the walker steps onto the block, one foot on: it is
+-- then thrown back the way it came (Vs_EnemyHandleHitUnder drifts it away from the hit side) and comes
+-- down on the block it just left, next to us. flipped on the way out it lands a block on, a gift to
+-- whoever waits there
+local function bumpNow(brain: Brain, plan: Plan, b: Physics.Body, tx: number, tvx: number, keep: boolean): boolean
     local hit = Nav.bumpFrames(plan.row, plan.targetRow)
     if hit == nil then
         return false
     end
-    local rel = wrapDx(plan.x, tx)
+    local bx = blockUnder(plan.x)
+    if keep and tvx ~= 0 then
+        local d = wrapDx(bx, tx + tvx * hit)
+        return if tvx > 0 then (d >= -8 and d < 0) else (d >= 0 and d < 8)
+    end
     for t = hit, hit + World.BLOCK_FRAMES - 1 do
-        local d = rel + tvx * t
-        if d >= -11 and d <= 11 then
+        local ex = tx + tvx * t
+        local l, r = wrapDx(bx, ex + 4), wrapDx(bx, ex + 12)
+        if (l >= 0 and l < 16) or (r >= 0 and r < 16) then
             return true
         end
     end
@@ -696,7 +711,7 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
             tx = h.body.x
             tvx = h.body.vx / 16
         end
-        if bumpNow(brain, plan, b, tx, tvx) and columnClear(b, enemies, fireballs) then
+        if bumpNow(brain, plan, b, tx, tvx, plan.kind == 'flip') and columnClear(b, enemies, fireballs) then
             local hit = Nav.bumpFrames(plan.row, plan.targetRow) or 0
             return jump(brain, 0, hit + 2)
         end

@@ -313,7 +313,9 @@ local function stepPlaying(self: Game)
     if eev.kick then
         play(self, 'kick')
         play(self, 'coin')
-        self.coins[eev.coin] += 1
+        for _, who in eev.kicks do
+            self.coins[who] += 1
+        end
         if self.coins[1] + self.coins[2] == 4 then
             Enemies.markLast(self.enemies)
         end

@@ -125,7 +125,8 @@ where those contact rows put them; the sheet had them bottom aligned.
 
 ## round
 
-five coins exist, one per kicked enemy. the round ends when the two counts reach five (most coins wins, mario on
+five coins exist, one per kicked enemy, and two enemies kicked in the same frame are two coins (the kick event
+lists its kickers, a single flag once lost one and left the round unfinishable). the round ends when the two counts reach five (most coins wins, mario on
 a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the menu
 returns with the next style, the locks kept.
 
@@ -162,7 +163,9 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   of the travel frames, minus 40 per live enemy that will be near the spot, minus 70 for a kick the other
   player reaches first and 20 for a flip they would kick: kick a flipped enemy that stays down long enough
   (100, +20 for the blue last one); flip a walker by bumping the block under its path from the row below (60,
-  50 while it is still in the pipe), jumping when its feet will be on the block while it bounces, a fly where
+  50 while it is still in the pipe), jumping as the walker steps onto the block with one foot, so the hit
+  throws it back onto the block it just left, next to the cpu, where it is kicked or denied (hit on the way
+  out it would land a block on, a gift to whoever waits there); a fly where
   it will land, as it rests or touches down; the pow when two or more live enemies are grounded (30 each); the
   trap (90): the human within reach of a downed enemy on the floor, so the pow rights it under their feet;
   deny (85, 110 when the human is within 60 frames of it): a downed enemy on a ledge the human is closer

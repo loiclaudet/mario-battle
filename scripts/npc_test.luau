@@ -66,8 +66,10 @@ local function run(sc: Scene, frames: number)
             sc.pows += 1
         end
         local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
-        if eev.kick and eev.coin == 1 then
-            sc.kicks += 1
+        for _, who in eev.kicks do
+            if who == 1 then
+                sc.kicks += 1
+            end
         end
         if eev.flip then
             sc.flips += 1
@@ -99,7 +101,7 @@ return function(): Tests
             test.case('flips a spiny walking on the lower ledge by bumping it from the floor', function(expect)
                 local sc = scene(176)
                 table.insert(sc.s.list, spiny(9, 176, 144, Physics.ENEMY_SPAWN_VX, false, 0))
-                run(sc, 150)
+                run(sc, 220)
                 expect(sc.flips).is(1)
                 expect(sc.kicks).is(1) -- and then it goes up and kicks it
                 expect(sc.killed).is(0)
@@ -115,7 +117,7 @@ return function(): Tests
             test.case('leaves a flipped enemy alone when it is about to get up', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 200, 192, 0, true, 10))
-                run(sc, 300)
+                run(sc, 100) -- it is up again after 20 frames; a fresh flip and kick would take longer than this
                 expect(sc.kicks).is(0)
                 expect(sc.killed).is(0)
             end)
