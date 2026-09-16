@@ -14,7 +14,7 @@ local Sim = require('scripts/sim')
 
 local Npc = {}
 
-export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'post' | 'escape'
+export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'shadow' | 'post' | 'escape'
 -- row and x: where to stand. slot: the enemy slot or player index it is about. targetRow: the row the target walks
 export type Plan = { kind: Kind, row: number, x: number, slot: number, targetRow: number }
 export type Brain = {
@@ -31,6 +31,8 @@ export type Brain = {
     override: Input.Intent?, -- a move the search chose over the policy, held for overrideLeft frames
     overrideLeft: number,
     frame: number, -- frames thought so far, paces the periodic search
+    hunt: boolean, -- the coins are lost: no more kicks, only the human's death wins now
+    coins: { number },
 }
 
 Npc.REPLAN_FRAMES = 8
@@ -52,9 +54,10 @@ Npc.HORIZON = 48 -- frames the brain runs the battle forward before committing
 Npc.MACRO_FRAMES = 12 -- frames a searched move is held before the policy takes over again
 Npc.SEARCH_EVERY = 6 -- frames between searches for a better move while the policy is safe
 Npc.DEATH = -10000
+Npc.COINS_TO_WIN = 5
 
 function Npc.new(index: number): Brain
-    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0, override = nil, overrideLeft = 0, frame = 0 }
+    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0, override = nil, overrideLeft = 0, frame = 0, hunt = false, coins = { 0, 0 } }
 end
 
 local function intent(dir: number, run: boolean, jump: boolean): Input.Intent
@@ -367,14 +370,14 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             if er ~= nil then
                 local travel = Nav.travel(row, b.x, er, e.body.x)
                 local remaining = e.getUpTimer * 2
-                if remaining > travel + Npc.KICK_MARGIN then
+                if not brain.hunt and remaining > travel + Npc.KICK_MARGIN then
                     offer(100 + (if e.last then 20 else 0), { kind = 'kick', row = er, x = e.body.x, slot = e.slot, targetRow = er })
                 end
                 -- the human closer to it than we are: sit under its block and right it as they reach for it
-                if er ~= Nav.FLOOR and rivalTravel(brain, players, er, e.body.x) < travel then
+                if er ~= Nav.FLOOR and (brain.hunt or rivalTravel(brain, players, er, e.body.x) < travel) then
                     local below = Nav.rowBelow(e.body.x, e.body.y)
                     if below ~= nil and Nav.bumpFrames(below, er) ~= nil then
-                        offer(85, { kind = 'deny', row = below, x = blockUnder(e.body.x), slot = e.slot, targetRow = er })
+                        offer(if brain.hunt then 95 else 85, { kind = 'deny', row = below, x = blockUnder(e.body.x), slot = e.slot, targetRow = er })
                     end
                 end
             end
@@ -382,7 +385,9 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             if er ~= nil then
                 grounded += 1
             end
-            if e.kind == 'fly' then
+            if brain.hunt then
+                -- a downed enemy is a harmless one: leave the walkers alive
+            elseif e.kind == 'fly' then
                 -- a fly is flipped where it lands: be under that block when it touches down
                 local lr, lx, _ = flyLanding(e)
                 if lr ~= nil and lr ~= Nav.FLOOR then
@@ -400,8 +405,23 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         end
     end
 
-    if Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 and grounded >= 2 then
-        offer(30 * grounded, { kind = 'pow', row = Nav.FLOOR, x = Npc.POW_X, slot = 0, targetRow = Nav.FLOOR })
+    if Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 then
+        if brain.hunt then
+            -- hunting: the pow stuns a grounded human and rights every downed enemy, worth it when they are grounded
+            local downed = 0
+            for _, e in enemies.list do
+                if e.state == Enemies.STATE_FLIPPED then
+                    downed += 1
+                end
+            end
+            for i, h in players do
+                if i ~= brain.index and h.state == Players.STATE_NORMAL and h.onGround then
+                    offer(40 + 40 * downed - 20 * grounded, { kind = 'pow', row = Nav.FLOOR, x = Npc.POW_X, slot = 0, targetRow = Nav.FLOOR })
+                end
+            end
+        elseif grounded >= 2 then
+            offer(30 * grounded, { kind = 'pow', row = Nav.FLOOR, x = Npc.POW_X, slot = 0, targetRow = Nav.FLOOR })
+        end
     end
 
     -- the trap: a human going for a downed enemy, and the pow rights it under their feet. a kill ends the round
@@ -412,7 +432,7 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             end
             for _, e in enemies.list do
                 if e.state == Enemies.STATE_FLIPPED and e.onGround and math.abs(e.body.y - h.body.y) < 8 and math.abs(wrapDx(h.body.x, e.body.x)) < 80 then
-                    offer(90, { kind = 'trap', row = Nav.FLOOR, x = Npc.POW_X, slot = e.slot, targetRow = i })
+                    offer(if brain.hunt then 95 else 90, { kind = 'trap', row = Nav.FLOOR, x = Npc.POW_X, slot = e.slot, targetRow = i })
                 end
             end
         end
@@ -432,11 +452,19 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                         near = true
                     end
                 end
-                offer(if near then 80 else 10, { kind = 'bump', row = below, x = blockUnder(h.body.x), slot = i, targetRow = hr })
+                local value = if near then 80 else 10
+                if brain.hunt then
+                    value = if near then 140 else 90
+                end
+                offer(value, { kind = 'bump', row = below, x = blockUnder(h.body.x), slot = i, targetRow = hr })
             end
         end
         if h.dizzy > 0 and hr == row and math.abs(Nav.dx(row, b.x, h.body.x)) < 48 then
-            offer(25, { kind = 'stomp', row = row, x = h.body.x, slot = i, targetRow = row })
+            offer(if brain.hunt then 60 else 25, { kind = 'stomp', row = row, x = h.body.x, slot = i, targetRow = row })
+        end
+        if brain.hunt and hr ~= nil then
+            -- stick to them: a shove, a stomp, a block in their way, whatever the look ahead finds
+            offer(20, { kind = 'shadow', row = hr, x = h.body.x, slot = i, targetRow = hr })
         end
     end
 
@@ -475,6 +503,8 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
     elseif plan.kind == 'deny' then
         local e = findEnemy(enemies, plan.slot)
         return e ~= nil and e.state == Enemies.STATE_FLIPPED and e.getUpTimer * 2 > Npc.KICK_MARGIN and (not e.onGround or enemyRow(e) == plan.targetRow)
+    elseif plan.kind == 'shadow' then
+        return players[plan.slot].state == Players.STATE_NORMAL
     elseif plan.kind == 'trap' then
         local e = findEnemy(enemies, plan.slot)
         local h = players[plan.targetRow]
@@ -673,6 +703,10 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
             end
         end
         return jump(brain, 0, 1)
+    elseif plan.kind == 'shadow' then
+        return moveTo(row, b, players[plan.slot].body.x)
+    elseif plan.kind == 'shadow' then
+        return moveTo(row, b, players[plan.slot].body.x)
     elseif plan.kind == 'stomp' then
         local h = players[plan.slot]
         local dx = Nav.dx(row, b.x, h.body.x)
@@ -780,6 +814,10 @@ local MACROS: { Input.Intent } = {
 local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }, brains: { Brain }?): number
     local snap = Sim.snapshot(w, enemies, fireballs, players)
     local me = brain.index
+    for i, c in brain.coins do
+        snap.coins[i] = c
+    end
+    local hunt = brain.hunt
     local minds: { [number]: Brain } = {}
     for i, p in snap.players do
         if i == me then
@@ -808,14 +846,18 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
             return 5000 - t
         end
         if ev.coin == me then
-            score += 200
+            score += if hunt then -200 else 200 -- hunting, a coin only brings the round's end closer, and it is lost
         elseif ev.coin > 0 then
             score -= 100
         end
-        score += 40 * ev.flips - 80 * ev.righted
+        if hunt then
+            score += 40 * ev.righted - 40 * ev.flips
+        else
+            score += 40 * ev.flips - 80 * ev.righted
+        end
         for i, stunned in ev.stunned do
             if stunned then
-                score += if i == me then -60 else 30
+                score += if i == me then -60 elseif hunt then 80 else 30
             end
         end
     end
@@ -831,11 +873,29 @@ end
 
 -- one frame of thought for player brain.index. the policy decides, the rollout checks it survives the next
 -- frames and, now and then, whether one of a few plain moves does better; the best move wins
-function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }, brains: { Brain }?): Input.Intent
+function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Enemies.State, fireballs: Fireballs.State, players: { Players.Player }, brains: { Brain }?, coins: { number }?): Input.Intent
     if p.state ~= Players.STATE_NORMAL then
         return Input.NONE
     end
     brain.frame += 1
+    -- the hunt: when no coin left can put us ahead, the only win is their death
+    if coins ~= nil then
+        brain.coins = coins
+        local total = 0
+        local best = 0
+        for i, c in coins do
+            total += c
+            if i ~= brain.index and c > best then
+                best = c
+            end
+        end
+        local mine = coins[brain.index] or 0
+        local hunt = mine + (Npc.COINS_TO_WIN - total) < best
+        if hunt ~= brain.hunt then
+            brain.hunt = hunt
+            brain.plan = nil
+        end
+    end
     local override = brain.override
     if override ~= nil and brain.overrideLeft > 0 then
         -- keep a chosen move as long as it still comes out alive

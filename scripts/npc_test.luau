@@ -175,6 +175,36 @@ return function(): Tests
                 expect(kicked).is(false)
                 expect(killed).is(2)
             end)
+            test.case('with the coins lost it hunts: no kick, the human on a ledge gets bumped', function(expect)
+                local sc = scene(150)
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 40 -- standing on the lower ring
+                h.body.y = 144
+                h.onGround = true
+                table.insert(sc.s.list, spiny(9, 200, 192, 0, true, 0xFF)) -- a free kick right next to the npc
+                local p = sc.players[1]
+                local kicks = 0
+                local stuns = 0
+                for _ = 1, 240 do
+                    World.update(sc.w)
+                    Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players, nil, { 0, 3 }))
+                    local hev = Players.update(h, sc.w, Input.NONE)
+                    if hev.stun then
+                        stuns += 1
+                    end
+                    local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    if eev.kick then
+                        kicks += 1
+                    end
+                    if eev.killed > 0 then
+                        break
+                    end
+                end
+                expect(sc.brain.hunt).is(true)
+                expect(kicks).is(0)
+                expect(stuns).greaterThan(0)
+            end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))

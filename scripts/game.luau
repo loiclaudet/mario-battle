@@ -251,7 +251,7 @@ end
 local function intentFor(self: Game, p: Players.Player): Input.Intent
     local slot = p.controller
     if slot == nil then
-        return Npc.think(self.brains[p.index], p, self.world, self.enemies, self.fireballs, self.players, self.brains)
+        return Npc.think(self.brains[p.index], p, self.world, self.enemies, self.fireballs, self.players, self.brains, self.coins)
     end
     return Input.intent(self.input, slot)
 end

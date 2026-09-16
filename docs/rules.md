@@ -167,6 +167,13 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   bump the block under the human (10, 80 with a live enemy within 40 px of them); stomp the human while they
   are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
   or a stub while nothing has spawned yet, where the first enemy walks out right above).
+- the hunt: when no coin left can put it ahead (you have 3, or 2 to its 0 with... in short, the arithmetic says
+  the coins are lost), it stops kicking and flipping altogether, since a coin only ends the round and a downed
+  enemy is a harmless one. it goes for your death instead: bump the block under you (90, 140 with a live enemy
+  near you), stomp you dizzy (60), the trap and the deny (95), the pow while you are grounded (40, +40 per
+  downed enemy it rights, -20 per live one it would down), and otherwise shadows you on your row (20) for
+  whatever shove, stomp or block the look ahead finds. the look ahead scores the same way: your stun +80, a
+  righted enemy +40, a flipped one -40, its own coin -200.
 - a press is one frame, then the button stays up two frames so the next press is fresh. a jump that started a
   move is held and steered until landing.
 
