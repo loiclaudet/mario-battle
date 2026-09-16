@@ -142,8 +142,11 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   6 frames anyway, it also tries six plain moves (stand, run left, run right, jump, jump running left or
   right), each held 12 frames then the policy, and when doomed each held the whole way. the best stretch
   wins: a death is -10000, the other player's death +5000, a coin +200, a coin for them -100, an enemy
-  flipped +40, one righted -80, a stun taken -60, one given +30, minus the trip left to the plan's spot. a
-  chosen move is held while it still comes out alive. cost is about 2 ms a frame per brain.
+  flipped +40, one righted -80, a stun taken -60, one given +30, minus the trip left to the plan's spot,
+  counted from where a jump in progress comes down. a chosen move is held while it still comes out alive,
+  and a jump in progress is only second guessed when it ends in a death. cost is about 2 ms a frame per brain.
+- it reads the other player where they will land, not where they float: a human mid jump towards a downed
+  enemy counts as closer to it, which is what turns a kick plan into a deny in time.
 
 - `nav.luau` sees the arena as five rows: floor, lower ring (the two lower ledges join through the wrap), centre
   platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running

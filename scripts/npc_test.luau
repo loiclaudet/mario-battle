@@ -211,7 +211,7 @@ return function(): Tests
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))
                 run(sc, 500)
-                expect(sc.kicks).is(1)
+                expect(sc.kicks).greaterThanOrEqual(1) -- it also flips and kicks the spawn that comes out meanwhile
                 expect(sc.killed).is(0)
             end)
         end)

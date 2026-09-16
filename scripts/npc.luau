@@ -34,6 +34,8 @@ export type Brain = {
     hunt: boolean, -- the coins are lost: no more kicks, only the human's death wins now
     coins: { number },
     denyFrames: number, -- frames spent sitting under a downed enemy the human has not come for
+    lastBase: number, -- the policy's last rollout score, for the trace
+    lastScores: string, -- the searched moves' scores, for the trace
 }
 
 Npc.REPLAN_FRAMES = 8
@@ -60,7 +62,7 @@ Npc.DEATH = -10000
 Npc.COINS_TO_WIN = 5
 
 function Npc.new(index: number): Brain
-    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0, override = nil, overrideLeft = 0, frame = 0, hunt = false, coins = { 0, 0 }, denyFrames = 0 }
+    return { index = index, plan = nil, replanIn = 0, jumping = false, jumpHold = 0, airDir = 0, lastRow = Nav.FLOOR, evadeFrames = 0, evadeDir = 0, release = 0, override = nil, overrideLeft = 0, frame = 0, hunt = false, coins = { 0, 0 }, denyFrames = 0, lastBase = 0, lastScores = '' }
 end
 
 local function intent(dir: number, run: boolean, jump: boolean): Input.Intent
@@ -314,38 +316,65 @@ end
 
 -- where a walker on row `er` can next be bumped from below: the first block along its walk (up to
 -- 160 px ahead) with a row under it that a jump reaches. returns the row below and the block, or nil
-local function flipSpot(e: Enemies.Enemy, er: number): (number?, number)
+local function flipSpot(e: Enemies.Enemy, er: number): (number?, number, number)
     local steps = if e.kind == 'fly' then 0 else 20
     local dir = if e.body.vx < 0 then -1 else 1
     -- still in the pipe: nothing touches it until it is out, so start one block past where it comes out,
     -- the exit block's bounce would carry it off the block
     local start = e.body.x + dir * (e.pipeTimer * Physics.ENEMY_PIPE_VX / 16 + 8)
+    local row = er
+    local y = e.body.y
     for k = 0, steps do
         local x = Stage.wrapX(start + dir * k * 8)
-        if not Nav.onRow(Nav.ROWS[er], x) then
-            break
+        if not Nav.onRow(Nav.ROWS[row], x) then
+            -- off the end: it drops to the first row under and keeps walking, plan for that row too
+            local under = Nav.rowBelow(x, y)
+            if under == nil or under == Nav.FLOOR then
+                break
+            end
+            row = under
+            y = Nav.ROWS[under].y
         end
-        local below, spot = underSpot(x, e.body.y, er)
+        local below, spot = underSpot(x, y, row)
         if below ~= nil then
             -- a walker must still be on its way into the block, flipped on entry it comes down on it
             local bx = blockUnder(x)
             local entering = if e.kind == 'fly' then true elseif dir > 0 then wrapDx(bx, e.body.x) < 0 else wrapDx(bx, e.body.x) >= 0
             if entering then
-                return below, spot
+                return below, spot, row
             end
         end
     end
-    return nil, 0
+    return nil, 0, er
 end
 
--- frames the other players need to reach a spot, the nearest of them
+-- where a player comes down: the row, x and frames, for one in the air (keeping their motion, jump held
+-- while rising), or where they stand
+local function playerLanding(h: Players.Player): (number?, number, number)
+    if h.onGround then
+        return Nav.rowAt(h.body.x, h.body.y), h.body.x, 0
+    end
+    local w = World.new()
+    local p = Sim.copy(h)
+    local v = h.body.vx
+    local dir = if v >= 4 then 1 elseif v <= -4 then -1 else 0
+    for t = 1, 90 do
+        Players.update(p, w, intent(dir, math.abs(v) > Physics.WALK_MAX, p.body.vy < 0 and h.jumped))
+        if p.onGround then
+            return Nav.rowAt(p.body.x, p.body.y), p.body.x, t
+        end
+    end
+    return nil, 0, 0
+end
+
+-- frames the other players need to reach a spot, the nearest of them, from where they land if in the air
 local function rivalTravel(brain: Brain, players: { Players.Player }, row: number, x: number): number
     local best = math.huge
     for i, h in players do
         if i ~= brain.index and h.state == Players.STATE_NORMAL and h.halt == 0 then
-            local hr = if h.onGround then Nav.rowAt(h.body.x, h.body.y) else nil
+            local hr, hx, ht = playerLanding(h)
             if hr ~= nil then
-                best = math.min(best, Nav.travel(hr, h.body.x, row, x))
+                best = math.min(best, ht + Nav.travel(hr, hx, row, x))
             end
         end
     end
@@ -389,9 +418,9 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         if e.pipeTimer > 0 then
             -- still in a pipe: it will walk out onto this row, be under its path already
             if er ~= nil and e.state == Enemies.STATE_NORMAL then
-                local below, bx = flipSpot(e, er)
+                local below, bx, onRow = flipSpot(e, er)
                 if below ~= nil then
-                    offer(50, { kind = 'flip', row = below, x = bx, slot = e.slot, targetRow = er })
+                    offer(50, { kind = 'flip', row = below, x = bx, slot = e.slot, targetRow = onRow })
                 end
             end
             continue
@@ -435,9 +464,9 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                     end
                 end
             elseif er ~= nil and er ~= Nav.FLOOR then
-                local below, bx = flipSpot(e, er)
+                local below, bx, onRow = flipSpot(e, er)
                 if below ~= nil then
-                    offer(60, { kind = 'flip', row = below, x = bx, slot = e.slot, targetRow = er })
+                    offer(60, { kind = 'flip', row = below, x = bx, slot = e.slot, targetRow = onRow })
                 end
             end
         end
@@ -544,7 +573,9 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
             local lr, _, _ = flyLanding(e)
             return lr == plan.targetRow
         end
-        return not e.onGround or enemyRow(e) == plan.targetRow
+        -- a walker still on its way down to the target row is fine, one that went elsewhere is not
+        local er = enemyRow(e)
+        return not e.onGround or er == plan.targetRow or (er ~= nil and Nav.ROWS[er].y < Nav.ROWS[plan.targetRow].y)
     elseif plan.kind == 'pow' then
         return Stage.powRect(w.powHits) ~= nil and w.powCnt == 0
     elseif plan.kind == 'deny' then
@@ -928,7 +959,14 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
     local plan = mind.plan
     local body = snap.players[me].body
     if plan ~= nil then
-        score -= Nav.travel(mind.lastRow, body.x, plan.row, plan.x) / 4
+        -- from where it stands, or where a jump in progress comes down
+        local me_ = snap.players[me]
+        local lr, lx, lt = playerLanding(me_)
+        if lr ~= nil then
+            score -= (lt + Nav.travel(lr, lx, plan.row, plan.x)) / 4
+        else
+            score -= Nav.travel(mind.lastRow, body.x, plan.row, plan.x) / 4
+        end
     end
     return score
 end
@@ -972,7 +1010,11 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
     local chosen = policy(brain, p, w, enemies, fireballs, players, true)
     local base = rollout(brain, nil, 0, w, enemies, fireballs, players, brains)
     local doomed = base <= Npc.DEATH + Npc.HORIZON
-    if not doomed and brain.frame % Npc.SEARCH_EVERY ~= 0 then
+    brain.lastBase = base
+    brain.lastScores = ''
+    -- a jump in progress is only second guessed when it ends in a death: reversing mid air on a small
+    -- score difference is how a move to the next platform turns into a fall back
+    if not doomed and (brain.frame % Npc.SEARCH_EVERY ~= 0 or (not p.onGround and brain.jumping)) then
         return chosen
     end
     -- a short move then the policy; when the policy dies, also each move held the whole way (a long run)
@@ -985,6 +1027,7 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
         end
         for _, macro in MACROS do
             local score = rollout(brain, macro, hold, w, enemies, fireballs, players, brains)
+            brain.lastScores ..= string.format(' %s%s%s=%d', if macro.left then 'L' elseif macro.right then 'R' else '.', if macro.jump then 'J' else '', if hold == Npc.HORIZON then '+' else '', math.floor(score))
             if score > best + 20 then
                 best = score
                 bestMacro = macro
