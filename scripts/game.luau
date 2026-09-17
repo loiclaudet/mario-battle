@@ -485,6 +485,23 @@ local function stepPlaying(self: Game)
     if ev.fireball then
         play(self, 'fireball')
     end
+    if bit32.band(self.debug, 8) ~= 0 and (#ev.killed > 0 or #ev.turnedBlue > 0 or #ev.beaten > 0 or #ev.sided > 0) then
+        -- the round's events, on the frame they happen, with the sounds the game played for them
+        local line = string.format('%5d event', self.world.frame)
+        for _, i in ev.turnedBlue do
+            line ..= string.format(' blue p%d', i)
+        end
+        for _, i in ev.sided do
+            line ..= string.format(' side p%d', i)
+        end
+        for _, hit in ev.beaten do
+            line ..= string.format(' p%d beat p%d', hit[2], hit[1])
+        end
+        for _, i in ev.killed do
+            line ..= string.format(' dead p%d%s', i, if self.players[i].blue then ' (quiet)' else ' (player_down)')
+        end
+        print(line)
+    end
     if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 15 == 0 then
         -- a round trace for tuning the cpu: paste it back with what the human was doing
         local line = string.format('%5d c', self.world.frame)
