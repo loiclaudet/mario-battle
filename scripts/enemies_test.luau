@@ -65,6 +65,23 @@ return function(): Tests
                 expect(entered).is(1) -- once at x 208, then it rides the pipe and comes out of a top pipe without a second one
                 expect(atTop).is(true)
             end)
+            test.case('a walker drifted by a one foot hit faces its walk again once it lands', function(expect)
+                local s = Enemies.new()
+                local w = World.new()
+                local e = spinyAt(100) -- walking right on the floor
+                e.body.vx = Physics.ENEMY_SPAWN_VX
+                table.insert(s.list, e)
+                local p = Players.new(1)
+                p.halt = 0xFFFF
+                -- the block under its left foot bounces: it is thrown back the way it came, on its feet or on
+                -- its back, and lands walking on
+                World.bump(w, e.body.x + 4, e.body.y + 16)
+                for f = 1, 60 do
+                    Enemies.update(s, w, { p }, f, false)
+                end
+                expect(e.onGround).is(true)
+                expect(e.dir).is(if e.body.vx < 0 then -1 else 1)
+            end)
             test.case('the same touch kills a driven player', function(expect)
                 local s = Enemies.new()
                 local w = World.new()

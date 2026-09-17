@@ -280,7 +280,9 @@ local function walkerNormal(s: State, e: Enemy, w: World.State, ev: Events)
             e.animCnt += 1
         end
         if vyBefore >= 0x10 and e.restoreVx ~= 0 then
+            -- the walk comes back the way it went, and the sprite faces it again (the hit drift turned it)
             b.vx = e.restoreVx
+            e.dir = if b.vx < 0 then -1 else 1
             e.restoreVx = 0
         end
     else
