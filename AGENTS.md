@@ -2,8 +2,9 @@
 
 Rive CLI project: the 2 player "Mario Bros." battle game from Super Mario Bros. 3 (NES), enemy stages only.
 Rules and every physics constant are transcribed from the SMB3 disassembly, see `docs/rules.md` before
-changing any number. one deliberate deviation: `Physics.TURN_DECEL` is 2 where the rom uses 1 (lodz's call, the
-rom's turn-around slid too long for him); keep it labelled as such.
+changing any number. one deliberate deviation: the turn-around brake is 2 above walking speed and 1 below
+(`Physics.turnDecel`) where the rom uses 1 throughout (lodz's call, the rom's slide was too long, a flat 2 too
+sharp); keep it labelled as such.
 
 ## layout
 

@@ -303,6 +303,9 @@ local function stepPlaying(self: Game)
     if eev.flip then
         play(self, 'bump')
     end
+    if eev.entered then
+        play(self, 'pipe') -- only the walk into a bottom pipe, the top pipes stay quiet
+    end
     if eev.killed > 0 then
         killPlayer(self, eev.killed)
         return

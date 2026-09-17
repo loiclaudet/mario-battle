@@ -48,7 +48,7 @@ the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 1
 | walk cap | 0x0C | 0.75 |
 | run cap, B held | 0x18 | 1.5 |
 | acceleration, deceleration, friction | 1 per frame | 0.0625 |
-| turning against the motion | 2 per frame (`Physics.TURN_DECEL`, lodz's tweak: the rom uses 1 here too) | 0.125 |
+| turning against the motion | 2 per frame above walking speed, 1 at or below (`Physics.turnDecel`; lodz's tweak: the rom uses 1 at every speed, a flat 2 was too sharp). a full run stops in 18 frames, the rom takes 24 | 0.125 / 0.0625 |
 | jump | -0x42 | -4.125 (every reachable entry of `Vs_PlayerJumpHeightBySpd`) |
 | gravity | +2 always, +3 more when falling or when A is not held | |
 | terminal fall | 0x40 | 4.0 |

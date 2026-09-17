@@ -1,6 +1,6 @@
 <Rive version="1" kind="fragment">
     <!-- Game artboard: the nes framebuffer, 256x240. earlier siblings draw on top, so the order is
-         overlay (start menu, banners), hud coin fills, playfield script, stage strips.
+         overlay (start menu, banners), playfield script, hud (boxes and coin fills, under the sprites), stage strips.
          ids: 0:1xx layout, 0:2xx stage, 0:3xx hud, 0:4xx overlay (0:46x 0:47x cards, 0:48x cursors and markers),
          0:5xx state machine, 0:6xx animations, 0:7xx converters. -->
     <Artboard defaultStateMachineId="0:500" viewModelId="9:200" viewModelInstanceId="9:201" clip="true" width="256" height="240" styleId="0:101" x="0" y="0" name="Game" id="0:100">
@@ -129,8 +129,29 @@
             </Solo>
         </Node>
 
-        <!-- hud: five coin fills per player, opacity 0 or 1 from coinsP1/coinsP2 through the slot range mappers -->
+        <!-- playfield: the simulation. fill sized so resize gets 256x240 and local coords equal artboard coords -->
+        <LayoutComponent width="256" height="240" styleId="0:111" name="Playfield Layout" id="0:110">
+            <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" widthUnitsValue="auto" heightUnitsValue="auto" name="Playfield Style" id="0:111"/>
+            <ScriptedLayout scriptAssetId="8:990" name="Playfield" id="0:112">
+                <FocusData id="0:61814"/>
+                <ScriptInputArtboard artboardId="1:100" name="playerArtboard" id="0:61815"/>
+                <ScriptInputArtboard artboardId="2:100" name="spinyArtboard" id="0:61816"/>
+                <ScriptInputArtboard artboardId="3:100" name="flyArtboard" id="0:61817"/>
+                <ScriptInputArtboard artboardId="4:100" name="crabArtboard" id="0:61818"/>
+                <ScriptInputArtboard artboardId="5:100" name="powArtboard" id="0:61819"/>
+                <ScriptInputArtboard artboardId="6:100" name="fireballArtboard" id="0:61820"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:230" name="cursorP1" id="0:61973"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:231" name="cursorP2" id="0:61974"/>
+            </ScriptedLayout>
+        </LayoutComponent>
+
+        <!-- hud: the boxes and five coin fills per player (opacity 0 or 1 from coinsP1/coinsP2 through the slot range
+             mappers). below the playfield so a player jumping through the top row passes in front of the coins; y bound
+             to shakeY like the stage -->
         <Node name="Hud" id="0:300">
+            <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14" id="0:61975"/>
+            <Image assetId="8:39357" x="52" y="12" originX="0" originY="0" name="hud_m" id="0:201"/>
+            <Image assetId="8:30507" x="140" y="12" originX="0" originY="0" name="hud_l" id="0:202"/>
             <Image assetId="8:60009" x="72" y="16" originX="0" originY="0" opacity="0" name="p1_coin_1" id="0:301">
                 <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:701" id="0:61804"/>
             </Image>
@@ -163,27 +184,9 @@
             </Image>
         </Node>
 
-        <!-- playfield: the simulation. fill sized so resize gets 256x240 and local coords equal artboard coords -->
-        <LayoutComponent width="256" height="240" styleId="0:111" name="Playfield Layout" id="0:110">
-            <LayoutComponentStyle layoutWidthScaleType="fill" layoutHeightScaleType="fill" widthUnitsValue="auto" heightUnitsValue="auto" name="Playfield Style" id="0:111"/>
-            <ScriptedLayout scriptAssetId="8:990" name="Playfield" id="0:112">
-                <FocusData id="0:61814"/>
-                <ScriptInputArtboard artboardId="1:100" name="playerArtboard" id="0:61815"/>
-                <ScriptInputArtboard artboardId="2:100" name="spinyArtboard" id="0:61816"/>
-                <ScriptInputArtboard artboardId="3:100" name="flyArtboard" id="0:61817"/>
-                <ScriptInputArtboard artboardId="4:100" name="crabArtboard" id="0:61818"/>
-                <ScriptInputArtboard artboardId="5:100" name="powArtboard" id="0:61819"/>
-                <ScriptInputArtboard artboardId="6:100" name="fireballArtboard" id="0:61820"/>
-                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:230" name="cursorP1" id="0:61973"/>
-                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:231" name="cursorP2" id="0:61974"/>
-            </ScriptedLayout>
-        </LayoutComponent>
-
         <!-- stage, framebuffer coordinates from PRG/levels/2PVs/Typical.asm. y is bound to shakeY for the pow shake -->
         <Node name="Stage" id="0:200">
             <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14" id="0:61821"/>
-            <Image assetId="8:39357" x="52" y="12" originX="0" originY="0" name="hud_m" id="0:201"/>
-            <Image assetId="8:30507" x="140" y="12" originX="0" originY="0" name="hud_l" id="0:202"/>
             <Image assetId="8:48161" x="0" y="16" originX="0" originY="0" name="pipe_tl" id="0:203"/>
             <Image assetId="8:56482" x="224" y="16" originX="0" originY="0" name="pipe_tr" id="0:204"/>
             <Image assetId="8:31191" x="0" y="48" originX="0" originY="0" name="ledge_ul" id="0:205"/>

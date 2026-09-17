@@ -13,7 +13,7 @@ export type Bank = {
     scheduled: number, -- how many loop iterations are queued past nextLoopFrame
 }
 
-Sfx.NAMES = { 'jump', 'kick', 'coin', 'bump', 'player_down', 'fireball', 'pow' }
+Sfx.NAMES = { 'jump', 'kick', 'coin', 'bump', 'player_down', 'fireball', 'pow', 'pipe' }
 -- cut points from tools/music_cuts.json, written by tools/cut_music.py (manual cut: intro 6 s, loop 6 to 19 s)
 Sfx.INTRO_SECONDS = 242550 / 44100
 Sfx.LOOP_SECONDS = 551250 / 44100

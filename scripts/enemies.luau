@@ -64,10 +64,11 @@ export type State = {
     random: number,
 }
 
-export type Events = { flip: boolean, kick: boolean, coin: number, kicks: { number }, killed: number, fireball: boolean, ender: boolean, spawned: boolean }
+-- entered: an enemy walked into a bottom pipe this frame (the pipe sound)
+export type Events = { flip: boolean, kick: boolean, coin: number, kicks: { number }, killed: number, fireball: boolean, ender: boolean, entered: boolean }
 
 local function noEvents(): Events
-    return { flip = false, kick = false, coin = 0, kicks = {}, killed = 0, fireball = false, ender = false, spawned = false }
+    return { flip = false, kick = false, coin = 0, kicks = {}, killed = 0, fireball = false, ender = false, entered = false }
 end
 
 function Enemies.new(): State
@@ -147,7 +148,6 @@ function Enemies.spawner(s: State, halted: boolean, ev: Events)
     end
     if s.count < 5 and s.spawnCnt == 0 then
         spawn(s)
-        ev.spawned = true
     end
 end
 
@@ -196,13 +196,17 @@ local function handleHitUnder(e: Enemy, w: World.State, probe: World.Probe, ev: 
 end
 
 -- Vs_EnemyUsePipes. returns true when the enemy teleported to a top pipe this frame
-local function usePipes(s: State, e: Enemy): boolean
+local function usePipes(s: State, e: Enemy, ev: Events): boolean
     local b = e.body
     if b.y < 160 then
         return false
     end
     local side = if e.dir > 0 then 1 else 2
     if b.x == Stage.BOTTOM_PIPE_ENTRANCE_X[side] then
+        -- x sits on the entrance for a few frames at pipe speed: the sound is the first of them
+        if e.pipeTimer == 0 then
+            ev.entered = true
+        end
         e.pipeTimer = Enemies.RECYCLE_PIPE_FRAMES
         return false
     end
@@ -247,7 +251,7 @@ end
 
 local function walkerNormal(s: State, e: Enemy, w: World.State, ev: Events)
     local b = e.body
-    if usePipes(s, e) then
+    if usePipes(s, e, ev) then
         return
     end
     move(e)
@@ -280,7 +284,7 @@ end
 
 local function flyNormal(s: State, e: Enemy, w: World.State, ev: Events)
     local b = e.body
-    if usePipes(s, e) then
+    if usePipes(s, e, ev) then
         return
     end
     if e.getUpTimer > 0 then

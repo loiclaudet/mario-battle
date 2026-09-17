@@ -83,7 +83,7 @@ return function(): Tests
                 end
                 expect(b.vx).is(0x18)
             end)
-            test.case('turning around from a full run: 12 frames to stop at TURN_DECEL 2, then 24 to full speed', function(expect)
+            test.case('turning around from a full run: 6 frames at 2 to walking speed, 12 at 1 to a stop, then 24 to full speed', function(expect)
                 local b = Physics.newBody(0, 0)
                 b.vx = 0x18
                 local frames = 0
@@ -91,12 +91,12 @@ return function(): Tests
                     Physics.stepPlayerX(b, -1, true, true)
                     frames += 1
                 end
-                expect(frames).is(0x18 // Physics.TURN_DECEL)
+                expect(frames).is(18) -- 12 with a flat 2, the rom's 24 with a flat 1
                 while b.vx > -0x18 do
                     Physics.stepPlayerX(b, -1, true, true)
                     frames += 1
                 end
-                expect(frames).is(0x18 // Physics.TURN_DECEL + 24)
+                expect(frames).is(18 + 24)
             end)
             test.case('walking moves 0.75 px per frame: 3 px every 4 frames', function(expect)
                 local b = Physics.newBody(100, 0)
