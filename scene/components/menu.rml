@@ -11,7 +11,7 @@
             <DataBindContext sourcePathIds="9:900-9:910-9:715" propertyKey="14" id="11:1002"/>
             <DataBindContext sourcePathIds="9:900-9:910-9:716" propertyKey="18" id="11:1003"/>
             <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1004">
-                <Fill name="Fill" id="11:1006"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1007"/></Fill>
+                <Fill name="Fill" id="11:1006"><SolidColor colorValue="FFE04030" name="Colour" id="11:1007"/></Fill>
             </TextStylePaint>
             <TextValueRun styleId="11:1004" text="1P" name="Run" id="11:1008"/>
         </Text>
@@ -20,7 +20,7 @@
             <DataBindContext sourcePathIds="9:900-9:911-9:715" propertyKey="14" id="11:1010"/>
             <DataBindContext sourcePathIds="9:900-9:911-9:716" propertyKey="18" id="11:1011"/>
             <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1012">
-                <Fill name="Fill" id="11:1014"><SolidColor colorValue="FF3CBCFC" name="Colour" id="11:1015"/></Fill>
+                <Fill name="Fill" id="11:1014"><SolidColor colorValue="FF30C820" name="Colour" id="11:1015"/></Fill>
             </TextStylePaint>
             <TextValueRun styleId="11:1012" text="2P" name="Run" id="11:1016"/>
         </Text>
@@ -51,7 +51,7 @@
                 <DataBindContext sourcePathIds="9:900-9:910-9:713" propertyKey="21" id="11:1039"/>
             </Rectangle>
             <Stroke thickness="1" name="Stroke" id="11:1040">
-                <SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1041"/>
+                <SolidColor colorValue="FFE04030" name="Colour" id="11:1041"/>
                 <DashPath offset="0" name="Dashes" id="11:1042">
                     <Dash length="4" name="On" id="11:1043"/>
                     <Dash length="4" name="Off" id="11:1044"/>
@@ -67,7 +67,7 @@
                 <DataBindContext sourcePathIds="9:900-9:911-9:713" propertyKey="21" id="11:1051"/>
             </Rectangle>
             <Stroke thickness="1" name="Stroke" id="11:1052">
-                <SolidColor colorValue="FF3CBCFC" name="Colour" id="11:1053"/>
+                <SolidColor colorValue="FF30C820" name="Colour" id="11:1053"/>
                 <DashPath offset="2" name="Dashes" id="11:1054">
                     <Dash length="4" name="On" id="11:1055"/>
                     <Dash length="4" name="Off" id="11:1056"/>

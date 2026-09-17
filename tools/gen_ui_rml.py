@@ -14,7 +14,7 @@ ids = json.load(open(os.path.join(root, 'tools/asset_ids.json')))
 def I(n): return f'8:{ids["image/" + n]}'
 FONT = '8:850'
 CHARS = ['mario', 'luigi', 'wario', 'waluigi']
-MARKER_COLOURS = ['FFFFFFFF', 'FF3CBCFC', 'FFF8B800', 'FFC060FF']
+MARKER_COLOURS = ['FFE04030', 'FF30C820', 'FFF8B800', 'FFC060FF'] # mario red, luigi green, wario yellow, waluigi purple
 ORANGE = 'FFEA9E22'
 
 class Ids:

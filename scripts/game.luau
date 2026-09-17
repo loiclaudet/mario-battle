@@ -494,9 +494,13 @@ local function stepPlaying(self: Game)
         end
         return
     end
+    -- the five coins out: the round is the leader's, unless two share the top, then sudden death goes on
+    -- around the target until someone stands alone
     if Sim.total(self.round) >= Sim.COINS_TO_WIN then
         local leader = Sim.leader(self.round)
-        endRound(self, if leader > 0 then CHARACTERS[leader] else 'none')
+        if leader > 0 then
+            endRound(self, CHARACTERS[leader])
+        end
     end
 end
 

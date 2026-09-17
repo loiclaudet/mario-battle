@@ -20,7 +20,7 @@ a slot with nothing behind it has no cursor.
 | keyboard set 2 | arrows, K jump, L run, space start |
 
 the title is a start menu in the smb3 style: a card per character in a 2x2 grid (mario and luigi above,
-wario and waluigi below), START under them, one cursor per slot (the same dashed rect for all, in white, blue,
+wario and waluigi below), START under them, one cursor per slot (the same dashed rect for all, in red, green,
 yellow and purple with the dash pattern shifted 2 px per slot, each with its 1P..4P marker). left, right, up
 and down move between the cards, down from the bottom row goes to START, up comes back. jump on a card locks that character (the marker stays on it and the
 character hops), jump on your own card unlocks it, a card another player took refuses. the run button on a free
