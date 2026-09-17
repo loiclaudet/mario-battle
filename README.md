@@ -14,13 +14,16 @@ rive login            # once
 rive . --fit=contain  # opens the viewer, resize it to full screen
 ```
 
-the title is a start menu: each player moves a cursor over the mario and luigi cards, jump locks a brother,
-jump on START (or the start button) launches. a brother nobody locked is played by the cpu, a strong one: it
-runs the battle 48 frames ahead on a clone before every move, flips enemies from below with frame-exact bumps,
-kicks them, hits the pow, and plays it against you: bumps the block under you, stomps you dizzy, rights a downed
-enemy under your feet. one player fights it, no player at all is a cpu vs cpu demo. gamepads first (first pad is p1,
-second p2, B jumps, Y runs, plus starts and pauses), keyboard fills the empty slots: p1 on `W A S D` + `G`
-jump + `F` run, p2 on the arrows + `K` jump + `L` run. `F1` shows the collision boxes.
+the title is a start menu: up to four players move a cursor over the mario, luigi, wario and waluigi cards,
+jump locks a character, the run button turns a free card off (at least two stay on), jump on START (or the start
+button) launches. a card nobody locked is played by the cpu, a strong one: it runs the battle 48 frames ahead on
+a clone before every move, flips enemies from below with frame-exact bumps, kicks them, hits the pow, and plays
+it against you: bumps the block under you, stomps you dizzy, rights a downed enemy under your feet. the round is
+a free for all: five coins, one per kicked enemy, the most wins; a death loses the coins and puts that many
+enemies back in the pipes, and the round goes on until one player is left. no player at all is a cpu demo. the
+pads take the slots in the order they connect (B jumps, Y runs, plus starts and pauses), then the keyboard: `W A
+S D` + `G` jump + `F` run, and the arrows + `K` jump + `L` run. `F1` shows the collision boxes. the stage is
+picked at random from those in `scene/stages`.
 
 five enemies come out of the top pipes. bump the platform under one to flip it, touch it while it is on its
 back to kick it off and take its coin. three coins win. touching a live enemy or a fireball ends the round.

@@ -39,7 +39,7 @@ return function(): Tests
                 table.insert(s.list, e)
                 local p = Players.new(1)
                 local ev = Enemies.update(s, w, { p }, e.slot, false)
-                expect(ev.killed).is(1)
+                expect(ev.killed[1]).is(1)
             end)
             test.case('walking into a bottom pipe raises the entered event once, coming out of a top pipe does not', function(expect)
                 local s = Enemies.new()
@@ -73,7 +73,7 @@ return function(): Tests
                 local p = Players.new(1)
                 Players.setController(p, 1)
                 local ev = Enemies.update(s, w, { p }, e.slot, false)
-                expect(ev.killed).is(1)
+                expect(ev.killed[1]).is(1)
             end)
         end)
     end

@@ -1091,8 +1091,8 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
     for i, p in snap.players do
         if i == me then
             minds[i] = Sim.copy(brain)
-        elseif Players.isNpc(p) and brains ~= nil and brains[i] ~= nil then
-            minds[i] = Sim.copy(brains[i])
+        elseif Players.isNpc(p) and brains ~= nil and brains[i] ~= nil and Players.active(players) <= 2 then
+            minds[i] = Sim.copy(brains[i]) -- in a bigger round the other cpus keep their motion, a policy each is too dear
         end
     end
     local score = 0
@@ -1109,10 +1109,17 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
             end
         end
         local ev = Sim.step(snap, intents)
-        if ev.killed == me then
-            return Npc.DEATH + t
-        elseif ev.killed > 0 then
-            return 5000 - t
+        for _, dead in ev.killed do
+            if dead == me then
+                return Npc.DEATH + t
+            end
+        end
+        if #ev.killed > 0 then
+            -- a rival down: the round is ours when nobody else is left, a big step otherwise
+            if #Players.alive(snap.players) <= 1 then
+                return 5000 - t
+            end
+            score += 150 * #ev.killed
         end
         if ev.coin == me then
             score += if hunt then -200 else 200 -- hunting, a coin only brings the round's end closer, and it is lost

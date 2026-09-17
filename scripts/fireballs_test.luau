@@ -56,7 +56,7 @@ return function(): Tests
                 f.pose = 'flying'
                 f.body.x = 60
                 local p = Players.new(1)
-                expect(Fireballs.update(s, w, { p }, f.id).killed).is(1)
+                expect(Fireballs.update(s, w, { p }, f.id).killed[1]).is(1)
             end)
         end)
     end

@@ -11,7 +11,7 @@ local function intent(keys: Keys): Input.Intent
         up = keys.up == true,
         down = keys.down == true,
         jump = keys.jump == true,
-        run = false,
+        run = keys.run == true,
         start = keys.start == true,
     }
 end
@@ -50,8 +50,13 @@ return function(): Tests
                 local m = Menu.new(2)
                 expect(press(m, 1, 'right').moved).is(true)
                 expect(m.slots[1].focus).is(2)
+                press(m, 1, 'right')
+                press(m, 1, 'right')
+                expect(m.slots[1].focus).is(4)
                 expect(press(m, 1, 'right').moved).is(false)
-                expect(m.slots[1].focus).is(2)
+                expect(m.slots[1].focus).is(4)
+                press(m, 1, 'left')
+                press(m, 1, 'left')
                 expect(press(m, 1, 'left').moved).is(true)
                 expect(m.slots[1].focus).is(1)
                 expect(press(m, 1, 'left').moved).is(false)
@@ -119,19 +124,45 @@ return function(): Tests
         end)
 
         test.group('launch', function()
-            test.case('jump on START launches with nobody locked: two npcs', function(expect)
+            test.case('jump on START launches with nobody locked: four cpus', function(expect)
                 local m = Menu.new(2)
                 press(m, 1, 'down')
                 expect(press(m, 1, 'jump').launch).is(true)
-                expect(Menu.controllerFor(m, 1)).is(nil)
-                expect(Menu.controllerFor(m, 2)).is(nil)
+                for card = 1, 4 do
+                    expect(Menu.roleFor(m, card)).is('cpu')
+                end
+                expect(Menu.onCount(m)).is(4)
             end)
-            test.case('one lock: that player, the other brother is an npc', function(expect)
+            test.case('the run button on a free card turns it off and on, never below two cards on', function(expect)
+                local m = Menu.new(2)
+                press(m, 1, 'right') -- p1 on luigi
+                expect(press(m, 1, 'run').toggled).is(true)
+                expect(Menu.roleFor(m, 2)).is('off')
+                press(m, 1, 'right')
+                press(m, 1, 'run') -- wario off
+                expect(Menu.onCount(m)).is(2)
+                press(m, 1, 'right')
+                expect(press(m, 1, 'run').refused).is(true) -- waluigi would leave one card on
+                expect(Menu.roleFor(m, 4)).is('cpu')
+                press(m, 1, 'left')
+                expect(press(m, 1, 'run').toggled).is(true) -- wario back on
+                expect(Menu.roleFor(m, 3)).is('cpu')
+                -- a human taking an off card turns it on, and a locked card cannot be turned off
+                press(m, 2, 'left') -- p2 from luigi to mario... luigi is off, p2 starts on it
+                expect(Menu.roleFor(m, 2)).is('off')
+                press(m, 2, 'right')
+                expect(press(m, 2, 'jump').locked).is(true)
+                expect(Menu.roleFor(m, 2)).is(2)
+                press(m, 1, 'left') -- p1 on luigi, p2's card
+                expect(press(m, 1, 'run').refused).is(true)
+            end)
+            test.case('one lock: that player, the other cards are cpus', function(expect)
                 local m = Menu.new(2)
                 press(m, 1, 'jump')
                 expect(press(m, 1, 'jump').launch).is(true)
-                expect(Menu.controllerFor(m, 1)).is(1)
-                expect(Menu.controllerFor(m, 2)).is(nil)
+                expect(Menu.roleFor(m, 1)).is(1)
+                expect(Menu.roleFor(m, 2)).is('cpu')
+                expect(Menu.roleFor(m, 4)).is('cpu')
             end)
             test.case('two locks, p2 took mario: the slots are swapped', function(expect)
                 local m = Menu.new(2)

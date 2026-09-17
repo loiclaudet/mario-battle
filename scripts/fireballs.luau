@@ -32,7 +32,7 @@ export type Fireball = {
 
 export type State = { list: { Fireball }, nextId: number }
 
-export type Events = { killed: number }
+export type Events = { killed: { number } } -- every player a flame touched this frame
 
 function Fireballs.new(): State
     return { list = {}, nextId = 1 }
@@ -99,8 +99,7 @@ local function collidePlayers(f: Fireball, players: { Players.Player }, frame: n
         end
         local px, py, pw, ph = World.playerBox(p.body)
         if World.boxOverlap(px, py, pw, ph, fx, fy, fw, fh) then
-            ev.killed = i
-            return
+            table.insert(ev.killed, i)
         end
     end
 end
@@ -136,7 +135,7 @@ local function bounce(f: Fireball, w: World.State)
 end
 
 function Fireballs.update(s: State, w: World.State, players: { Players.Player }, frame: number): Events
-    local ev: Events = { killed = 0 }
+    local ev: Events = { killed = {} }
     local kept: { Fireball } = {}
     for _, f in s.list do
         local alive = true

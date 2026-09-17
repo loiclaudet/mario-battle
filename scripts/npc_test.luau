@@ -76,8 +76,8 @@ local function run(sc: Scene, frames: number)
             sc.flips += 1
         end
         local fev = Fireballs.update(sc.f, sc.w, sc.players, sc.w.frame)
-        if eev.killed > 0 or fev.killed > 0 then
-            sc.killed = math.max(eev.killed, fev.killed)
+        if eev.killed[1] ~= nil or fev.killed[1] ~= nil then
+            sc.killed = math.max(eev.killed[1] or 0, fev.killed[1] or 0)
             return
         end
     end
@@ -142,8 +142,8 @@ return function(): Tests
                         powHits += 1
                     end
                     local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
-                    if eev.killed > 0 then
-                        killed = eev.killed
+                    if eev.killed[1] ~= nil then
+                        killed = eev.killed[1]
                         break
                     end
                 end
@@ -175,8 +175,8 @@ return function(): Tests
                     if eev.flip and e.state == Enemies.STATE_NORMAL and math.abs((h.body.x - e.body.x + 128) % 256 - 128) < 48 then
                         rightedNear = true
                     end
-                    if eev.killed > 0 then
-                        killed = eev.killed
+                    if eev.killed[1] ~= nil then
+                        killed = eev.killed[1]
                         break
                     end
                 end
@@ -205,7 +205,7 @@ return function(): Tests
                     if eev.kick then
                         kicks += 1
                     end
-                    if eev.killed > 0 then
+                    if eev.killed[1] ~= nil then
                         break
                     end
                 end
@@ -234,7 +234,7 @@ return function(): Tests
                         righted = true
                         break
                     end
-                    if eev.killed > 0 then
+                    if eev.killed[1] ~= nil then
                         break
                     end
                 end
@@ -286,7 +286,7 @@ return function(): Tests
                             theirs += 1
                         end
                     end
-                    if eev.killed > 0 then
+                    if eev.killed[1] ~= nil then
                         break
                     end
                 end

@@ -10,9 +10,12 @@ local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
 local Menu = require('scripts/menu')
 local Npc = require('scripts/npc')
+local Sim = require('scripts/sim')
 
 type Phase = 'title' | 'playing' | 'over'
-type Winner = 'none' | 'mario' | 'luigi'
+type Character = 'mario' | 'luigi' | 'wario' | 'waluigi'
+type Winner = 'none' | Character
+local CHARACTERS: { Character } = { 'mario', 'luigi', 'wario', 'waluigi' } -- card and player index to name
 
 local STEP = 1 / 60
 local OVER_FRAMES = 0x80 -- Vs_TimeToExit
@@ -63,7 +66,9 @@ type Game = {
     enemies: Enemies.State,
     enemyViews: { [number]: EnemyView }, -- by enemy slot
     fireballs: Fireballs.State,
-    bumpCooldown: number,
+    round: Sim.Snap, -- the live round state Sim.step advances: the world, enemies, fireballs, players and coins
+    off: { boolean }, -- per player, sitting this round out (the menu's off cards)
+    lastKilled: number, -- the death that ended the round, whose fall the over phase waits for
     coins: { number },
     phase: Phase,
     winner: Winner,
@@ -160,7 +165,7 @@ local function pushVm(self: Game)
             local p = self.players[i]
             h.letter.value = i - 1
             h.coins.value = self.coins[i] or 0
-            h.shown.value = if p ~= nil then 1 else 0
+            h.shown.value = if p ~= nil and p.state ~= Players.STATE_OFF then 1 else 0
         end
     end
     -- the menu component: taken cards hop, the cursor outlines and markers follow scripts/menu.luau's layout
@@ -168,10 +173,10 @@ local function pushVm(self: Game)
     if menuVm ~= nil then
         local locks = { menuVm.lock1, menuVm.lock2, menuVm.lock3, menuVm.lock4 }
         local modes = { menuVm.mode1, menuVm.mode2, menuVm.mode3, menuVm.mode4 }
-        for card = 1, 4 do
-            local exists = card <= #Menu.CARDS
-            locks[card].value = if exists and Menu.isLocked(self.menu, card) then 1 else 0
-            modes[card].value = if not exists then 'OFF' elseif Menu.isLocked(self.menu, card) then '' else 'CPU'
+        for card = 1, #Menu.CARDS do
+            local role = Menu.roleFor(self.menu, card)
+            locks[card].value = if type(role) == 'number' then 1 else 0
+            modes[card].value = if role == 'cpu' then 'CPU' elseif role == 'off' then 'OFF' else ''
         end
     end
     if self.phase == 'title' then
@@ -273,10 +278,13 @@ local function startRound(self: Game)
     self.fireballViews = {}
     for i, p in self.players do
         Players.reset(p)
+        if self.off[i] then
+            p.state = Players.STATE_OFF
+        end
         self.brains[i] = Npc.new(i)
     end
-    self.coins = { 0, 0 }
-    self.bumpCooldown = 0
+    Sim.resetScore(self.round)
+    self.lastKilled = 0
     self.winner = 'none'
     self.phase = 'playing'
     self.overFrames = 0
@@ -305,24 +313,25 @@ local function endRound(self: Game, winner: Winner)
 end
 
 -- a live enemy or a fireball touched a player: everything freezes and they fall off the screen
-local function killPlayer(self: Game, index: number)
-    local victim = self.players[index]
-    if victim.state ~= Players.STATE_NORMAL then
+-- a player died this step (Sim.step already dropped their coins and gave them back as enemies). with others
+-- still alive the round goes on around the falling body; with one left the round is theirs once the body is gone
+local function onDeath(self: Game, index: number)
+    play(self, 'player_down')
+    if #Players.alive(self.players) > 1 then
         return
     end
-    Players.kill(victim)
     local bank = self.sfx
     if bank ~= nil then
         Sfx.stopMusic(bank)
     end
-    play(self, 'player_down')
     for i, p in self.players do
-        if i ~= index then
+        if i ~= index and p.state == Players.STATE_NORMAL then
             p.halt = HALT
         end
     end
     Enemies.haltAll(self.enemies)
     Fireballs.haltAll(self.fireballs)
+    self.lastKilled = index
 end
 
 -- one 1/60 step ----------------------------------------------------------------------------------
@@ -337,40 +346,51 @@ local function intentFor(self: Game, p: Players.Player): Input.Intent
 end
 
 local function stepPlaying(self: Game)
-    World.update(self.world)
+    local intents: { Input.Intent } = {}
     for i, p in self.players do
-        local ev = Players.update(p, self.world, intentFor(self, p))
-        if ev.jump then
+        intents[i] = if p.state == Players.STATE_NORMAL then intentFor(self, p) else Input.NONE
+    end
+    local debugSpawn: number? = nil
+    if bit32.band(self.debug, 3) ~= 0 and self.world.frame == 30 then
+        debugSpawn = if bit32.band(self.debug, 2) ~= 0 then 2 else 1
+    end
+    local ev = Sim.step(self.round, intents, debugSpawn)
+    ensureEnemyViews(self)
+    ensureFireballViews(self)
+    for i, _ in self.players do
+        if ev.jumped[i] then
             play(self, 'jump')
         end
-        if ev.bump then
+        if ev.bumped[i] or ev.stunned[i] then
             play(self, 'bump')
-        end
-        if ev.stun then
-            play(self, 'bump')
-        end
-        if ev.pow then
-            play(self, 'pow')
         end
     end
-    local cooldown, stunned = Players.bumpEachOther(self.players[1], self.players[2], self.bumpCooldown)
-    self.bumpCooldown = cooldown
-    if stunned then
+    if ev.pow then
+        play(self, 'pow')
+    end
+    if ev.flip then
         play(self, 'bump')
     end
-
-    local halted = false
-    for _, p in self.players do
-        if p.halt > 0 or p.state == Players.STATE_DYING then
-            halted = true
-        end
+    if ev.entered then
+        play(self, 'pipe') -- only the walk into a bottom pipe, the top pipes stay quiet
     end
-    local eev = Enemies.update(self.enemies, self.world, self.players, self.world.frame, halted)
-    ensureEnemyViews(self)
+    if #ev.kicks > 0 then
+        play(self, 'kick')
+        play(self, 'coin')
+    end
+    if ev.fireball then
+        play(self, 'fireball')
+    end
     if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 15 == 0 then
         -- a round trace for tuning the cpu: paste it back with what the human was doing
-        local line = string.format('%5d c%d-%d', self.world.frame, self.coins[1], self.coins[2])
+        local line = string.format('%5d c', self.world.frame)
+        for i, c in self.coins do
+            line ..= (if i > 1 then '-' else '') .. tostring(c)
+        end
         for i, p in self.players do
+            if p.state == Players.STATE_OFF then
+                continue
+            end
             local plan = self.brains[i].plan
             local who = if Players.isNpc(p) then (if plan then plan.kind .. '>' .. plan.row .. ',' .. plan.x else '-') else 'human'
             line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', if p.dizzy > 0 then 'D' else '', who)
@@ -380,59 +400,20 @@ local function stepPlaying(self: Game)
         end
         print(line)
     end
-    if eev.flip then
-        play(self, 'bump')
+    for _, i in ev.killed do
+        onDeath(self, i)
     end
-    if eev.entered then
-        play(self, 'pipe') -- only the walk into a bottom pipe, the top pipes stay quiet
-    end
-    if eev.killed > 0 then
-        killPlayer(self, eev.killed)
+    -- the last death ends the round once the body has fallen off the screen
+    if self.lastKilled > 0 then
+        if self.players[self.lastKilled].body.y > Players.GONE_Y then
+            local alive = Players.alive(self.players)
+            endRound(self, if #alive == 1 then CHARACTERS[alive[1]] else 'none')
+        end
         return
     end
-    if eev.kick then
-        play(self, 'kick')
-        play(self, 'coin')
-        for _, who in eev.kicks do
-            self.coins[who] += 1
-        end
-        if self.coins[1] + self.coins[2] == 4 then
-            Enemies.markLast(self.enemies)
-        end
-    end
-    if bit32.band(self.debug, 3) ~= 0 and self.world.frame == 30 then
-        if bit32.band(self.debug, 2) ~= 0 then
-            eev.ender = true
-        else
-            eev.fireball = true
-        end
-    end
-    if eev.fireball or eev.ender then
-        -- level with a random player, like Vs_Random picking the y
-        local target = self.players[self.world.frame % 2 + 1]
-        if eev.ender then
-            Fireballs.spawnEnder(self.fireballs, self.enemies.spawnCnt2, target.body.y)
-        else
-            Fireballs.spawnHorz(self.fireballs, self.enemies.spawnCnt2, target.body.y)
-        end
-        play(self, 'fireball')
-    end
-    local fev = Fireballs.update(self.fireballs, self.world, self.players, self.world.frame)
-    ensureFireballViews(self)
-    if fev.killed > 0 then
-        killPlayer(self, fev.killed)
-        return
-    end
-
-    -- a dying player ends the round once they have fallen off the screen
-    for i, p in self.players do
-        if p.state == Players.STATE_DYING and p.body.y > Stage.HEIGHT + 16 then
-            endRound(self, if i == 1 then 'luigi' else 'mario')
-            return
-        end
-    end
-    if self.coins[1] + self.coins[2] >= 5 then
-        endRound(self, if self.coins[1] >= self.coins[2] then 'mario' else 'luigi')
+    if Sim.total(self.round) >= Sim.COINS_TO_WIN then
+        local leader = Sim.leader(self.round)
+        endRound(self, if leader > 0 then CHARACTERS[leader] else 'none')
     end
 end
 
@@ -454,7 +435,7 @@ local function backToTitle(self: Game)
     for _, p in self.players do
         Players.reset(p)
     end
-    self.coins = { 0, 0 }
+    Sim.resetScore(self.round)
     Menu.rearm(self.menu)
 end
 
@@ -477,12 +458,15 @@ local function stepTitle(self: Game)
     if ev.locked then
         play(self, 'jump')
     end
-    if ev.unlocked or ev.refused then
+    if ev.unlocked or ev.refused or ev.toggled then
         play(self, 'bump')
     end
     if ev.launch then
+        -- each card: a human's slot, the cpu, or nobody
         for i, p in self.players do
-            Players.setController(p, Menu.controllerFor(self.menu, i))
+            local role = Menu.roleFor(self.menu, i)
+            Players.setController(p, if type(role) == 'number' then role else nil)
+            self.off[i] = role == 'off'
         end
         startRound(self)
     end
@@ -555,9 +539,9 @@ local function ensureReady(self: Game)
     self.sfx = Sfx.load(context)
     self.blockImage = context:image('block')
     buildPipeMask(self.pipeMask)
-    for i = 1, 2 do
+    for i = 1, #self.players do
         local pvm = Data.Player.new()
-        pvm.character.value = if i == 1 then 'mario' else 'luigi'
+        pvm.character.value = CHARACTERS[i]
         self.playerVm[i] = pvm
         self.playerInst[i] = self.playerArtboard:instance(pvm)
     end
@@ -714,7 +698,7 @@ function draw(self: Game, renderer: Renderer)
     end
     for i, p in self.players do
         local inst = self.playerInst[i]
-        if inst ~= nil then
+        if inst ~= nil and p.state ~= Players.STATE_OFF then
             drawWrapped(renderer, inst, p.body.x, p.body.y, p.dir < 0)
         end
     end
@@ -751,6 +735,16 @@ function gamepadEvent(self: Game, event: GamepadEvent)
 end
 
 return function(context: Context): Layout<Game>
+    local world = World.new()
+    local enemies = Enemies.new()
+    local fireballs = Fireballs.new()
+    local players: { Players.Player } = {}
+    local brains: { Npc.Brain } = {}
+    for i = 1, #Menu.CARDS do
+        players[i] = Players.new(i)
+        brains[i] = Npc.new(i)
+    end
+    local round = Sim.live(world, enemies, fireballs, players)
     return {
         playerArtboard = late(),
         spinyArtboard = late(),
@@ -778,22 +772,24 @@ return function(context: Context): Layout<Game>
         stage = 1,
         seed = 7,
         stageForced = false,
-        menu = Menu.new(2),
-        brains = { Npc.new(1), Npc.new(2) },
+        menu = Menu.new(Input.SLOTS),
+        brains = brains,
         ready = false,
         context = nil,
         vm = nil,
         sfx = nil,
         input = Input.new(),
-        world = World.new(),
-        players = { Players.new(1), Players.new(2) },
+        world = world,
+        players = players,
         playerInst = {},
         playerVm = {},
-        enemies = Enemies.new(),
+        enemies = enemies,
         enemyViews = {},
-        fireballs = Fireballs.new(),
-        bumpCooldown = 0,
-        coins = { 0, 0 },
+        fireballs = fireballs,
+        round = round,
+        coins = round.coins,
+        off = { false, false, false, false },
+        lastKilled = 0,
         phase = 'title',
         winner = 'none',
         overFrames = 0,

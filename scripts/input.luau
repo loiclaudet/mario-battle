@@ -84,7 +84,19 @@ local function emptyIntent(): Intent
     return { left = false, right = false, up = false, down = false, jump = false, run = false, start = false }
 end
 
--- intent for player 1 or 2 this frame
+Input.SLOTS = 4
+
+-- the keyboard set a slot falls back on: the slots past the pads take the sets in order
+local function keySet(s: State, slot: number): { [string]: number }?
+    return Input.KEYS[slot - #s.pads]
+end
+
+-- does anything drive this slot: a pad, or a free keyboard set
+function Input.present(s: State, slot: number): boolean
+    return s.pads[slot] ~= nil or keySet(s, slot) ~= nil
+end
+
+-- intent for a slot this frame: its pad, else its keyboard set, else nothing
 function Input.intent(s: State, player: number): Intent
     local out = emptyIntent()
     local padId = s.pads[player]
@@ -101,7 +113,10 @@ function Input.intent(s: State, player: number): Intent
         out.start = pad.start
         return out
     end
-    local keys = Input.KEYS[player]
+    local keys = keySet(s, player)
+    if keys == nil then
+        return out
+    end
     out.left = s.held[keys.left] == true
     out.right = s.held[keys.right] == true
     out.up = s.held[keys.up] == true

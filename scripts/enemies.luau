@@ -59,20 +59,24 @@ export type State = {
     spawnCnt2: number,
     tooLongCnt: number,
     count: number, -- enemies spawned so far this round
+    quota: number, -- how many the round spawns: five, plus one per coin a dead player gave back
     nextIsLast: boolean,
     style: number,
     random: number,
 }
 
--- entered: an enemy walked into a bottom pipe this frame (the pipe sound)
-export type Events = { flip: boolean, kick: boolean, coin: number, kicks: { number }, killed: number, fireball: boolean, ender: boolean, entered: boolean }
+Enemies.QUOTA = 5
+
+-- entered: an enemy walked into a bottom pipe this frame (the pipe sound). killed lists every player touched by
+-- a live enemy this frame, kicks every kicker
+export type Events = { flip: boolean, kick: boolean, coin: number, kicks: { number }, killed: { number }, fireball: boolean, ender: boolean, entered: boolean }
 
 local function noEvents(): Events
-    return { flip = false, kick = false, coin = 0, kicks = {}, killed = 0, fireball = false, ender = false, entered = false }
+    return { flip = false, kick = false, coin = 0, kicks = {}, killed = {}, fireball = false, ender = false, entered = false }
 end
 
 function Enemies.new(): State
-    return { list = {}, spawnCnt = 0, spawnCnt2 = 0, tooLongCnt = 0, count = 0, nextIsLast = false, style = 0, random = 1 }
+    return { list = {}, spawnCnt = 0, spawnCnt2 = 0, tooLongCnt = 0, count = 0, quota = Enemies.QUOTA, nextIsLast = false, style = 0, random = 1 }
 end
 
 function Enemies.reset(s: State, style: number)
@@ -81,8 +85,15 @@ function Enemies.reset(s: State, style: number)
     s.spawnCnt2 = 0
     s.tooLongCnt = 0
     s.count = 0
+    s.quota = Enemies.QUOTA
     s.nextIsLast = false
     s.style = style
+end
+
+-- a dead player's coins come back as enemies: the round spawns that many more, the last mark waits again
+function Enemies.refund(s: State, n: number)
+    s.quota += n
+    s.nextIsLast = false
 end
 
 -- Vs_Randomize stand-in: a small lcg, only used to pick a top pipe when recycling
@@ -97,11 +108,11 @@ local function spawnVx(dir: number, fast: boolean): number
 end
 
 local function spawn(s: State): Enemy
-    local kind = SETS[s.style + 1][s.count + 1]
+    local kind = SETS[s.style + 1][s.count % 5 + 1] -- past the five, the set repeats
     local side = s.count % 2 -- 0 left pipe walking right, 1 right pipe walking left
     local dir = if side == 0 then 1 else -1
     s.count += 1
-    local last = s.count == 5 and s.nextIsLast
+    local last = s.count == s.quota and s.nextIsLast
     local e: Enemy = {
         slot = s.count,
         kind = kind,
@@ -146,7 +157,7 @@ function Enemies.spawner(s: State, halted: boolean, ev: Events)
             return
         end
     end
-    if s.count < 5 and s.spawnCnt == 0 then
+    if s.count < s.quota and s.spawnCnt == 0 then
         spawn(s)
     end
 end
@@ -419,7 +430,7 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
             continue
         end
         if e.state == Enemies.STATE_NORMAL then
-            ev.killed = i
+            table.insert(ev.killed, i)
             e.animCnt = 0x20
             e.dir = if p.body.x >= e.body.x then 1 else -1
             return
@@ -436,11 +447,11 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
     end
 end
 
--- the fourth coin flags the survivor as last and gives it a speed grade
+-- the fourth coin flags the survivors as last and gives each a speed grade, once
 function Enemies.markLast(s: State)
     s.nextIsLast = true
     for _, e in s.list do
-        if e.state ~= Enemies.STATE_DYING then
+        if e.state ~= Enemies.STATE_DYING and not e.last then
             e.body.vx = Physics.fasterVx(e.body.vx)
             e.last = true
         end

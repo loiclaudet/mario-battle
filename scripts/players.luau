@@ -9,6 +9,8 @@ local Players = {}
 
 Players.STATE_NORMAL = 1
 Players.STATE_DYING = 2
+Players.STATE_OFF = 3 -- not in this round: never updated, drawn or touched
+Players.GONE_Y = 240 + 16 -- a dying body past this has left the screen
 Players.WALK_RATE = { 0x10, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xE0 } -- Vs_WalkCntRate by |vx| / 4
 Players.KICK_FRAMES = 0x0C
 Players.BUMP_COOLDOWN = 8
@@ -94,6 +96,28 @@ function Players.stun(p: Player, kickDir: number)
     p.body.vx = Physics.STUN_VX * kickDir
 end
 
+-- the players still in the round and alive
+function Players.alive(players: { Player }): { number }
+    local out: { number } = {}
+    for i, p in players do
+        if p.state == Players.STATE_NORMAL then
+            table.insert(out, i)
+        end
+    end
+    return out
+end
+
+-- the players in the round, alive or dying
+function Players.active(players: { Player }): number
+    local n = 0
+    for _, p in players do
+        if p.state ~= Players.STATE_OFF then
+            n += 1
+        end
+    end
+    return n
+end
+
 function Players.kill(p: Player)
     p.state = Players.STATE_DYING
     p.body.vy = Physics.DEATH_VY
@@ -140,11 +164,17 @@ end
 function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     local ev = noEvents()
     local b = p.body
+    if p.state == Players.STATE_OFF then
+        return ev
+    end
     if p.halt > 0 then
         p.halt -= 1
         return ev
     end
     if p.state == Players.STATE_DYING then
+        if b.y > Players.GONE_Y then
+            return ev -- off the screen, nothing more to fall through
+        end
         Physics.applyY(b)
         if b.vy < Physics.TERMINAL_VY then
             b.vy = math.min(b.vy + Physics.DEATH_GRAVITY, Physics.TERMINAL_VY)

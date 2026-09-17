@@ -13,11 +13,15 @@ export type Slot = {
     locked: number, -- 0, or the card this slot is locked on
     prev: Input.Intent, -- last frame, for edge detection
 }
-export type State = { slots: { Slot } }
-export type Events = { moved: boolean, locked: boolean, unlocked: boolean, refused: boolean, launch: boolean }
+-- off: the cards nobody plays this round (neither a human nor the cpu). the run button on an unlocked card
+-- toggles it; at least two cards stay on
+export type State = { slots: { Slot }, off: { boolean } }
+export type Events = { moved: boolean, locked: boolean, unlocked: boolean, refused: boolean, launch: boolean, toggled: boolean }
+export type Role = 'cpu' | 'off' | number -- who plays a card: the cpu, nobody, or the input slot locked on it
 export type SlotView = { cursor: Rect, marker: { x: number, y: number } }
 
-Menu.CARDS = { 'mario', 'luigi' } -- card index = player index
+Menu.CARDS = { 'mario', 'luigi', 'wario', 'waluigi' } -- card index = player index
+Menu.MIN_ON = 2
 Menu.START = #Menu.CARDS + 1
 -- four card places, 60 wide with 4 px gaps, as drawn by scene/components/menu.rml (tools/gen_ui_rml.py)
 local CARD_RECTS: { Rect } = { { x = 4, y = 80, w = 60, h = 80 }, { x = 68, y = 80, w = 60, h = 80 }, { x = 132, y = 80, w = 60, h = 80 }, { x = 196, y = 80, w = 60, h = 80 } }
@@ -35,12 +39,35 @@ end
 
 -- slot i starts on card i, nothing locked
 function Menu.new(slots: number): State
-    local m: State = { slots = {} }
+    local m: State = { slots = {}, off = {} }
     for i = 1, slots do
         local card = (i - 1) % #Menu.CARDS + 1
         m.slots[i] = { focus = card, card = card, locked = 0, prev = copyIntent(Input.NONE) }
     end
+    for card = 1, #Menu.CARDS do
+        m.off[card] = false
+    end
     return m
+end
+
+-- who plays a card once the round starts
+function Menu.roleFor(m: State, card: number): Role
+    local slot = Menu.controllerFor(m, card)
+    if slot ~= nil then
+        return slot
+    end
+    return if m.off[card] then 'off' else 'cpu'
+end
+
+-- how many cards are in the round
+function Menu.onCount(m: State): number
+    local n = 0
+    for card = 1, #Menu.CARDS do
+        if Menu.roleFor(m, card) ~= 'off' then
+            n += 1
+        end
+    end
+    return n
 end
 
 -- the slot locked on a card, nil when the card goes to an npc
@@ -59,7 +86,7 @@ end
 
 -- one frame: every slot reads its intent, presses count on the edge
 function Menu.update(m: State, intents: { Input.Intent }): Events
-    local ev: Events = { moved = false, locked = false, unlocked = false, refused = false, launch = false }
+    local ev: Events = { moved = false, locked = false, unlocked = false, refused = false, launch = false, toggled = false }
     for i, s in m.slots do
         local intent = intents[i] or Input.NONE
         local prev = s.prev
@@ -68,6 +95,7 @@ function Menu.update(m: State, intents: { Input.Intent }): Events
         local up = intent.up and not prev.up
         local down = intent.down and not prev.down
         local jump = intent.jump and not prev.jump
+        local run = intent.run and not prev.run
         local start = intent.start and not prev.start
         if start then
             ev.launch = true
@@ -99,8 +127,19 @@ function Menu.update(m: State, intents: { Input.Intent }): Events
                     ev.refused = true
                 else
                     s.locked = s.focus
+                    m.off[s.focus] = false -- taking a card turns it on
                     s.focus = Menu.START
                     ev.locked = true
+                end
+            elseif run then
+                -- an unlocked card goes cpu / off, while at least two cards stay on
+                if Menu.isLocked(m, s.focus) then
+                    ev.refused = true
+                elseif not m.off[s.focus] and Menu.onCount(m) <= Menu.MIN_ON then
+                    ev.refused = true
+                else
+                    m.off[s.focus] = not m.off[s.focus]
+                    ev.toggled = true
                 end
             end
         end
@@ -116,6 +155,7 @@ function Menu.rearm(m: State)
         s.focus = Menu.START
         s.prev.jump = true
         s.prev.start = true
+        s.prev.run = true
     end
 end
 

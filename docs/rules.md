@@ -9,18 +9,25 @@ units: 60 frames per second, velocities in 1/16 px per frame (raw), positions in
 
 ## controls
 
-| player | gamepad (first pad = p1, second = p2) | keyboard fallback |
-|---|---|---|
-| p1 | dpad or left stick, B jump, Y run, plus start (nintendo layout) | W A S D, G jump, F run, enter start |
-| p2 | same on the second pad | arrows, K jump, L run, space start |
+four input slots. the pads take the slots in the order they connect; the two keyboard sets fill the slots after
+them (no pad: keyboard set 1 is slot 1 and set 2 is slot 2; one pad: it is slot 1, the sets are slots 2 and 3).
+a slot with nothing behind it has no cursor.
 
-the title is a start menu in the smb3 style: a card per brother, START below, one cursor per slot (p1 white,
-p2 blue, each with its 1P or 2P marker). left and right move between the cards, down goes to START, up comes
-back. jump on a card locks that brother (the marker stays on it and the brother hops), jump on your own card
-unlocks it, a card the other player took refuses. jump on START, or the start button anywhere, launches. a
-brother nobody locked is played by the cpu (see the npc section), under the same rules as you. start pauses a
-round with a human in it and ends a cpu vs cpu demo. after a round the menu returns with the locks kept and
-the cursors on START, so a jump replays. play with `rive . --fit=contain`.
+| device | controls |
+|---|---|
+| a pad | dpad or left stick, B jump, Y run, plus start (nintendo layout) |
+| keyboard set 1 | W A S D, G jump, F run, enter start |
+| keyboard set 2 | arrows, K jump, L run, space start |
+
+the title is a start menu in the smb3 style: a card per character (mario, luigi, wario, waluigi), START below,
+one cursor per slot (white, blue, yellow, purple, each with its 1P..4P marker). left and right move between the
+cards, down goes to START, up comes back. jump on a card locks that character (the marker stays on it and the
+character hops), jump on your own card unlocks it, a card another player took refuses. the run button on a free
+card turns it off and on again (OFF under the name: nobody plays it; CPU: the cpu does), with at least two cards
+on; taking an off card turns it on. jump on START, or the start button anywhere, launches with every card that
+is on: the locked ones for their players, the rest for the cpu (see the npc section), under the same rules as
+you. start pauses a round with a human in it and ends a cpu only demo. after a round the menu returns with the
+locks and the off cards kept and the cursors on START, so a jump replays. play with `rive . --fit=contain`.
 `Input.PAD_LAYOUT` in `scripts/input.luau` is `nintendo` (jump on the east slot, run on the north slot, which is
 B and Y on a switch pro controller); set it to `xbox` for south jump / west run. F1 toggles the collision box
 overlay (`--data=debug=4` headless).
@@ -143,10 +150,18 @@ where those contact rows put them; the sheet had them bottom aligned.
 
 ## round
 
-five coins exist, one per kicked enemy, and two enemies kicked in the same frame are two coins (the kick event
-lists its kickers, a single flag once lost one and left the round unfinishable). the round ends when the two counts reach five (most coins wins, mario on
-a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the menu
-returns with the next style, the locks kept.
+a free for all for up to four: five coins exist, one per kicked enemy, and two enemies kicked in the same
+frame are two coins (the rom's counter only grows by one there, and the second kick in a frame is a case it never
+meets). the round ends when the coins reach five: most coins wins, a tie going to the tied player whose count
+came first (`Sim.leader`); or when one player is left alive. a player who dies falls off the screen and the
+round goes on around the body when two or more others are alive: their coins are lost and that many enemies
+come back out of the top pipes (the spawn quota rises by the count, the last mark is forgotten until the total
+is four again, the enemy sets repeat past the fifth). the fourth coin on the board marks the survivors as last,
+once each. a death with one other player alive halts everything, and the round is theirs once the body has
+fallen off. the result holds 128 frames (`Vs_TimeToExit`) then the menu returns with the next style, the locks
+and the off cards kept. mario and luigi start on the floor at x 64 and 176, wario and waluigi on the lower
+ledges above the bottom pipes at 8 and 232, every start facing the middle. `scripts/sim.luau` is the one round
+step: the game plays it on its live state and the cpu on a clone, so the rules cannot drift between them.
 
 ## npc (scripts/npc.luau, scripts/nav.luau, scripts/sim.luau)
 
