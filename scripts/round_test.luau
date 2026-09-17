@@ -133,6 +133,20 @@ return function(): Tests
                 r.players[4].state = Players.STATE_DYING
                 expect(#Sim.contenders(r)).is(1) -- player 1 alone can still win, player 2 is the target
             end)
+            test.case('a target walks through a downed enemy without kicking it', function(expect)
+                local r = round()
+                local p = r.players[2]
+                Players.makeBlue(p)
+                p.invincible = 0
+                r.coins[2] = 1
+                table.insert(r.s.list, spiny(9, p.body.x + 4, 192, 0, true))
+                for _ = 1, 6 do
+                    Sim.step(r, none(4))
+                end
+                expect(r.coins[2]).is(1)
+                expect(r.s.list[1].state).is(Enemies.STATE_FLIPPED)
+                expect(p.side).is(false)
+            end)
             test.case('a hit from under rights a blue player on his side, and the same bounce does not lay him back down', function(expect)
                 local r = round()
                 local p = r.players[2]

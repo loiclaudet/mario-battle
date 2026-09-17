@@ -7,18 +7,6 @@
         <LayoutComponentStyle name="HudSlot Style" id="10:101"/>
         <Node name="Slot" id="10:102">
             <DataBindContext sourcePathIds="9:800-9:812" propertyKey="18" id="10:103"/>
-            <Image assetId="8:39357" originX="0" originY="0" opacity="0" name="mario" id="10:200">
-                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:710" id="10:230"/>
-            </Image>
-            <Image assetId="8:30507" originX="0" originY="0" opacity="0" name="luigi" id="10:201">
-                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:711" id="10:231"/>
-            </Image>
-            <Image assetId="8:21591" originX="0" originY="0" opacity="0" name="wario" id="10:202">
-                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:712" id="10:232"/>
-            </Image>
-            <Image assetId="8:18619" originX="0" originY="0" opacity="0" name="waluigi" id="10:203">
-                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:713" id="10:233"/>
-            </Image>
             <Image assetId="8:54180" x="16" y="4" originX="0" originY="0" opacity="0" name="coin_blue_1" id="10:240">
                 <DataBindContext sourcePathIds="9:800-9:813" propertyKey="18" converterId="10:700" id="10:250"/>
             </Image>
@@ -48,6 +36,18 @@
             </Image>
             <Image assetId="8:60009" x="48" y="4" originX="0" originY="0" opacity="0" name="coin_5" id="10:214">
                 <DataBindContext sourcePathIds="9:800-9:811" propertyKey="18" converterId="10:704" id="10:224"/>
+            </Image>
+            <Image assetId="8:39357" originX="0" originY="0" opacity="0" name="mario" id="10:200">
+                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:710" id="10:230"/>
+            </Image>
+            <Image assetId="8:30507" originX="0" originY="0" opacity="0" name="luigi" id="10:201">
+                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:711" id="10:231"/>
+            </Image>
+            <Image assetId="8:21591" originX="0" originY="0" opacity="0" name="wario" id="10:202">
+                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:712" id="10:232"/>
+            </Image>
+            <Image assetId="8:18619" originX="0" originY="0" opacity="0" name="waluigi" id="10:203">
+                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:713" id="10:233"/>
             </Image>
         </Node>
         <StateMachine name="Binds" id="10:500">

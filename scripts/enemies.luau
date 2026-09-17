@@ -430,6 +430,9 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
             e.dir = if p.body.x >= e.body.x then 1 else -1
             return
         end
+        if p.blue then
+            continue -- the target takes no coins: a downed enemy is nothing to him
+        end
         -- kicked off. two enemies can go in one frame, so every kick is listed with its kicker
         ev.kick = true
         ev.coin = i
