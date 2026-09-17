@@ -4,9 +4,10 @@
 -- forward, so what it foresees is exactly what happens. the free for all rules live here: a kick is a coin,
 -- the fourth coin marks the survivors, the fireballs aim at an alive player in turn, every alive pair can bump,
 -- and the target: a player touched by an enemy or a flame while holding coins, with two or more others alive,
--- turns blue instead of dying (a blue player touched again lands on his side; touched there by another player
--- he is beaten, his coins go to the beater and he falls off); and when the five coins are out with a tie at
--- the top, the player with coins below the leaders turns blue, so that whoever beats him takes his coins.
+-- turns blue instead of dying, with a grace period nothing touches him in (a blue player touched after it lands
+-- on his side; touched there by another player he is beaten, his coins go to the beater and he falls off); and
+-- when the five coins are out with a tie at the top, the player with coins below the leaders turns blue the
+-- same way: sudden death, whoever beats him takes his coins and may take the round.
 local World = require('scripts/world')
 local Players = require('scripts/players')
 local Enemies = require('scripts/enemies')
@@ -32,6 +33,7 @@ export type Snap = {
 export type Events = {
     killed: { number },
     turnedBlue: { number },
+    suddenDeath: boolean, -- a target was made because the five coins are out and the top is shared
     beaten: { { number } },
     sided: { number },
     coin: number,
@@ -115,7 +117,7 @@ function Sim.leader(snap: Snap): number
 end
 
 local function noEvents(n: number): Events
-    local ev: Events = { killed = {}, turnedBlue = {}, beaten = {}, sided = {}, coin = 0, kicks = {}, flips = 0, righted = 0, flip = false, pow = false, entered = false, fireball = false, jumped = {}, bumped = {}, stunned = {} }
+    local ev: Events = { killed = {}, turnedBlue = {}, suddenDeath = false, beaten = {}, sided = {}, coin = 0, kicks = {}, flips = 0, righted = 0, flip = false, pow = false, entered = false, fireball = false, jumped = {}, bumped = {}, stunned = {} }
     for i = 1, n do
         ev.jumped[i] = false
         ev.bumped[i] = false
@@ -146,9 +148,8 @@ local function touched(snap: Snap, i: number, ev: Events)
         return
     end
     if snap.coins[i] > 0 and #Players.alive(snap.players) >= 3 then
-        Players.makeBlue(p)
+        Players.makeBlue(p) -- standing, and untouchable for a while
         table.insert(ev.turnedBlue, i)
-        layDown(p, i, ev)
         return
     end
     Players.kill(p)
@@ -200,6 +201,7 @@ local function showdown(snap: Snap, ev: Events)
     if odd > 0 then
         Players.makeBlue(snap.players[odd])
         table.insert(ev.turnedBlue, odd)
+        ev.suddenDeath = true
     end
 end
 
@@ -227,9 +229,9 @@ function Sim.step(snap: Snap, intents: { Input.Intent }, debugSpawn: number?): E
     -- by whoever touches him
     for i = 1, #players do
         for j = i + 1, #players do
-            if players[i].state == Players.STATE_NORMAL and players[j].state == Players.STATE_NORMAL then
+            if Players.touchable(players[i]) and Players.touchable(players[j]) then
                 local a, b = players[i], players[j]
-                if (a.side or b.side) and a.halt == 0 and b.halt == 0 then
+                if a.side or b.side then
                     local ax, ay, aw, ah = World.playerBox(a.body)
                     local bx, by, bw, bh = World.playerBox(b.body)
                     if World.boxOverlap(ax, ay, aw, ah, bx, by, bw, bh) then

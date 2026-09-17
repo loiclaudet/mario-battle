@@ -44,7 +44,7 @@ end
 return function(): Tests
     return function(test: Tester)
         test.group('round', function()
-            test.case('touched with coins and three alive, a player turns blue and lands on his side instead of dying', function(expect)
+            test.case('touched with coins and three alive, a player turns blue with a grace period instead of dying', function(expect)
                 local r = round()
                 r.coins[2] = 2
                 r.coinSeq[2] = 2
@@ -52,21 +52,33 @@ return function(): Tests
                 table.insert(r.s.list, spiny(9, r.players[2].body.x + 4, 192, 0, false)) -- a live spiny on player 2
                 local ev = Sim.step(r, none(4))
                 expect(ev.turnedBlue[1]).is(2)
-                expect(ev.sided[1]).is(2)
+                expect(ev.suddenDeath).is(false)
+                expect(#ev.sided).is(0)
                 expect(#ev.killed).is(0)
                 local p = r.players[2]
                 expect(p.blue).is(true)
-                expect(p.side).is(true)
+                expect(p.side).is(false)
+                expect(p.invincible).is(Players.INVINCIBLE_FRAMES)
                 expect(p.state).is(Players.STATE_NORMAL)
                 expect(r.coins[2]).is(2)
-                -- on his side he does not answer the pad, and a further touch does nothing more
-                for _ = 1, 80 do
-                    local right: Input.Intent = { left = false, right = true, up = false, down = false, jump = false, run = true, start = false }
+                -- the spiny walks through him for the whole grace, and he keeps steering
+                local right: Input.Intent = { left = false, right = true, up = false, down = false, jump = false, run = true, start = false }
+                r.s.list[1].body.vx = 0
+                for _ = 1, Players.INVINCIBLE_FRAMES do
                     local intents = none(4)
                     intents[2] = right
-                    Sim.step(r, intents)
+                    local e2 = Sim.step(r, intents)
+                    expect(#e2.sided).is(0)
                 end
-                expect(p.body.vx).is(0)
+                expect(p.side).is(false)
+                expect(p.body.x > r.players[2].body.x - 1).is(true)
+                expect(p.invincible).is(0)
+                -- after it a touch lays him down
+                r.s.list[1].body.x = p.body.x + 4
+                r.s.list[1].body.y = p.body.y
+                for _ = 1, 3 do
+                    Sim.step(r, none(4))
+                end
                 expect(p.side).is(true)
             end)
             test.case('touched without coins a player dies and falls off, the round goes on', function(expect)
@@ -92,6 +104,7 @@ return function(): Tests
                 local p = r.players[2]
                 r.coins[2] = 2
                 Players.makeBlue(p)
+                p.invincible = 0
                 p.side = true
                 r.players[1].body.x = p.body.x - 8 -- player 1 overlaps him
                 local ev = Sim.step(r, none(4))
@@ -119,14 +132,20 @@ return function(): Tests
                 r.coinSeq = { 3, 4, 0, 0 }
                 r.kickCount = 4
                 table.insert(r.s.list, spiny(9, r.players[3].body.x + 4, 192, 0, true)) -- player 3 takes the fifth
+                local sudden = false
                 for _ = 1, 4 do
-                    Sim.step(r, none(4))
+                    if Sim.step(r, none(4)).suddenDeath then
+                        sudden = true
+                    end
                 end
+                expect(sudden).is(true)
                 expect(Sim.total(r)).is(5)
                 expect(Sim.leader(r)).is(0) -- a tie, no winner yet
                 expect(r.players[3].blue).is(true)
                 expect(r.players[3].side).is(false)
+                expect(r.players[3].invincible).greaterThan(250)
                 -- player 4 (no coins) lays him down and takes the coin: the tie stands, player 4 is blue now
+                r.players[3].invincible = 0
                 r.players[3].side = true
                 r.players[4].body.x = r.players[3].body.x - 8
                 Sim.step(r, none(4))
@@ -134,6 +153,7 @@ return function(): Tests
                 expect(r.players[4].blue).is(true)
                 expect(Sim.leader(r)).is(0)
                 -- player 1 beats player 4: three coins, alone at the top
+                r.players[4].invincible = 0
                 r.players[4].side = true
                 r.players[1].body.x = r.players[4].body.x - 8
                 Sim.step(r, none(4))

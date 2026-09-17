@@ -38,7 +38,10 @@ export type Player = {
     -- under his feet rights him; touched there by another player he is beaten and his coins change hands
     blue: boolean,
     side: boolean,
+    invincible: number, -- frames left of the grace a new target gets: enemies, flames and players pass through him
 }
+
+Players.INVINCIBLE_FRAMES = 275 -- the theme's intro at 1.2x (5.5 s / 1.2 at 60 fps)
 
 export type Events = { jump: boolean, bump: boolean, stun: boolean, pow: boolean, kick: boolean }
 
@@ -61,6 +64,7 @@ function Players.new(index: number): Player
         prevJump = true, -- the press that started the round must not also jump
         blue = false,
         side = false,
+        invincible = 0,
     }
     return p
 end
@@ -92,6 +96,7 @@ function Players.reset(p: Player)
     p.prevJump = fresh.prevJump
     p.blue = fresh.blue
     p.side = fresh.side
+    p.invincible = fresh.invincible
 end
 
 local function noEvents(): Events
@@ -108,9 +113,15 @@ function Players.stun(p: Player, kickDir: number)
     end
 end
 
--- the target: from now on a stun lays him on his side
+-- the target: from now on a stun lays him on his side. he starts with a grace period nothing can touch him in
 function Players.makeBlue(p: Player)
     p.blue = true
+    p.invincible = Players.INVINCIBLE_FRAMES
+end
+
+-- can enemies, flames and other players touch this player right now
+function Players.touchable(p: Player): boolean
+    return p.state == Players.STATE_NORMAL and p.halt == 0 and p.invincible == 0
 end
 
 -- a hit from under a blue player on his side stands him up again
@@ -193,6 +204,9 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     if p.halt > 0 then
         p.halt -= 1
         return ev
+    end
+    if p.invincible > 0 then
+        p.invincible -= 1
     end
     if p.state == Players.STATE_DYING then
         if b.y > Players.GONE_Y then

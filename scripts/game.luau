@@ -17,6 +17,8 @@ type Character = 'mario' | 'luigi' | 'wario' | 'waluigi'
 -- a coin on its way from where it was won to the hud, eased in over FLIGHT_FRAMES
 type Flight = { x0: number, y0: number, x1: number, y1: number, t: number, player: number }
 local FLIGHT_FRAMES = 30
+local FLIGHT_GAP = 6 -- frames between two coins leaving the same spot
+local BLINK = 4 -- frames per half of an invincible player's blink
 local BLUE_FRAMES = 40
 local HUD_X = { 8, 68, 128, 188 } -- the hud slots, as placed in game.rml
 local COIN_X, COIN_Y = 16, 4 -- the first coin fill inside a slot, 8 px apart
@@ -370,13 +372,13 @@ local function flightsFor(self: Game, player: number): number
     return n
 end
 
--- a coin leaves (x, y) for the next free fill of the player's hud slot
-local function launchCoin(self: Game, player: number, x: number, y: number)
+-- a coin leaves (x, y) for the next free fill of the player's hud slot, after `delay` frames
+local function launchCoin(self: Game, player: number, x: number, y: number, delay: number?)
     local slot = self.shownCoins[player] + flightsFor(self, player) + 1
     if slot > 5 then
         return
     end
-    table.insert(self.flights, { x0 = x + 4, y0 = y + 4, x1 = HUD_X[player] + COIN_X + 8 * (slot - 1), y1 = COIN_Y, t = 0, player = player })
+    table.insert(self.flights, { x0 = x + 4, y0 = y + 4, x1 = HUD_X[player] + COIN_X + 8 * (slot - 1), y1 = COIN_Y, t = -(delay or 0), player = player })
 end
 
 -- the coins fly with an ease in, and light their fill on arrival; the blue fades settle towards the state
@@ -445,15 +447,15 @@ local function stepPlaying(self: Game)
         play(self, 'coin')
         local victim, by = hit[1], hit[2]
         local n = self.coins[by] - self.shownCoins[by] - flightsFor(self, by)
-        for _ = 1, n do
-            launchCoin(self, by, self.players[victim].body.x, self.players[victim].body.y)
+        for k = 1, n do
+            launchCoin(self, by, self.players[victim].body.x, self.players[victim].body.y, (k - 1) * FLIGHT_GAP) -- one after the other
         end
     end
     for _, i in ev.sided do
         play(self, 'bump')
     end
-    if #ev.turnedBlue > 0 then
-        -- the target: the theme starts over, faster
+    if ev.suddenDeath then
+        -- the last coins can end the round on the target: the theme starts over, faster
         local bank = self.sfx
         if bank ~= nil then
             Sfx.startMusic(bank, true)
@@ -788,7 +790,8 @@ function draw(self: Game, renderer: Renderer)
     end
     for i, p in self.players do
         local inst = self.playerInst[i]
-        if inst ~= nil and p.state ~= Players.STATE_OFF then
+        local blink = p.invincible > 0 and (self.world.frame // BLINK) % 2 == 1
+        if inst ~= nil and p.state ~= Players.STATE_OFF and not blink then
             drawWrapped(renderer, inst, p.body.x, p.body.y, p.dir < 0, p.side)
         end
     end
@@ -800,6 +803,9 @@ function draw(self: Game, renderer: Renderer)
     local coin = self.coinImage
     if coin ~= nil then
         for _, f in self.flights do
+            if f.t < 0 then
+                continue -- not left yet
+            end
             local k = f.t / FLIGHT_FRAMES
             k = k * k -- ease in
             renderer:save()

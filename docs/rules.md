@@ -157,14 +157,16 @@ meets). every coin won flies from where it was won to its hud slot with an ease 
 fill lights. the round ends when one player has the most coins with the five out, or when one player is left
 alive. a touch by a live enemy or a flame kills a player without coins, or with one other player alive: he
 falls off the screen and the round goes on around the body, or ends when nobody else is left. holding coins
-with two or more others alive he becomes **the target** instead: he wears the last enemy's blue (a 40 frame
-fade that does not stop play, and the theme starts over at 1.2x), lands on his side (a quarter turn) and keeps
-his coins. on his side he has no control until a hit from under his feet (a bumped block or the pow) stands
-him up; standing, any stun (a bumped block, the pow, a stomp) or another touch by an enemy or a flame lays him
-down again. another player touching him on his side beats him: the coins change hands (no kick sound, they fly
-to the beater's hud) and he falls off. with the five coins out and two players sharing the top, the player with
-coins below them becomes the target (no stun, standing): a leader beating him takes his coins and wins; a
-player below beating him takes the coins and becomes the target in turn, until someone stands alone at the top.
+with two or more others alive he becomes **the target** instead, standing where he was and keeping his coins:
+he wears the last enemy's blue (a 40 frame fade that does not stop play) and gets 275 frames of grace (the
+theme's intro at 1.2x) in which he blinks and nothing but the blocks touches him, no enemy, flame or player,
+and no sound plays. after it, any stun (a bumped block, the pow, a stomp) or a touch by an enemy or a flame
+lays him on his side (a quarter turn) with no control until a hit from under his feet (a bumped block or the
+pow) stands him up. another player touching him on his side beats him: the coins change hands (no kick sound;
+they fly to the beater's hud one after the other) and he falls off. with the five coins out and two players
+sharing the top, the player with coins below them becomes the target the same way, and that is sudden death:
+the theme starts over at 1.2x, a leader beating him takes his coins and wins, a player below beating him takes
+the coins and becomes the target in turn, until someone stands alone at the top.
 the result holds 128 frames (`Vs_TimeToExit`) then the menu returns with the next style, the locks and the off
 cards kept. mario and luigi start on the floor at x 64 and 176, wario and waluigi on the lower ledges above the
 bottom pipes at 8 and 232, every start facing the middle. `scripts/sim.luau` is the one round step: the game

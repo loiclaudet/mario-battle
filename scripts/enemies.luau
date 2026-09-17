@@ -417,7 +417,7 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
     end
     local ex, ey, ew, eh = World.enemyBox(e.body)
     for i, p in players do
-        if p.state ~= Players.STATE_NORMAL or p.halt > 0 then
+        if not Players.touchable(p) then
             continue
         end
         local px, py, pw, ph = World.playerBox(p.body)
