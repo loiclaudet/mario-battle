@@ -508,6 +508,15 @@ local function stepPlaying(self: Game)
     for _, i in ev.killed do
         onDeath(self, i)
     end
+    -- a lone contender beside targets wins at once, however that came about
+    if self.lastKilled == 0 then
+        local alive = Players.alive(self.players)
+        local contenders = Sim.contenders(self.round)
+        if #contenders == 1 and #alive > 1 then
+            endRound(self, CHARACTERS[contenders[1]])
+            return
+        end
+    end
     -- the last death ends the round once the body has fallen off the screen
     if self.lastKilled > 0 then
         if self.players[self.lastKilled].body.y > Players.GONE_Y then

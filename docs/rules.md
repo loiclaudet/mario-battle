@@ -158,6 +158,8 @@ fill lights. the round ends when one player has the most coins with the five out
 alive, or when one player is left who is not a target (a target cannot win, so the last other player standing
 takes the round at once). a touch by a live enemy or a flame kills a player without coins, or with one other
 player alive: he falls off the screen and the round goes on around the body, or ends when nobody else is left.
+the same touch kills when a target already stands and only two contenders are left, since a second target
+would leave one contender, who wins on the spot.
 a dead player's hud goes out with him; a target's coins show in blue. a target takes no coins: he may still flip
 walkers from below, but a downed enemy is nothing to him, he walks through it. holding coins
 with two or more others alive he becomes **the target** instead, standing where he was and keeping his coins:

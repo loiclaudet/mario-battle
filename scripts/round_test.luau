@@ -89,6 +89,17 @@ return function(): Tests
                 expect(r.players[2].state).is(Players.STATE_DYING)
                 expect(#Players.alive(r.players)).is(3)
             end)
+            test.case('with a target already standing and two others, a touch on one of them kills instead of a second target', function(expect)
+                local r = round()
+                r.players[4].state = Players.STATE_OFF
+                r.coins = { 1, 1, 1, 0 }
+                Players.makeBlue(r.players[3])
+                table.insert(r.s.list, spiny(9, r.players[2].body.x + 4, 192, 0, false))
+                local ev = Sim.step(r, none(4))
+                expect(#ev.turnedBlue).is(0)
+                expect(ev.killed[1]).is(2)
+                expect(#Sim.contenders(r)).is(1) -- player 1 alone: the game ends the round for him
+            end)
             test.case('with one other alive a touch kills, coins or not', function(expect)
                 local r = round()
                 r.players[3].state = Players.STATE_OFF

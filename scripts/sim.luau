@@ -94,17 +94,6 @@ function Sim.clone(snap: Snap): Snap
     return copy(snap)
 end
 
--- the players still able to win: alive and not the target
-function Sim.contenders(snap: Snap): { number }
-    local out: { number } = {}
-    for i, p in snap.players do
-        if p.state == Players.STATE_NORMAL and not p.blue then
-            table.insert(out, i)
-        end
-    end
-    return out
-end
-
 function Sim.total(snap: Snap): number
     local total = 0
     for _, c in snap.coins do
@@ -127,6 +116,17 @@ function Sim.leader(snap: Snap): number
     return if tie then 0 else best
 end
 
+-- the players still able to win: alive and not the target
+function Sim.contenders(snap: Snap): { number }
+    local out: { number } = {}
+    for i, p in snap.players do
+        if p.state == Players.STATE_NORMAL and not p.blue then
+            table.insert(out, i)
+        end
+    end
+    return out
+end
+
 local function noEvents(n: number): Events
     local ev: Events = { killed = {}, turnedBlue = {}, suddenDeath = false, beaten = {}, sided = {}, coin = 0, kicks = {}, flips = 0, righted = 0, flip = false, pow = false, entered = false, fireball = false, jumped = {}, bumped = {}, stunned = {} }
     for i = 1, n do
@@ -147,8 +147,8 @@ local function layDown(p: Players.Player, i: number, ev: Events)
     table.insert(ev.sided, i)
 end
 
--- a live enemy or a flame touched a player. holding coins with two or more others alive he turns blue (and
--- lands on his side) instead of dying; blue already, he lands on his side; else he dies and falls off
+-- a live enemy or a flame touched a player. holding coins with two or more other contenders alive he turns
+-- blue instead of dying; blue already, he lands on his side; else he dies and falls off
 local function touched(snap: Snap, i: number, ev: Events)
     local p = snap.players[i]
     if p.state ~= Players.STATE_NORMAL then
@@ -158,7 +158,9 @@ local function touched(snap: Snap, i: number, ev: Events)
         layDown(p, i, ev)
         return
     end
-    if snap.coins[i] > 0 and #Players.alive(snap.players) >= 3 then
+    -- the target only makes sense with two or more others still able to win: a target beside a lone
+    -- contender would hand him the round, so the touch kills instead and the contender wins
+    if snap.coins[i] > 0 and #Sim.contenders(snap) >= 3 then
         Players.makeBlue(p) -- standing, and untouchable for a while
         table.insert(ev.turnedBlue, i)
         return
