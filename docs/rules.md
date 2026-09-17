@@ -20,8 +20,8 @@ a slot with nothing behind it has no cursor.
 | keyboard set 2 | arrows, K jump, L run, space start |
 
 the title is a start menu in the smb3 style: a card per character in a 2x2 grid (mario and luigi above,
-wario and waluigi below), START under them, one cursor per slot (the same dashed rect for all, in red, green,
-yellow and purple with the dash pattern shifted 2 px per slot, each with its 1P..4P marker). left, right, up
+wario and waluigi below), START under them, one cursor per slot (the same dashed rect for all, in white, grey,
+cyan and tan, none of the characters' colours with the dash pattern shifted 2 px per slot, each with its 1P..4P marker). left, right, up
 and down move between the cards, down from the bottom row goes to START, up comes back. jump on a card locks that character (the marker stays on it and the
 character hops), jump on your own card unlocks it, a card another player took refuses. the run button on a free
 card turns it off and on again (OFF under the name: nobody plays it; CPU: the cpu does), with at least two cards
@@ -233,6 +233,11 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   are dizzy on the same row (25); otherwise wait at the safest post (either side of the pow on the floor, the
   middle of each ledge on the lowest row, or under the first block the next enemy steps on while nothing has
   spawned yet).
+- the target: a blue cpu chases nothing any more. every replan it picks the spot the nearest rival needs
+  longest to reach (the posts and three points on every row, its own trip and any live enemy near the spot
+  counted against it) and goes there, and its look ahead counts every frame within 64 px of a rival against
+  it, landing on its side as a loss. a blue rival is a coin purse: one on his side is walked into like a
+  kick, one standing is worth a bump.
 - the hunt: when no coin left can put it ahead (you have 3, or 2 to its 0 with... in short, the arithmetic says
   the coins are lost), it stops kicking and flipping altogether, since a coin only ends the round and a downed
   enemy is a harmless one. it goes for your death instead: bump the block under you (90, 140 with a live enemy

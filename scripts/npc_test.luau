@@ -293,6 +293,29 @@ return function(): Tests
                 expect(powHits).is(1)
                 expect(theirs).is(0)
             end)
+            test.case('the target keeps away from a rival coming at it', function(expect)
+                local sc = scene(120)
+                local p = sc.players[1]
+                Players.makeBlue(p)
+                p.invincible = 0
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 60 -- on the floor, walking at the cpu from the left
+                h.body.y = 192
+                h.onGround = true
+                local right: Input.Intent = { left = false, right = true, up = false, down = false, jump = false, run = false, start = false }
+                local closest = 1000
+                for _ = 1, 180 do
+                    World.update(sc.w)
+                    Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, right)
+                    Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    local d = math.abs((p.body.x - h.body.x + 128) % 256 - 128) + math.abs(p.body.y - h.body.y)
+                    closest = math.min(closest, d)
+                end
+                expect(closest).greaterThan(24) -- never within reach
+                expect(p.side).is(false)
+            end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))

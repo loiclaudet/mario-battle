@@ -14,7 +14,7 @@ local Sim = require('scripts/sim')
 
 local Npc = {}
 
-export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'shadow' | 'post' | 'escape'
+export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'shadow' | 'post' | 'escape' | 'flee'
 -- row and x: where to stand. slot: the enemy slot or player index it is about. targetRow: the row the target walks.
 -- block: for a deny, the block bumped when it is not the downed enemy's own but one on the rival's way to it
 export type Plan = { kind: Kind, row: number, x: number, slot: number, targetRow: number, block: number? }
@@ -487,6 +487,49 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
     local row = brain.lastRow
     local bestScore = -math.huge
     local best: Plan? = nil
+    if p.blue then
+        -- the target: no more coins to chase, only the other players to keep away from. the spot the
+        -- nearest rival needs longest to reach, our own trip counted against it
+        local spots: { { number } } = {}
+        for _, post in Npc.POSTS do
+            table.insert(spots, post)
+        end
+        for r, seg in Nav.ROWS do
+            local width = seg.x1 - seg.x0
+            for k = 1, 3 do
+                table.insert(spots, { r, Stage.wrapX(seg.x0 + width * k // 4) })
+            end
+        end
+        for _, spot in spots do
+            local sr, sx = spot[1], spot[2]
+            local theirs = math.huge
+            for i, h in players do
+                if i ~= brain.index and h.state == Players.STATE_NORMAL and h.halt == 0 then
+                    local hr, hx, ht = playerLanding(h)
+                    if hr ~= nil then
+                        theirs = math.min(theirs, ht + Nav.travel(hr, hx, sr, sx))
+                    end
+                end
+            end
+            if theirs == math.huge then
+                theirs = Npc.FAR
+            end
+            local mine = Nav.travel(row, b.x, sr, sx)
+            if mine < Npc.FAR then
+                local danger_ = danger(sr, sx, mine + Npc.DANGER_FRAMES, enemies, fireballs, 0)
+                local score = math.min(theirs, Npc.FAR) / 2 - mine / 4 - Npc.DANGER_COST * danger_
+                if score > bestScore then
+                    bestScore = score
+                    local flee: Plan = { kind = 'flee', row = sr, x = sx, slot = 0, targetRow = sr }
+                    best = flee
+                end
+            end
+        end
+        local fled = best
+        if fled ~= nil then
+            return fled
+        end
+    end
     -- every spot is worth less the longer the trip, the more live enemies it will have around it, and
     -- when a rival gets there first (a kick is theirs then, a flip is a gift to them)
     local function offer(value: number, plan: Plan)
@@ -736,6 +779,8 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
         return er ~= nil and rivalTravel(brain, players, er, e.body.x) < Npc.TRAP_FAR
     elseif plan.kind == 'escape' then
         return brain.lastRow ~= plan.row
+    elseif plan.kind == 'flee' then
+        return true
     elseif plan.kind == 'bump' then
         local h = players[plan.slot]
         return h.state == Players.STATE_NORMAL and (not h.onGround or Nav.rowAt(h.body.x, h.body.y) == plan.targetRow)
@@ -1135,6 +1180,23 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
         for _, i in ev.turnedBlue do
             score += if i == me then -300 else 60 -- the target is a walking coin purse, and it is bad to be one
         end
+        for _, i in ev.sided do
+            if i == me then
+                score -= 500 -- on our side we are a coin purse on the floor
+            end
+        end
+        if snap.players[me].blue then
+            -- the target keeps its distance from every rival
+            local mine_ = snap.players[me].body
+            for i, h in snap.players do
+                if i ~= me and h.state == Players.STATE_NORMAL then
+                    local d = math.abs(wrapDx(mine_.x, h.body.x)) + math.abs(mine_.y - h.body.y)
+                    if d < 64 then
+                        score -= (64 - d) / 8
+                    end
+                end
+            end
+        end
         for _, hit in ev.beaten do
             if hit[2] == me then
                 score += 200 * (brain.coins[hit[1]] or 1)
@@ -1213,7 +1275,7 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
             end
         end
         local mine = coins[brain.index] or 0
-        local hunt = mine + (Npc.COINS_TO_WIN - total) < best
+        local hunt = mine + (Npc.COINS_TO_WIN - total) < best and not p.blue
         if hunt ~= brain.hunt then
             brain.hunt = hunt
             brain.plan = nil

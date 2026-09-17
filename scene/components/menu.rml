@@ -11,7 +11,7 @@
             <DataBindContext sourcePathIds="9:900-9:910-9:715" propertyKey="14" id="11:1002"/>
             <DataBindContext sourcePathIds="9:900-9:910-9:716" propertyKey="18" id="11:1003"/>
             <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1004">
-                <Fill name="Fill" id="11:1006"><SolidColor colorValue="FFE04030" name="Colour" id="11:1007"/></Fill>
+                <Fill name="Fill" id="11:1006"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1007"/></Fill>
             </TextStylePaint>
             <TextValueRun styleId="11:1004" text="1P" name="Run" id="11:1008"/>
         </Text>
@@ -20,7 +20,7 @@
             <DataBindContext sourcePathIds="9:900-9:911-9:715" propertyKey="14" id="11:1010"/>
             <DataBindContext sourcePathIds="9:900-9:911-9:716" propertyKey="18" id="11:1011"/>
             <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1012">
-                <Fill name="Fill" id="11:1014"><SolidColor colorValue="FF30C820" name="Colour" id="11:1015"/></Fill>
+                <Fill name="Fill" id="11:1014"><SolidColor colorValue="FFA8A8A8" name="Colour" id="11:1015"/></Fill>
             </TextStylePaint>
             <TextValueRun styleId="11:1012" text="2P" name="Run" id="11:1016"/>
         </Text>
@@ -29,7 +29,7 @@
             <DataBindContext sourcePathIds="9:900-9:912-9:715" propertyKey="14" id="11:1018"/>
             <DataBindContext sourcePathIds="9:900-9:912-9:716" propertyKey="18" id="11:1019"/>
             <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1020">
-                <Fill name="Fill" id="11:1022"><SolidColor colorValue="FFF8B800" name="Colour" id="11:1023"/></Fill>
+                <Fill name="Fill" id="11:1022"><SolidColor colorValue="FF40D8E8" name="Colour" id="11:1023"/></Fill>
             </TextStylePaint>
             <TextValueRun styleId="11:1020" text="3P" name="Run" id="11:1024"/>
         </Text>
@@ -38,7 +38,7 @@
             <DataBindContext sourcePathIds="9:900-9:913-9:715" propertyKey="14" id="11:1026"/>
             <DataBindContext sourcePathIds="9:900-9:913-9:716" propertyKey="18" id="11:1027"/>
             <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1028">
-                <Fill name="Fill" id="11:1030"><SolidColor colorValue="FFC060FF" name="Colour" id="11:1031"/></Fill>
+                <Fill name="Fill" id="11:1030"><SolidColor colorValue="FFD0A070" name="Colour" id="11:1031"/></Fill>
             </TextStylePaint>
             <TextValueRun styleId="11:1028" text="4P" name="Run" id="11:1032"/>
         </Text>
@@ -51,7 +51,7 @@
                 <DataBindContext sourcePathIds="9:900-9:910-9:713" propertyKey="21" id="11:1039"/>
             </Rectangle>
             <Stroke thickness="1" name="Stroke" id="11:1040">
-                <SolidColor colorValue="FFE04030" name="Colour" id="11:1041"/>
+                <SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1041"/>
                 <DashPath offset="0" name="Dashes" id="11:1042">
                     <Dash length="4" name="On" id="11:1043"/>
                     <Dash length="4" name="Off" id="11:1044"/>
@@ -67,7 +67,7 @@
                 <DataBindContext sourcePathIds="9:900-9:911-9:713" propertyKey="21" id="11:1051"/>
             </Rectangle>
             <Stroke thickness="1" name="Stroke" id="11:1052">
-                <SolidColor colorValue="FF30C820" name="Colour" id="11:1053"/>
+                <SolidColor colorValue="FFA8A8A8" name="Colour" id="11:1053"/>
                 <DashPath offset="2" name="Dashes" id="11:1054">
                     <Dash length="4" name="On" id="11:1055"/>
                     <Dash length="4" name="Off" id="11:1056"/>
@@ -83,7 +83,7 @@
                 <DataBindContext sourcePathIds="9:900-9:912-9:713" propertyKey="21" id="11:1063"/>
             </Rectangle>
             <Stroke thickness="1" name="Stroke" id="11:1064">
-                <SolidColor colorValue="FFF8B800" name="Colour" id="11:1065"/>
+                <SolidColor colorValue="FF40D8E8" name="Colour" id="11:1065"/>
                 <DashPath offset="4" name="Dashes" id="11:1066">
                     <Dash length="4" name="On" id="11:1067"/>
                     <Dash length="4" name="Off" id="11:1068"/>
@@ -99,7 +99,7 @@
                 <DataBindContext sourcePathIds="9:900-9:913-9:713" propertyKey="21" id="11:1075"/>
             </Rectangle>
             <Stroke thickness="1" name="Stroke" id="11:1076">
-                <SolidColor colorValue="FFC060FF" name="Colour" id="11:1077"/>
+                <SolidColor colorValue="FFD0A070" name="Colour" id="11:1077"/>
                 <DashPath offset="6" name="Dashes" id="11:1078">
                     <Dash length="4" name="On" id="11:1079"/>
                     <Dash length="4" name="Off" id="11:1080"/>
@@ -129,7 +129,7 @@
             </Text>
             <Shape x="64.5" y="28.5" name="Frame" id="11:1097">
                 <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1098"/>
-                <Stroke thickness="1" name="Stroke" id="11:1099"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1100"/></Stroke>
+                <Stroke thickness="1" name="Stroke" id="11:1099"><SolidColor colorValue="FFFFFFFF" name="White" id="11:1100"/></Stroke>
             </Shape>
         </Node>
         <Node name="CardLuigi" id="11:1101">
@@ -155,7 +155,7 @@
             </Text>
             <Shape x="132.5" y="28.5" name="Frame" id="11:1117">
                 <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1118"/>
-                <Stroke thickness="1" name="Stroke" id="11:1119"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1120"/></Stroke>
+                <Stroke thickness="1" name="Stroke" id="11:1119"><SolidColor colorValue="FFFFFFFF" name="White" id="11:1120"/></Stroke>
             </Shape>
         </Node>
         <Node name="CardWario" id="11:1121">
@@ -181,7 +181,7 @@
             </Text>
             <Shape x="64.5" y="124.5" name="Frame" id="11:1137">
                 <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1138"/>
-                <Stroke thickness="1" name="Stroke" id="11:1139"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1140"/></Stroke>
+                <Stroke thickness="1" name="Stroke" id="11:1139"><SolidColor colorValue="FFFFFFFF" name="White" id="11:1140"/></Stroke>
             </Shape>
         </Node>
         <Node name="CardWaluigi" id="11:1141">
@@ -207,7 +207,7 @@
             </Text>
             <Shape x="132.5" y="124.5" name="Frame" id="11:1157">
                 <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1158"/>
-                <Stroke thickness="1" name="Stroke" id="11:1159"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1160"/></Stroke>
+                <Stroke thickness="1" name="Stroke" id="11:1159"><SolidColor colorValue="FFFFFFFF" name="White" id="11:1160"/></Stroke>
             </Shape>
         </Node>
         <Text x="128" y="4" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleText" id="11:1162">

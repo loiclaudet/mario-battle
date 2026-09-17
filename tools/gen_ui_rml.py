@@ -14,8 +14,8 @@ ids = json.load(open(os.path.join(root, 'tools/asset_ids.json')))
 def I(n): return f'8:{ids["image/" + n]}'
 FONT = '8:850'
 CHARS = ['mario', 'luigi', 'wario', 'waluigi']
-MARKER_COLOURS = ['FFE04030', 'FF30C820', 'FFF8B800', 'FFC060FF'] # mario red, luigi green, wario yellow, waluigi purple
-ORANGE = 'FFEA9E22'
+MARKER_COLOURS = ['FFFFFFFF', 'FFA8A8A8', 'FF40D8E8', 'FFD0A070'] # per slot: white, grey, cyan, tan, none of the characters' colours
+FRAME = 'FFFFFFFF' # the card frames
 
 class Ids:
     def __init__(self, prefix, start):
@@ -189,7 +189,7 @@ def menu():
             '>\n                        <DataBindContext sourcePathIds="9:900-' + MODE_PROPS[i] + '" propertyKey="268" id="' + nid() + '"/>\n                    </TextValueRun>\n            </Text>'))
         L.append(f'            <Shape x="{x + 0.5}" y="{CARD_Y + 0.5}" name="Frame" id="{nid()}">')
         L.append(f'                <Rectangle originX="0" originY="0" width="{CARD_W - 1}" height="{CARD_H - 1}" name="Path" id="{nid()}"/>')
-        L.append(f'                <Stroke thickness="1" name="Stroke" id="{nid()}"><SolidColor colorValue="{ORANGE}" name="Orange" id="{nid()}"/></Stroke>')
+        L.append(f'                <Stroke thickness="1" name="Stroke" id="{nid()}"><SolidColor colorValue="{FRAME}" name="White" id="{nid()}"/></Stroke>')
         L.append('            </Shape>')
         L.append('        </Node>')
     L.append(text(128, 4, 'MARIO BATTLE', 'FFFFFFFF', 'TitleText', nid))

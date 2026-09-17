@@ -393,6 +393,11 @@ local function stepEffects(self: Game)
         end
     end
     self.flights = kept
+    for i, c in self.coins do
+        if self.shownCoins[i] > c then
+            self.shownCoins[i] = c -- beaten or dead: the fills go out
+        end
+    end
     for i, p in self.players do
         local target = if p.blue then 1 else 0
         local v = self.blueFade[i] or 0
@@ -476,7 +481,8 @@ local function stepPlaying(self: Game)
             end
             local plan = self.brains[i].plan
             local who = if Players.isNpc(p) then (if plan then plan.kind .. '>' .. plan.row .. ',' .. plan.x else '-') else 'human'
-            line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', if p.dizzy > 0 then 'D' else '', who)
+            local flags = (if p.dizzy > 0 then 'D' else '') .. (if p.blue then 'B' else '') .. (if p.side then 'S' else '') .. (if p.invincible > 0 then 'I' else '')
+            line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', flags, who)
         end
         for _, e in self.enemies.list do
             line ..= string.format(' | %s%d %d,%d s%d', e.kind, e.slot, e.body.x, e.body.y, e.state)
