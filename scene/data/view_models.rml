@@ -170,10 +170,12 @@
         <ViewModelPropertyNumber name="pauseShown" id="9:960"/>
         <ViewModelPropertyNumber name="winnerShown" id="9:961"/>
         <ViewModelPropertyString name="winnerText" id="9:962"/>
+        <ViewModelPropertyNumber name="menuShown" id="9:963"/>
         <ViewModelInstance exports="true" name="Default" id="9:951">
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:960" id="9:970"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:961" id="9:971"/>
             <ViewModelInstanceString propertyValue="" viewModelPropertyId="9:962" id="9:972"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:963" id="9:973"/>
         </ViewModelInstance>
     </ViewModel>
 

@@ -67,3 +67,10 @@ for y in range(coin.size[1]):
             px[x, y] = BLUES.get(c, (100, 176, 255, 255))
 coin.save(os.path.join(stage, 'hud_coin_blue.png'))
 print('hud_coin_blue written')
+
+# each character's letter alone (the 7x8 cell of its box) for the initial drawn over a target's head
+for name in ('m', 'l', 'w', 'wl'):
+    box = Image.open(os.path.join(stage, f'hud_{name}.png')).convert('RGBA')
+    letter = box.crop((CELL[0], CELL[1], CELL[0] + 7, CELL[1] + 8))
+    letter.save(os.path.join(stage, f'letter_{name}.png'))
+print('letters written: m l w wl (7x8)')

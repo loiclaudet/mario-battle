@@ -121,6 +121,21 @@ def overlay():
          '    <Artboard isComponent="true" defaultStateMachineId="12:500" viewModelId="9:950" viewModelInstanceId="9:951" width="256" height="240" styleId="12:101" x="0" y="-420" name="Overlay" id="12:100">',
          '        <LayoutComponentStyle name="Overlay Style" id="12:101"/>']
     L.append(text(128, 124, 'PAUSE', 'FFFFFFFF', 'PauseText', nid, bind('9:950-9:960', 18, nid)))
+    # the way back once the round is over: a MENU button under the winner's line, shown by menuShown
+    L.append(f'        <Node name="MenuButton" id="{nid()}">')
+    L.append(bind('9:950-9:963', 18, nid).rstrip('\n'))
+    L.append('    ' + text(128, 152, 'MENU', 'FFFFFFFF', 'MenuText', nid).replace('\n', '\n    '))
+    L.append(f'            <Shape x="104.5" y="148.5" name="MenuFrame" id="{nid()}">')
+    L.append(f'                <Rectangle originX="0" originY="0" width="47" height="15" name="Path" id="{nid()}"/>')
+    L.append(f'                <Stroke thickness="1" name="Stroke" id="{nid()}">')
+    L.append(f'                    <SolidColor colorValue="FFFFFFFF" name="White" id="{nid()}"/>')
+    L.append(f'                    <DashPath name="Dashes" id="{nid()}">')
+    L.append(f'                        <Dash length="{DASH}" name="On" id="{nid()}"/>')
+    L.append(f'                        <Dash length="{DASH}" name="Off" id="{nid()}"/>')
+    L.append('                    </DashPath>')
+    L.append('                </Stroke>')
+    L.append('            </Shape>')
+    L.append('        </Node>')
     L.append(text(128, 124, 'WINS', 'FFFFFFFF', 'WinnerText', nid, bind('9:950-9:961', 18, nid)).replace(
         'name="Run" id=', 'name="Run" id=').replace('<TextValueRun', '<TextValueRun').replace(
         '            <TextValueRun styleId', '            <TextValueRun styleId'))

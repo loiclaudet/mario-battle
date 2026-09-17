@@ -170,8 +170,11 @@ and he falls off. with the five coins out and two players
 sharing the top, the player with coins below them becomes the target the same way, and that is sudden death:
 the theme starts over at 1.2x, a leader beating him takes his coins and wins, a player below beating him takes
 the coins and becomes the target in turn, until someone stands alone at the top.
-the result holds 128 frames (`Vs_TimeToExit`) then the menu returns with the next style, the locks and the off
-cards kept. mario and luigi start on the floor at x 64 and 176, wario and waluigi on the lower ledges above the
+the result stays up, the winner's line over the arena and the huds as they ended, and after 128 frames
+(`Vs_TimeToExit`) a MENU button appears: jump or start on any slot returns to the menu with the next style, the
+locks and the off cards kept (a cpu only round returns on its own). two targets at once can happen (a tie's
+target plus a player caught holding coins): each wears his initial over his head then, and whoever beats
+either takes that one's coins. mario and luigi start on the floor at x 64 and 176, wario and waluigi on the lower ledges above the
 bottom pipes at 8 and 232, every start facing the middle. `scripts/sim.luau` is the one round step: the game
 plays it on its live state and the cpu on a clone, so the rules cannot drift between them.
 

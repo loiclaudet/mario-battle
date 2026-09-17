@@ -13,6 +13,10 @@
     <ImageAsset file="assets/stage/ledge_lr.png" samplerFilter="1" name="ledge_lr" id="8:56988"/>
     <ImageAsset file="assets/stage/ledge_ul.png" samplerFilter="1" name="ledge_ul" id="8:31191"/>
     <ImageAsset file="assets/stage/ledge_ur.png" samplerFilter="1" name="ledge_ur" id="8:35412"/>
+    <ImageAsset file="assets/stage/letter_l.png" samplerFilter="1" name="letter_l" id="8:53221"/>
+    <ImageAsset file="assets/stage/letter_m.png" samplerFilter="1" name="letter_m" id="8:59379"/>
+    <ImageAsset file="assets/stage/letter_w.png" samplerFilter="1" name="letter_w" id="8:35417"/>
+    <ImageAsset file="assets/stage/letter_wl.png" samplerFilter="1" name="letter_wl" id="8:36047"/>
     <ImageAsset file="assets/stage/pipe_bl.png" samplerFilter="1" name="pipe_bl" id="8:6166"/>
     <ImageAsset file="assets/stage/pipe_br.png" samplerFilter="1" name="pipe_br" id="8:5269"/>
     <ImageAsset file="assets/stage/pipe_tl.png" samplerFilter="1" name="pipe_tl" id="8:48161"/>

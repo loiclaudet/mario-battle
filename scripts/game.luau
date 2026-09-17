@@ -26,7 +26,8 @@ type Winner = 'none' | Character
 local CHARACTERS: { Character } = { 'mario', 'luigi', 'wario', 'waluigi' } -- card and player index to name
 
 local STEP = 1 / 60
-local OVER_FRAMES = 0x80 -- Vs_TimeToExit
+local OVER_FRAMES = 0x80 -- Vs_TimeToExit: the result holds this long before the MENU button appears
+local DEMO_OVER_FRAMES = 0x80 * 4 -- a cpu only round goes back on its own after this
 local HALT = 0xFF
 
 type EnemyView = { inst: Artboard<Data.Enemy>, vm: Data.Enemy }
@@ -84,6 +85,7 @@ type Game = {
     phase: Phase,
     winner: Winner,
     overFrames: number,
+    overArmed: boolean, -- the over screen takes a press only once every button has been let go
     style: number,
     debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender, 4 the boxes, 8 a round trace on the console
     paused: boolean,
@@ -91,6 +93,7 @@ type Game = {
     acc: number,
     blockImage: Image?,
     coinImage: Image?,
+    letterImages: { Image? }, -- each character's initial, drawn over a target's head when two are blue
     sampler: ImageSampler,
     black: Paint,
     path: Path,
@@ -169,6 +172,7 @@ local function pushVm(self: Game)
         overlay.pauseShown.value = if self.paused then 1 else 0
         overlay.winnerShown.value = if self.phase == 'over' and self.winner ~= 'none' then 1 else 0
         overlay.winnerText.value = string.upper(self.winner) .. ' WINS'
+        overlay.menuShown.value = if self.phase == 'over' and self.overFrames <= 0 then 1 else 0
     end
     -- the hud components: one box per player
     local huds: { Input<Data.HudSlot>? } = { self.hudSlot1, self.hudSlot2, self.hudSlot3, self.hudSlot4 }
@@ -320,6 +324,7 @@ local function endRound(self: Game, winner: Winner)
     self.phase = 'over'
     self.winner = winner
     self.overFrames = OVER_FRAMES
+    self.overArmed = false
     for _, p in self.players do
         if p.state == Players.STATE_NORMAL then
             p.halt = HALT
@@ -614,8 +619,23 @@ local function step(self: Game)
         Fireballs.update(self.fireballs, self.world, self.players, self.world.frame)
         stepEffects(self)
         self.overFrames -= 1
+        -- the result stays up: the winner's line, the huds as they ended. a jump or start on any slot goes back
+        -- to the menu once the MENU button is up and every button has been let go; a cpu only round goes
+        -- back on its own
         if self.overFrames <= 0 then
-            backToTitle(self)
+            local pressed = false
+            for i = 1, Input.SLOTS do
+                local it = Input.intent(self.input, i)
+                pressed = pressed or it.jump or it.start
+            end
+            if not pressed then
+                self.overArmed = true
+            elseif self.overArmed then
+                backToTitle(self)
+            end
+            if not hasHuman(self) and self.overFrames <= -DEMO_OVER_FRAMES then
+                backToTitle(self)
+            end
         end
     end
 end
@@ -647,6 +667,7 @@ local function ensureReady(self: Game)
     self.sfx = Sfx.load(context)
     self.blockImage = context:image('block')
     self.coinImage = context:image('hud_coin')
+    self.letterImages = { context:image('letter_m'), context:image('letter_l'), context:image('letter_w'), context:image('letter_wl') }
     buildPipeMask(self.pipeMask)
     for i = 1, #self.players do
         local pvm = Data.Player.new()
@@ -809,11 +830,27 @@ function draw(self: Game, renderer: Renderer)
             end
         end
     end
+    local blues = 0
+    for _, p in self.players do
+        if p.blue and p.state == Players.STATE_NORMAL then
+            blues += 1
+        end
+    end
     for i, p in self.players do
         local inst = self.playerInst[i]
         local blink = p.invincible > 0 and (self.world.frame // BLINK) % 2 == 1
         if inst ~= nil and p.state ~= Players.STATE_OFF and not blink then
             drawWrapped(renderer, inst, p.body.x, p.body.y, p.dir < 0, p.side)
+            if p.blue and blues >= 2 then
+                -- two targets look alike: the initial floats over each one's head
+                local letter = self.letterImages[i]
+                if letter ~= nil then
+                    renderer:save()
+                    renderer:transform(Mat2D.withTranslation(p.body.x + 4, p.body.y - 11))
+                    renderer:drawImage(letter, self.sampler, 'srcOver', 1)
+                    renderer:restore()
+                end
+            end
         end
     end
     if self.showBoxes then
@@ -932,6 +969,8 @@ return function(context: Context): Layout<Game>
         acc = 0,
         blockImage = nil,
         coinImage = nil,
+        letterImages = {},
+        overArmed = false,
         sampler = ImageSampler('clamp', 'clamp', 'nearest'),
         black = Paint.with({ color = Color.rgb(0, 0, 0) }),
         path = Path.new(),
