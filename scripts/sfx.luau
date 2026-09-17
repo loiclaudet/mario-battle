@@ -8,6 +8,9 @@ export type Bank = {
     -- music: the intro plays once, then the loop is scheduled back to back on the engine clock
     intro: AudioSource?,
     loop: AudioSource?,
+    introFast: AudioSource?, -- the same theme at 1.2x (tools/fast_music.py), from the moment a player turns blue
+    loopFast: AudioSource?,
+    fast: boolean, -- which take is playing
     playing: { AudioSound },
     nextLoopFrame: number, -- engine frame the next loop iteration starts at
     scheduled: number, -- how many loop iterations are queued past nextLoopFrame
@@ -20,9 +23,11 @@ Sfx.LOOP_SECONDS = 551250 / 44100
 Sfx.LEAD_FRAMES = 2205 -- schedule 50 ms ahead so the first play lands on a clean engine frame
 
 function Sfx.load(context: Context): Bank
-    local bank: Bank = { sources = {}, intro = nil, loop = nil, playing = {}, nextLoopFrame = 0, scheduled = 0 }
+    local bank: Bank = { sources = {}, intro = nil, loop = nil, introFast = nil, loopFast = nil, fast = false, playing = {}, nextLoopFrame = 0, scheduled = 0 }
     bank.intro = context:audio('battle_intro')
     bank.loop = context:audio('battle_loop')
+    bank.introFast = context:audio('battle_intro_fast')
+    bank.loopFast = context:audio('battle_loop_fast')
     if bank.intro == nil or bank.loop == nil then
         print('sfx: music assets missing')
     end
@@ -48,20 +53,30 @@ local function frames(seconds: number): number
     return math.floor(seconds * Audio.sampleRate() + 0.5)
 end
 
--- start the theme: intro now, first loop scheduled exactly at the intro's end
-function Sfx.startMusic(bank: Bank)
+Sfx.FAST = 1.2
+
+-- the loop's length in seconds for the take playing
+local function loopSeconds(bank: Bank): number
+    return if bank.fast then Sfx.LOOP_SECONDS / Sfx.FAST else Sfx.LOOP_SECONDS
+end
+
+-- start the theme: intro now, first loop scheduled exactly at the intro's end. fast is the 1.2x take
+function Sfx.startMusic(bank: Bank, fast: boolean?)
     Sfx.stopMusic(bank)
-    local intro, loop = bank.intro, bank.loop
+    bank.fast = fast == true
+    local intro: AudioSource? = if bank.fast then bank.introFast else bank.intro
+    local loop: AudioSource? = if bank.fast then bank.loopFast else bank.loop
     if intro == nil or loop == nil then
         return
     end
+    local introSeconds = if bank.fast then Sfx.INTRO_SECONDS / Sfx.FAST else Sfx.INTRO_SECONDS
     local t0 = Audio.timeFrame() + Sfx.LEAD_FRAMES
-    print(`music: engine {Audio.sampleRate()} Hz, intro {Sfx.INTRO_SECONDS} s then loop {Sfx.LOOP_SECONDS} s from frame {t0}`)
+    print(`music: engine {Audio.sampleRate()} Hz, intro {introSeconds} s then loop {loopSeconds(bank)} s from frame {t0}`)
     local a = Audio.playAtFrame(intro, t0)
     if a ~= nil then
         table.insert(bank.playing, a)
     end
-    bank.nextLoopFrame = t0 + frames(Sfx.INTRO_SECONDS)
+    bank.nextLoopFrame = t0 + frames(introSeconds)
     local b = Audio.playAtFrame(loop, bank.nextLoopFrame)
     if b ~= nil then
         table.insert(bank.playing, b)
@@ -71,11 +86,11 @@ end
 
 -- call every frame: keeps one loop iteration queued beyond the one that is playing, and forgets finished sounds
 function Sfx.updateMusic(bank: Bank)
-    local loop = bank.loop
+    local loop = if bank.fast then bank.loopFast else bank.loop
     if loop == nil or bank.scheduled == 0 then
         return
     end
-    local loopFrames = frames(Sfx.LOOP_SECONDS)
+    local loopFrames = frames(loopSeconds(bank))
     local now = Audio.timeFrame()
     -- the queued iteration starts at nextLoopFrame; once we are inside it, queue the following one
     if now >= bank.nextLoopFrame then

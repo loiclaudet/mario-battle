@@ -128,8 +128,13 @@ def overlay():
     L.append('</Rive>')
     return '\n'.join(L) + '\n'
 
-CARD_X = [4, 68, 132, 196]
-CARD_W, CARD_Y, CARD_H = 60, 80, 80
+# a 2x2 grid of 60x80 cards (mario, luigi / wario, waluigi), 8 px between columns, 16 between rows, START below
+CARD_X = [64, 132, 64, 132]
+CARD_Y_ROW = [28, 28, 124, 124]
+CARD_W, CARD_H = 60, 80
+START_Y = 216
+CURSOR_OUT = 4 # every cursor is the target's rect grown by this; the dashes tell them apart
+DASH = 4
 CURSOR_PROPS = ['9:910', '9:911', '9:912', '9:913']
 LOCK_PROPS = ['9:920', '9:921', '9:922', '9:923']
 MODE_PROPS = ['9:930', '9:931', '9:932', '9:933']
@@ -148,30 +153,38 @@ def menu():
     for i in range(4):
         cp = CURSOR_PROPS[i]
         binds = bind(f'9:900-{cp}-9:714', 13, nid) + bind(f'9:900-{cp}-9:715', 14, nid) + bind(f'9:900-{cp}-9:716', 18, nid)
-        L.append(text(CARD_X[i] + 22, 64, f'{i + 1}P', MARKER_COLOURS[i], f'Marker{i + 1}', nid, binds, origin_x='0'))
+        L.append(text(CARD_X[i] + 22, CARD_Y_ROW[i] - 16, f'{i + 1}P', MARKER_COLOURS[i], f'Marker{i + 1}', nid, binds, origin_x='0'))
     for i in range(4):
         cp = CURSOR_PROPS[i]
-        L.append(f'        <Shape x="{CARD_X[i] + 0.5}" y="{CARD_Y + 0.5}" name="Cursor{i + 1}" id="{nid()}">')
+        # one rect for every cursor, a 4 on 4 off dash, each slot's pattern shifted 2 px along
+        L.append(f'        <Shape x="{CARD_X[i] - CURSOR_OUT + 0.5}" y="{CARD_Y_ROW[i] - CURSOR_OUT + 0.5}" name="Cursor{i + 1}" id="{nid()}">')
         L.append(bind(f'9:900-{cp}-9:710', 13, nid).rstrip('\n'))
         L.append(bind(f'9:900-{cp}-9:711', 14, nid).rstrip('\n'))
         L.append(bind(f'9:900-{cp}-9:716', 18, nid).rstrip('\n'))
-        L.append(f'            <Rectangle originX="0" originY="0" width="{CARD_W - 1}" height="{CARD_H - 1}" name="Path" id="{nid()}">')
+        L.append(f'            <Rectangle originX="0" originY="0" width="{CARD_W + 2 * CURSOR_OUT - 1}" height="{CARD_H + 2 * CURSOR_OUT - 1}" name="Path" id="{nid()}">')
         L.append('    ' + bind(f'9:900-{cp}-9:712', 20, nid).rstrip('\n'))
         L.append('    ' + bind(f'9:900-{cp}-9:713', 21, nid).rstrip('\n'))
         L.append('            </Rectangle>')
-        L.append(f'            <Stroke thickness="1" name="Stroke" id="{nid()}"><SolidColor colorValue="{MARKER_COLOURS[i]}" name="Colour" id="{nid()}"/></Stroke>')
+        L.append(f'            <Stroke thickness="1" name="Stroke" id="{nid()}">')
+        L.append(f'                <SolidColor colorValue="{MARKER_COLOURS[i]}" name="Colour" id="{nid()}"/>')
+        L.append(f'                <DashPath offset="{2 * i}" name="Dashes" id="{nid()}">')
+        L.append(f'                    <Dash length="{DASH}" name="On" id="{nid()}"/>')
+        L.append(f'                    <Dash length="{DASH}" name="Off" id="{nid()}"/>')
+        L.append('                </DashPath>')
+        L.append('            </Stroke>')
         L.append('        </Shape>')
     for i, c in enumerate(CHARS):
         x = CARD_X[i]
+        CARD_Y = CARD_Y_ROW[i]
         L.append(f'        <Node name="Card{c.capitalize()}" id="{nid()}">')
-        L.append(f'            <Image assetId="{I(c + "_stand")}" x="{x + 22}" y="100" originX="0" originY="0" name="stand" id="{nid()}">')
+        L.append(f'            <Image assetId="{I(c + "_stand")}" x="{x + 22}" y="{CARD_Y + 20}" originX="0" originY="0" name="stand" id="{nid()}">')
         L.append('    ' + bind(f'9:900-{LOCK_PROPS[i]}', 18, nid, '11:700').rstrip('\n'))
         L.append('            </Image>')
-        L.append(f'            <Image assetId="{I(c + "_jump")}" x="{x + 22}" y="100" originX="0" originY="0" opacity="0" name="jump" id="{nid()}">')
+        L.append(f'            <Image assetId="{I(c + "_jump")}" x="{x + 22}" y="{CARD_Y + 20}" originX="0" originY="0" opacity="0" name="jump" id="{nid()}">')
         L.append('    ' + bind(f'9:900-{LOCK_PROPS[i]}', 18, nid).rstrip('\n'))
         L.append('            </Image>')
-        L.append('    ' + text(x + 30, 136, c.upper(), 'FFFFFFFF', 'Name', nid).replace('\n', '\n    '))
-        L.append('    ' + text(x + 30, 150, '', 'FFA0A0A0', 'Mode', nid).replace('\n', '\n    ').replace(
+        L.append('    ' + text(x + 30, CARD_Y + 56, c.upper(), 'FFFFFFFF', 'Name', nid).replace('\n', '\n    '))
+        L.append('    ' + text(x + 30, CARD_Y + 70, '', 'FFA0A0A0', 'Mode', nid).replace('\n', '\n    ').replace(
             'text="" name="Run" id="', 'text="" name="Run" id="').replace('/>\n            </Text>'.replace('\n', '\n    ') if False else '/>\n        </Text>'.replace('\n', '\n    '),
             '>\n                        <DataBindContext sourcePathIds="9:900-' + MODE_PROPS[i] + '" propertyKey="268" id="' + nid() + '"/>\n                    </TextValueRun>\n            </Text>'))
         L.append(f'            <Shape x="{x + 0.5}" y="{CARD_Y + 0.5}" name="Frame" id="{nid()}">')
@@ -179,8 +192,8 @@ def menu():
         L.append(f'                <Stroke thickness="1" name="Stroke" id="{nid()}"><SolidColor colorValue="{ORANGE}" name="Orange" id="{nid()}"/></Stroke>')
         L.append('            </Shape>')
         L.append('        </Node>')
-    L.append(text(128, 40, 'MARIO BATTLE', 'FFFFFFFF', 'TitleText', nid))
-    L.append(text(128, 184, 'START', 'FFFFFFFF', 'StartText', nid))
+    L.append(text(128, 4, 'MARIO BATTLE', 'FFFFFFFF', 'TitleText', nid))
+    L.append(text(128, START_Y + 4, 'START', 'FFFFFFFF', 'StartText', nid))
     L.append(empty_machine('11', nid))
     L.append('    </Artboard>')
     L.append('    <ComponentAsset artboardId="11:100" name="Menu" id="11:102"/>')

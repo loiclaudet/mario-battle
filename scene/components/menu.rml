@@ -6,7 +6,7 @@
          tools/gen_ui_rml.py, ids 11:xxx. card geometry must match Menu.CARD_RECTS -->
     <Artboard isComponent="true" defaultStateMachineId="11:500" viewModelId="9:900" viewModelInstanceId="9:901" width="256" height="240" styleId="11:101" x="0" y="-700" name="Menu" id="11:100">
         <LayoutComponentStyle name="Menu Style" id="11:101"/>
-        <Text x="26" y="64" sizingValue="autoWidth" originX="0" originY="0" name="Marker1" id="11:1005">
+        <Text x="86" y="12" sizingValue="autoWidth" originX="0" originY="0" name="Marker1" id="11:1005">
             <DataBindContext sourcePathIds="9:900-9:910-9:714" propertyKey="13" id="11:1001"/>
             <DataBindContext sourcePathIds="9:900-9:910-9:715" propertyKey="14" id="11:1002"/>
             <DataBindContext sourcePathIds="9:900-9:910-9:716" propertyKey="18" id="11:1003"/>
@@ -15,7 +15,7 @@
             </TextStylePaint>
             <TextValueRun styleId="11:1004" text="1P" name="Run" id="11:1008"/>
         </Text>
-        <Text x="90" y="64" sizingValue="autoWidth" originX="0" originY="0" name="Marker2" id="11:1013">
+        <Text x="154" y="12" sizingValue="autoWidth" originX="0" originY="0" name="Marker2" id="11:1013">
             <DataBindContext sourcePathIds="9:900-9:911-9:714" propertyKey="13" id="11:1009"/>
             <DataBindContext sourcePathIds="9:900-9:911-9:715" propertyKey="14" id="11:1010"/>
             <DataBindContext sourcePathIds="9:900-9:911-9:716" propertyKey="18" id="11:1011"/>
@@ -24,7 +24,7 @@
             </TextStylePaint>
             <TextValueRun styleId="11:1012" text="2P" name="Run" id="11:1016"/>
         </Text>
-        <Text x="154" y="64" sizingValue="autoWidth" originX="0" originY="0" name="Marker3" id="11:1021">
+        <Text x="86" y="108" sizingValue="autoWidth" originX="0" originY="0" name="Marker3" id="11:1021">
             <DataBindContext sourcePathIds="9:900-9:912-9:714" propertyKey="13" id="11:1017"/>
             <DataBindContext sourcePathIds="9:900-9:912-9:715" propertyKey="14" id="11:1018"/>
             <DataBindContext sourcePathIds="9:900-9:912-9:716" propertyKey="18" id="11:1019"/>
@@ -33,7 +33,7 @@
             </TextStylePaint>
             <TextValueRun styleId="11:1020" text="3P" name="Run" id="11:1024"/>
         </Text>
-        <Text x="218" y="64" sizingValue="autoWidth" originX="0" originY="0" name="Marker4" id="11:1029">
+        <Text x="154" y="108" sizingValue="autoWidth" originX="0" originY="0" name="Marker4" id="11:1029">
             <DataBindContext sourcePathIds="9:900-9:913-9:714" propertyKey="13" id="11:1025"/>
             <DataBindContext sourcePathIds="9:900-9:913-9:715" propertyKey="14" id="11:1026"/>
             <DataBindContext sourcePathIds="9:900-9:913-9:716" propertyKey="18" id="11:1027"/>
@@ -42,167 +42,191 @@
             </TextStylePaint>
             <TextValueRun styleId="11:1028" text="4P" name="Run" id="11:1032"/>
         </Text>
-        <Shape x="4.5" y="80.5" name="Cursor1" id="11:1033">
+        <Shape x="60.5" y="24.5" name="Cursor1" id="11:1033">
             <DataBindContext sourcePathIds="9:900-9:910-9:710" propertyKey="13" id="11:1034"/>
             <DataBindContext sourcePathIds="9:900-9:910-9:711" propertyKey="14" id="11:1035"/>
             <DataBindContext sourcePathIds="9:900-9:910-9:716" propertyKey="18" id="11:1036"/>
-            <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1037">
+            <Rectangle originX="0" originY="0" width="67" height="87" name="Path" id="11:1037">
                 <DataBindContext sourcePathIds="9:900-9:910-9:712" propertyKey="20" id="11:1038"/>
                 <DataBindContext sourcePathIds="9:900-9:910-9:713" propertyKey="21" id="11:1039"/>
             </Rectangle>
-            <Stroke thickness="1" name="Stroke" id="11:1040"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1041"/></Stroke>
+            <Stroke thickness="1" name="Stroke" id="11:1040">
+                <SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1041"/>
+                <DashPath offset="0" name="Dashes" id="11:1042">
+                    <Dash length="4" name="On" id="11:1043"/>
+                    <Dash length="4" name="Off" id="11:1044"/>
+                </DashPath>
+            </Stroke>
         </Shape>
-        <Shape x="68.5" y="80.5" name="Cursor2" id="11:1042">
-            <DataBindContext sourcePathIds="9:900-9:911-9:710" propertyKey="13" id="11:1043"/>
-            <DataBindContext sourcePathIds="9:900-9:911-9:711" propertyKey="14" id="11:1044"/>
-            <DataBindContext sourcePathIds="9:900-9:911-9:716" propertyKey="18" id="11:1045"/>
-            <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1046">
-                <DataBindContext sourcePathIds="9:900-9:911-9:712" propertyKey="20" id="11:1047"/>
-                <DataBindContext sourcePathIds="9:900-9:911-9:713" propertyKey="21" id="11:1048"/>
+        <Shape x="128.5" y="24.5" name="Cursor2" id="11:1045">
+            <DataBindContext sourcePathIds="9:900-9:911-9:710" propertyKey="13" id="11:1046"/>
+            <DataBindContext sourcePathIds="9:900-9:911-9:711" propertyKey="14" id="11:1047"/>
+            <DataBindContext sourcePathIds="9:900-9:911-9:716" propertyKey="18" id="11:1048"/>
+            <Rectangle originX="0" originY="0" width="67" height="87" name="Path" id="11:1049">
+                <DataBindContext sourcePathIds="9:900-9:911-9:712" propertyKey="20" id="11:1050"/>
+                <DataBindContext sourcePathIds="9:900-9:911-9:713" propertyKey="21" id="11:1051"/>
             </Rectangle>
-            <Stroke thickness="1" name="Stroke" id="11:1049"><SolidColor colorValue="FF3CBCFC" name="Colour" id="11:1050"/></Stroke>
+            <Stroke thickness="1" name="Stroke" id="11:1052">
+                <SolidColor colorValue="FF3CBCFC" name="Colour" id="11:1053"/>
+                <DashPath offset="2" name="Dashes" id="11:1054">
+                    <Dash length="4" name="On" id="11:1055"/>
+                    <Dash length="4" name="Off" id="11:1056"/>
+                </DashPath>
+            </Stroke>
         </Shape>
-        <Shape x="132.5" y="80.5" name="Cursor3" id="11:1051">
-            <DataBindContext sourcePathIds="9:900-9:912-9:710" propertyKey="13" id="11:1052"/>
-            <DataBindContext sourcePathIds="9:900-9:912-9:711" propertyKey="14" id="11:1053"/>
-            <DataBindContext sourcePathIds="9:900-9:912-9:716" propertyKey="18" id="11:1054"/>
-            <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1055">
-                <DataBindContext sourcePathIds="9:900-9:912-9:712" propertyKey="20" id="11:1056"/>
-                <DataBindContext sourcePathIds="9:900-9:912-9:713" propertyKey="21" id="11:1057"/>
+        <Shape x="60.5" y="120.5" name="Cursor3" id="11:1057">
+            <DataBindContext sourcePathIds="9:900-9:912-9:710" propertyKey="13" id="11:1058"/>
+            <DataBindContext sourcePathIds="9:900-9:912-9:711" propertyKey="14" id="11:1059"/>
+            <DataBindContext sourcePathIds="9:900-9:912-9:716" propertyKey="18" id="11:1060"/>
+            <Rectangle originX="0" originY="0" width="67" height="87" name="Path" id="11:1061">
+                <DataBindContext sourcePathIds="9:900-9:912-9:712" propertyKey="20" id="11:1062"/>
+                <DataBindContext sourcePathIds="9:900-9:912-9:713" propertyKey="21" id="11:1063"/>
             </Rectangle>
-            <Stroke thickness="1" name="Stroke" id="11:1058"><SolidColor colorValue="FFF8B800" name="Colour" id="11:1059"/></Stroke>
+            <Stroke thickness="1" name="Stroke" id="11:1064">
+                <SolidColor colorValue="FFF8B800" name="Colour" id="11:1065"/>
+                <DashPath offset="4" name="Dashes" id="11:1066">
+                    <Dash length="4" name="On" id="11:1067"/>
+                    <Dash length="4" name="Off" id="11:1068"/>
+                </DashPath>
+            </Stroke>
         </Shape>
-        <Shape x="196.5" y="80.5" name="Cursor4" id="11:1060">
-            <DataBindContext sourcePathIds="9:900-9:913-9:710" propertyKey="13" id="11:1061"/>
-            <DataBindContext sourcePathIds="9:900-9:913-9:711" propertyKey="14" id="11:1062"/>
-            <DataBindContext sourcePathIds="9:900-9:913-9:716" propertyKey="18" id="11:1063"/>
-            <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1064">
-                <DataBindContext sourcePathIds="9:900-9:913-9:712" propertyKey="20" id="11:1065"/>
-                <DataBindContext sourcePathIds="9:900-9:913-9:713" propertyKey="21" id="11:1066"/>
+        <Shape x="128.5" y="120.5" name="Cursor4" id="11:1069">
+            <DataBindContext sourcePathIds="9:900-9:913-9:710" propertyKey="13" id="11:1070"/>
+            <DataBindContext sourcePathIds="9:900-9:913-9:711" propertyKey="14" id="11:1071"/>
+            <DataBindContext sourcePathIds="9:900-9:913-9:716" propertyKey="18" id="11:1072"/>
+            <Rectangle originX="0" originY="0" width="67" height="87" name="Path" id="11:1073">
+                <DataBindContext sourcePathIds="9:900-9:913-9:712" propertyKey="20" id="11:1074"/>
+                <DataBindContext sourcePathIds="9:900-9:913-9:713" propertyKey="21" id="11:1075"/>
             </Rectangle>
-            <Stroke thickness="1" name="Stroke" id="11:1067"><SolidColor colorValue="FFC060FF" name="Colour" id="11:1068"/></Stroke>
+            <Stroke thickness="1" name="Stroke" id="11:1076">
+                <SolidColor colorValue="FFC060FF" name="Colour" id="11:1077"/>
+                <DashPath offset="6" name="Dashes" id="11:1078">
+                    <Dash length="4" name="On" id="11:1079"/>
+                    <Dash length="4" name="Off" id="11:1080"/>
+                </DashPath>
+            </Stroke>
         </Shape>
-        <Node name="CardMario" id="11:1069">
-            <Image assetId="8:19689" x="26" y="100" originX="0" originY="0" name="stand" id="11:1070">
-                <DataBindContext sourcePathIds="9:900-9:920" propertyKey="18" converterId="11:700" id="11:1071"/>
+        <Node name="CardMario" id="11:1081">
+            <Image assetId="8:19689" x="86" y="48" originX="0" originY="0" name="stand" id="11:1082">
+                <DataBindContext sourcePathIds="9:900-9:920" propertyKey="18" converterId="11:700" id="11:1083"/>
             </Image>
-            <Image assetId="8:40472" x="26" y="100" originX="0" originY="0" opacity="0" name="jump" id="11:1072">
-                <DataBindContext sourcePathIds="9:900-9:920" propertyKey="18" id="11:1073"/>
+            <Image assetId="8:40472" x="86" y="48" originX="0" originY="0" opacity="0" name="jump" id="11:1084">
+                <DataBindContext sourcePathIds="9:900-9:920" propertyKey="18" id="11:1085"/>
             </Image>
-            <Text x="34" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1075">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1074">
-                    <Fill name="Fill" id="11:1076"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1077"/></Fill>
+            <Text x="94" y="84" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1087">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1086">
+                    <Fill name="Fill" id="11:1088"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1089"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1074" text="MARIO" name="Run" id="11:1078"/>
+                <TextValueRun styleId="11:1086" text="MARIO" name="Run" id="11:1090"/>
             </Text>
-            <Text x="34" y="150" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1080">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1079">
-                    <Fill name="Fill" id="11:1081"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1082"/></Fill>
+            <Text x="94" y="98" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1092">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1091">
+                    <Fill name="Fill" id="11:1093"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1094"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1079" text="" name="Run" id="11:1083">
-                        <DataBindContext sourcePathIds="9:900-9:930" propertyKey="268" id="11:1084"/>
+                <TextValueRun styleId="11:1091" text="" name="Run" id="11:1095">
+                        <DataBindContext sourcePathIds="9:900-9:930" propertyKey="268" id="11:1096"/>
                     </TextValueRun>
             </Text>
-            <Shape x="4.5" y="80.5" name="Frame" id="11:1085">
-                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1086"/>
-                <Stroke thickness="1" name="Stroke" id="11:1087"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1088"/></Stroke>
+            <Shape x="64.5" y="28.5" name="Frame" id="11:1097">
+                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1098"/>
+                <Stroke thickness="1" name="Stroke" id="11:1099"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1100"/></Stroke>
             </Shape>
         </Node>
-        <Node name="CardLuigi" id="11:1089">
-            <Image assetId="8:54015" x="90" y="100" originX="0" originY="0" name="stand" id="11:1090">
-                <DataBindContext sourcePathIds="9:900-9:921" propertyKey="18" converterId="11:700" id="11:1091"/>
+        <Node name="CardLuigi" id="11:1101">
+            <Image assetId="8:54015" x="154" y="48" originX="0" originY="0" name="stand" id="11:1102">
+                <DataBindContext sourcePathIds="9:900-9:921" propertyKey="18" converterId="11:700" id="11:1103"/>
             </Image>
-            <Image assetId="8:5558" x="90" y="100" originX="0" originY="0" opacity="0" name="jump" id="11:1092">
-                <DataBindContext sourcePathIds="9:900-9:921" propertyKey="18" id="11:1093"/>
+            <Image assetId="8:5558" x="154" y="48" originX="0" originY="0" opacity="0" name="jump" id="11:1104">
+                <DataBindContext sourcePathIds="9:900-9:921" propertyKey="18" id="11:1105"/>
             </Image>
-            <Text x="98" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1095">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1094">
-                    <Fill name="Fill" id="11:1096"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1097"/></Fill>
+            <Text x="162" y="84" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1107">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1106">
+                    <Fill name="Fill" id="11:1108"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1109"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1094" text="LUIGI" name="Run" id="11:1098"/>
+                <TextValueRun styleId="11:1106" text="LUIGI" name="Run" id="11:1110"/>
             </Text>
-            <Text x="98" y="150" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1100">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1099">
-                    <Fill name="Fill" id="11:1101"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1102"/></Fill>
+            <Text x="162" y="98" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1112">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1111">
+                    <Fill name="Fill" id="11:1113"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1114"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1099" text="" name="Run" id="11:1103">
-                        <DataBindContext sourcePathIds="9:900-9:931" propertyKey="268" id="11:1104"/>
+                <TextValueRun styleId="11:1111" text="" name="Run" id="11:1115">
+                        <DataBindContext sourcePathIds="9:900-9:931" propertyKey="268" id="11:1116"/>
                     </TextValueRun>
             </Text>
-            <Shape x="68.5" y="80.5" name="Frame" id="11:1105">
-                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1106"/>
-                <Stroke thickness="1" name="Stroke" id="11:1107"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1108"/></Stroke>
+            <Shape x="132.5" y="28.5" name="Frame" id="11:1117">
+                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1118"/>
+                <Stroke thickness="1" name="Stroke" id="11:1119"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1120"/></Stroke>
             </Shape>
         </Node>
-        <Node name="CardWario" id="11:1109">
-            <Image assetId="8:10166" x="154" y="100" originX="0" originY="0" name="stand" id="11:1110">
-                <DataBindContext sourcePathIds="9:900-9:922" propertyKey="18" converterId="11:700" id="11:1111"/>
+        <Node name="CardWario" id="11:1121">
+            <Image assetId="8:10166" x="86" y="144" originX="0" originY="0" name="stand" id="11:1122">
+                <DataBindContext sourcePathIds="9:900-9:922" propertyKey="18" converterId="11:700" id="11:1123"/>
             </Image>
-            <Image assetId="8:7673" x="154" y="100" originX="0" originY="0" opacity="0" name="jump" id="11:1112">
-                <DataBindContext sourcePathIds="9:900-9:922" propertyKey="18" id="11:1113"/>
+            <Image assetId="8:7673" x="86" y="144" originX="0" originY="0" opacity="0" name="jump" id="11:1124">
+                <DataBindContext sourcePathIds="9:900-9:922" propertyKey="18" id="11:1125"/>
             </Image>
-            <Text x="162" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1115">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1114">
-                    <Fill name="Fill" id="11:1116"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1117"/></Fill>
+            <Text x="94" y="180" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1127">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1126">
+                    <Fill name="Fill" id="11:1128"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1129"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1114" text="WARIO" name="Run" id="11:1118"/>
+                <TextValueRun styleId="11:1126" text="WARIO" name="Run" id="11:1130"/>
             </Text>
-            <Text x="162" y="150" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1120">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1119">
-                    <Fill name="Fill" id="11:1121"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1122"/></Fill>
+            <Text x="94" y="194" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1132">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1131">
+                    <Fill name="Fill" id="11:1133"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1134"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1119" text="" name="Run" id="11:1123">
-                        <DataBindContext sourcePathIds="9:900-9:932" propertyKey="268" id="11:1124"/>
+                <TextValueRun styleId="11:1131" text="" name="Run" id="11:1135">
+                        <DataBindContext sourcePathIds="9:900-9:932" propertyKey="268" id="11:1136"/>
                     </TextValueRun>
             </Text>
-            <Shape x="132.5" y="80.5" name="Frame" id="11:1125">
-                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1126"/>
-                <Stroke thickness="1" name="Stroke" id="11:1127"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1128"/></Stroke>
+            <Shape x="64.5" y="124.5" name="Frame" id="11:1137">
+                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1138"/>
+                <Stroke thickness="1" name="Stroke" id="11:1139"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1140"/></Stroke>
             </Shape>
         </Node>
-        <Node name="CardWaluigi" id="11:1129">
-            <Image assetId="8:50910" x="218" y="100" originX="0" originY="0" name="stand" id="11:1130">
-                <DataBindContext sourcePathIds="9:900-9:923" propertyKey="18" converterId="11:700" id="11:1131"/>
+        <Node name="CardWaluigi" id="11:1141">
+            <Image assetId="8:50910" x="154" y="144" originX="0" originY="0" name="stand" id="11:1142">
+                <DataBindContext sourcePathIds="9:900-9:923" propertyKey="18" converterId="11:700" id="11:1143"/>
             </Image>
-            <Image assetId="8:47649" x="218" y="100" originX="0" originY="0" opacity="0" name="jump" id="11:1132">
-                <DataBindContext sourcePathIds="9:900-9:923" propertyKey="18" id="11:1133"/>
+            <Image assetId="8:47649" x="154" y="144" originX="0" originY="0" opacity="0" name="jump" id="11:1144">
+                <DataBindContext sourcePathIds="9:900-9:923" propertyKey="18" id="11:1145"/>
             </Image>
-            <Text x="226" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1135">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1134">
-                    <Fill name="Fill" id="11:1136"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1137"/></Fill>
+            <Text x="162" y="180" sizingValue="autoWidth" originX="0.5" originY="0" name="Name" id="11:1147">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1146">
+                    <Fill name="Fill" id="11:1148"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1149"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1134" text="WALUIGI" name="Run" id="11:1138"/>
+                <TextValueRun styleId="11:1146" text="WALUIGI" name="Run" id="11:1150"/>
             </Text>
-            <Text x="226" y="150" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1140">
-                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1139">
-                    <Fill name="Fill" id="11:1141"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1142"/></Fill>
+            <Text x="162" y="194" sizingValue="autoWidth" originX="0.5" originY="0" name="Mode" id="11:1152">
+                <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1151">
+                    <Fill name="Fill" id="11:1153"><SolidColor colorValue="FFA0A0A0" name="Colour" id="11:1154"/></Fill>
                 </TextStylePaint>
-                <TextValueRun styleId="11:1139" text="" name="Run" id="11:1143">
-                        <DataBindContext sourcePathIds="9:900-9:933" propertyKey="268" id="11:1144"/>
+                <TextValueRun styleId="11:1151" text="" name="Run" id="11:1155">
+                        <DataBindContext sourcePathIds="9:900-9:933" propertyKey="268" id="11:1156"/>
                     </TextValueRun>
             </Text>
-            <Shape x="196.5" y="80.5" name="Frame" id="11:1145">
-                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1146"/>
-                <Stroke thickness="1" name="Stroke" id="11:1147"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1148"/></Stroke>
+            <Shape x="132.5" y="124.5" name="Frame" id="11:1157">
+                <Rectangle originX="0" originY="0" width="59" height="79" name="Path" id="11:1158"/>
+                <Stroke thickness="1" name="Stroke" id="11:1159"><SolidColor colorValue="FFEA9E22" name="Orange" id="11:1160"/></Stroke>
             </Shape>
         </Node>
-        <Text x="128" y="40" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleText" id="11:1150">
-            <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1149">
-                <Fill name="Fill" id="11:1151"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1152"/></Fill>
+        <Text x="128" y="4" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleText" id="11:1162">
+            <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1161">
+                <Fill name="Fill" id="11:1163"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1164"/></Fill>
             </TextStylePaint>
-            <TextValueRun styleId="11:1149" text="MARIO BATTLE" name="Run" id="11:1153"/>
+            <TextValueRun styleId="11:1161" text="MARIO BATTLE" name="Run" id="11:1165"/>
         </Text>
-        <Text x="128" y="184" sizingValue="autoWidth" originX="0.5" originY="0" name="StartText" id="11:1155">
-            <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1154">
-                <Fill name="Fill" id="11:1156"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1157"/></Fill>
+        <Text x="128" y="220" sizingValue="autoWidth" originX="0.5" originY="0" name="StartText" id="11:1167">
+            <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="11:1166">
+                <Fill name="Fill" id="11:1168"><SolidColor colorValue="FFFFFFFF" name="Colour" id="11:1169"/></Fill>
             </TextStylePaint>
-            <TextValueRun styleId="11:1154" text="START" name="Run" id="11:1158"/>
+            <TextValueRun styleId="11:1166" text="START" name="Run" id="11:1170"/>
         </Text>
         <StateMachine name="Binds" id="11:500">
             <StateMachineLayer name="Layer" id="11:501">
-                <AnyState x="60" y="-100" id="11:1159"/>
-                <ExitState x="360" y="-100" id="11:1160"/>
-                <EntryState x="0" y="0" id="11:1161"/>
+                <AnyState x="60" y="-100" id="11:1171"/>
+                <ExitState x="360" y="-100" id="11:1172"/>
+                <EntryState x="0" y="0" id="11:1173"/>
             </StateMachineLayer>
         </StateMachine>
     </Artboard>

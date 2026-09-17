@@ -33,6 +33,11 @@ export type Player = {
     walkFrame: number,
     pose: Pose,
     prevJump: boolean,
+    -- the target: a player who would have died holding coins while others fight on, or the odd one out of a
+    -- tie, wears the last enemy's blue. any stun puts a blue player on his side, where he stays until a hit from
+    -- under his feet rights him; touched there by another player he is beaten and his coins change hands
+    blue: boolean,
+    side: boolean,
 }
 
 export type Events = { jump: boolean, bump: boolean, stun: boolean, pow: boolean, kick: boolean }
@@ -54,6 +59,8 @@ function Players.new(index: number): Player
         walkFrame = 0,
         pose = 'stand',
         prevJump = true, -- the press that started the round must not also jump
+        blue = false,
+        side = false,
     }
     return p
 end
@@ -83,6 +90,8 @@ function Players.reset(p: Player)
     p.walkFrame = fresh.walkFrame
     p.pose = fresh.pose
     p.prevJump = fresh.prevJump
+    p.blue = fresh.blue
+    p.side = fresh.side
 end
 
 local function noEvents(): Events
@@ -94,6 +103,20 @@ function Players.stun(p: Player, kickDir: number)
     p.dizzy = Physics.STUN_FRAMES
     p.body.vy = Physics.STUN_VY
     p.body.vx = Physics.STUN_VX * kickDir
+    if p.blue then
+        p.side = true -- a blue player lands on his side and stays there
+    end
+end
+
+-- the target: from now on a stun lays him on his side
+function Players.makeBlue(p: Player)
+    p.blue = true
+end
+
+-- a hit from under a blue player on his side stands him up again
+function Players.right(p: Player)
+    p.side = false
+    p.dizzy = 0
 end
 
 -- the players still in the round and alive
@@ -184,9 +207,12 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     end
 
     -- horizontal control. the stun does not lock it: the lockout at PRG009_A4E4 is NOPed out in the shipped rom,
-    -- so a dizzy player keeps steering and may jump; the stun is the launch plus 18 frames of the dizzy sprite
+    -- so a dizzy player keeps steering and may jump; the stun is the launch plus 18 frames of the dizzy sprite.
+    -- on his side a blue player has no control at all
     local dirPressed = 0
-    if intent.left then
+    if p.side then
+        intent = Input.NONE
+    elseif intent.left then
         dirPressed = -1
     elseif intent.right then
         dirPressed = 1
@@ -238,15 +264,20 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     end
     powCollide(p, w, ev)
 
-    -- a bounced block under the feet, or the pow while grounded, stuns
+    -- a bounced block under the feet, or the pow while grounded, stuns; it rights a blue player on his side
     if p.onGround and (probe.underHit or w.powCnt > 0) then
-        local kickDir = if b.vx < 0 then -1 else 1
-        if probe.underHit then
-            kickDir = if (b.x + 8) % 16 < 8 then -1 else 1
+        if p.side then
+            Players.right(p)
+            ev.stun = true
+        else
+            local kickDir = if b.vx < 0 then -1 else 1
+            if probe.underHit then
+                kickDir = if (b.x + 8) % 16 < 8 then -1 else 1
+            end
+            Players.stun(p, kickDir)
+            ev.stun = true
+            p.onGround = false
         end
-        Players.stun(p, kickDir)
-        ev.stun = true
-        p.onGround = false
     end
 
     -- animation (PRG009_A662 onward)
@@ -271,6 +302,9 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     if p.dizzy > 0 then
         p.dizzy -= 1
         frame = 4
+    end
+    if p.side then
+        frame = 4 -- the dizzy frame, drawn on its side by the game
     end
     if p.kick > 0 then
         p.kick -= 1

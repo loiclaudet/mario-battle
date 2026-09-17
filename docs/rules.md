@@ -19,9 +19,10 @@ a slot with nothing behind it has no cursor.
 | keyboard set 1 | W A S D, G jump, F run, enter start |
 | keyboard set 2 | arrows, K jump, L run, space start |
 
-the title is a start menu in the smb3 style: a card per character (mario, luigi, wario, waluigi), START below,
-one cursor per slot (white, blue, yellow, purple, each with its 1P..4P marker). left and right move between the
-cards, down goes to START, up comes back. jump on a card locks that character (the marker stays on it and the
+the title is a start menu in the smb3 style: a card per character in a 2x2 grid (mario and luigi above,
+wario and waluigi below), START under them, one cursor per slot (the same dashed rect for all, in white, blue,
+yellow and purple with the dash pattern shifted 2 px per slot, each with its 1P..4P marker). left, right, up
+and down move between the cards, down from the bottom row goes to START, up comes back. jump on a card locks that character (the marker stays on it and the
 character hops), jump on your own card unlocks it, a card another player took refuses. the run button on a free
 card turns it off and on again (OFF under the name: nobody plays it; CPU: the cpu does), with at least two cards
 on; taking an off card turns it on. jump on START, or the start button anywhere, launches with every card that
@@ -152,16 +153,22 @@ where those contact rows put them; the sheet had them bottom aligned.
 
 a free for all for up to four: five coins exist, one per kicked enemy, and two enemies kicked in the same
 frame are two coins (the rom's counter only grows by one there, and the second kick in a frame is a case it never
-meets). the round ends when the coins reach five: most coins wins, a tie going to the tied player whose count
-came first (`Sim.leader`); or when one player is left alive. a player who dies falls off the screen and the
-round goes on around the body when two or more others are alive: their coins are lost and that many enemies
-come back out of the top pipes (the spawn quota rises by the count, the last mark is forgotten until the total
-is four again, the enemy sets repeat past the fifth). the fourth coin on the board marks the survivors as last,
-once each. a death with one other player alive halts everything, and the round is theirs once the body has
-fallen off. the result holds 128 frames (`Vs_TimeToExit`) then the menu returns with the next style, the locks
-and the off cards kept. mario and luigi start on the floor at x 64 and 176, wario and waluigi on the lower
-ledges above the bottom pipes at 8 and 232, every start facing the middle. `scripts/sim.luau` is the one round
-step: the game plays it on its live state and the cpu on a clone, so the rules cannot drift between them.
+meets). every coin won flies from where it was won to its hud slot with an ease in (30 frames) before its
+fill lights. the round ends when one player has the most coins with the five out, or when one player is left
+alive. a touch by a live enemy or a flame kills a player without coins, or with one other player alive: he
+falls off the screen and the round goes on around the body, or ends when nobody else is left. holding coins
+with two or more others alive he becomes **the target** instead: he wears the last enemy's blue (a 40 frame
+fade that does not stop play, and the theme starts over at 1.2x), lands on his side (a quarter turn) and keeps
+his coins. on his side he has no control until a hit from under his feet (a bumped block or the pow) stands
+him up; standing, any stun (a bumped block, the pow, a stomp) or another touch by an enemy or a flame lays him
+down again. another player touching him on his side beats him: the coins change hands (no kick sound, they fly
+to the beater's hud) and he falls off. with the five coins out and two players sharing the top, the player with
+coins below them becomes the target (no stun, standing): a leader beating him takes his coins and wins; a
+player below beating him takes the coins and becomes the target in turn, until someone stands alone at the top.
+the result holds 128 frames (`Vs_TimeToExit`) then the menu returns with the next style, the locks and the off
+cards kept. mario and luigi start on the floor at x 64 and 176, wario and waluigi on the lower ledges above the
+bottom pipes at 8 and 232, every start facing the middle. `scripts/sim.luau` is the one round step: the game
+plays it on its live state and the cpu on a clone, so the rules cannot drift between them.
 
 ## npc (scripts/npc.luau, scripts/nav.luau, scripts/sim.luau)
 
@@ -240,6 +247,8 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   backgrounds sheet ripped by Doc von Schmeltwick (spriters-resource.com), player poses and blue palettes from
   the Super Mario Wiki gallery for Mario Bros. (Super Mario Bros. 3). blue skins are palette swaps learned from
   the wiki pairs (`tools/slice_sprites.py`)
+- the faster theme for the target is the same cut at 1.2x (`tools/fast_music.py`, ffmpeg atempo); the blue
+  takes of the four characters are palette swaps in the last enemy's blues (`tools/recolor_sprites.py`)
 - sounds: The Mushroom Kingdom wav archive (themushroomkingdom.net), ask-first, credit link owed. the pow uses
   the thwomp sample, no rip of the real pow hit exists
 - music: the super mario all-stars rendition of the smb3 enemy battle theme, 30 s transcode from the Super Mario

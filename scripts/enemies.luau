@@ -59,7 +59,7 @@ export type State = {
     spawnCnt2: number,
     tooLongCnt: number,
     count: number, -- enemies spawned so far this round
-    quota: number, -- how many the round spawns: five, plus one per coin a dead player gave back
+    quota: number, -- how many the round spawns
     nextIsLast: boolean,
     style: number,
     random: number,
@@ -90,11 +90,6 @@ function Enemies.reset(s: State, style: number)
     s.style = style
 end
 
--- a dead player's coins come back as enemies: the round spawns that many more, the last mark waits again
-function Enemies.refund(s: State, n: number)
-    s.quota += n
-    s.nextIsLast = false
-end
 
 -- Vs_Randomize stand-in: a small lcg, only used to pick a top pipe when recycling
 local function random01(s: State): number

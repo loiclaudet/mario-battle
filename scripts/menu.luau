@@ -23,12 +23,15 @@ export type SlotView = { cursor: Rect, marker: { x: number, y: number } }
 Menu.CARDS = { 'mario', 'luigi', 'wario', 'waluigi' } -- card index = player index
 Menu.MIN_ON = 2
 Menu.START = #Menu.CARDS + 1
--- four card places, 60 wide with 4 px gaps, as drawn by scene/components/menu.rml (tools/gen_ui_rml.py)
-local CARD_RECTS: { Rect } = { { x = 4, y = 80, w = 60, h = 80 }, { x = 68, y = 80, w = 60, h = 80 }, { x = 132, y = 80, w = 60, h = 80 }, { x = 196, y = 80, w = 60, h = 80 } }
-local START_RECT: Rect = { x = 104, y = 180, w = 48, h = 16 }
+-- a 2x2 grid of 60x80 cards, as drawn by scene/components/menu.rml (tools/gen_ui_rml.py): mario and luigi on
+-- the top row, wario and waluigi below, START under them. left and right move along a row, up and down
+-- between them, down from the bottom row goes to START
+Menu.COLUMNS = 2
+local CARD_RECTS: { Rect } = { { x = 64, y = 28, w = 60, h = 80 }, { x = 132, y = 28, w = 60, h = 80 }, { x = 64, y = 124, w = 60, h = 80 }, { x = 132, y = 124, w = 60, h = 80 } }
+local START_RECT: Rect = { x = 104, y = 216, w = 48, h = 16 }
 Menu.CARD_RECTS = CARD_RECTS
 Menu.START_RECT = START_RECT
-Menu.CURSOR_OUTSET = { 6, 4, 2, 0 } -- px outside the target per slot: each cursor sits 2 px inside the previous one
+Menu.CURSOR_OUTSET = 4 -- px outside the target for every cursor: the same rect, told apart by their dashes
 Menu.MARKER_W = 16 -- "1P" in the 8 px font
 Menu.MARKER_PITCH = 16 -- markers sharing a target sit this far apart (four on one card overflow it by 2 px a side)
 Menu.MARKER_LIFT = 16 -- marker top above the target top
@@ -108,12 +111,21 @@ function Menu.update(m: State, intents: { Input.Intent }): Events
                 ev.launch = true
             end
         else
-            if left and s.focus > 1 then
+            local col = (s.focus - 1) % Menu.COLUMNS
+            if left and col > 0 then
                 s.focus -= 1
                 s.card = s.focus
                 ev.moved = true
-            elseif right and s.focus < #Menu.CARDS then
+            elseif right and col < Menu.COLUMNS - 1 and s.focus < #Menu.CARDS then
                 s.focus += 1
+                s.card = s.focus
+                ev.moved = true
+            elseif up and s.focus > Menu.COLUMNS then
+                s.focus -= Menu.COLUMNS
+                s.card = s.focus
+                ev.moved = true
+            elseif down and s.focus + Menu.COLUMNS <= #Menu.CARDS then
+                s.focus += Menu.COLUMNS
                 s.card = s.focus
                 ev.moved = true
             elseif down then
@@ -176,7 +188,7 @@ function Menu.layout(m: State): { SlotView }
     local views: { SlotView } = {}
     local placed: { [number]: number } = {}
     for i, s in m.slots do
-        local out = Menu.CURSOR_OUTSET[i] or 0
+        local out = Menu.CURSOR_OUTSET
         local r = Menu.targetRect(s.focus)
         local t = targets[i]
         local tr = Menu.targetRect(t)

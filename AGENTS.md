@@ -93,8 +93,13 @@ after `cut_music.py` copy the new sample counts from `tools/music_cuts.json` int
 - luau cannot read a node's name, width or height, so a stage cannot be read from its art: it carries its
   geometry as a tile map string in its view model (scripts/stage.luau, tools/gen_stages_rml.py), and
   `--data=debug=4` tints the map's solid tiles over the art so a drift shows
-- generated markup: `tools/gen_enemy_rml.py` (enemies), `tools/gen_ui_rml.py` (hud slot, menu, overlay),
+- generated markup: `tools/gen_enemy_rml.py` (enemies), `tools/gen_player_rml.py` (the four characters and
+  their blue takes, cross faded by `Player.blue`), `tools/gen_ui_rml.py` (hud slot, menu, overlay),
   `tools/gen_stages_rml.py` (stages and the StageData view model), `tools/make_hud.py` (the four hud boxes),
-  `tools/recolor_sprites.py` (wario and waluigi). edit the generator, not the output
+  `tools/recolor_sprites.py` (wario, waluigi and every blue take), `tools/fast_music.py` (the 1.2x theme).
+  edit the generator, not the output
+- a dashed stroke is `DashPath` (with `offset`) holding `Dash` children inside the `Stroke`; the menu cursors
+  share one rect and differ by their dash offset
+- there is no `rive pull`: the rml is the source, `rive push` only sends revisions to the editor
 - `--data=stage=n` plays stage n every round (the pick is random when there are several), `--data=style=n`
   the enemy set

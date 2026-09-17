@@ -634,6 +634,11 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             continue
         end
         local hr = if h.onGround then Nav.rowAt(h.body.x, h.body.y) else nil
+        if h.blue and h.side and hr ~= nil then
+            -- the target on his side: touch him and his coins are ours (worth more the more he holds)
+            offer(110 + 30 * (brain.coins[i] or 0), { kind = 'kick', row = hr, x = h.body.x, slot = -i, targetRow = hr })
+            continue
+        end
         if hr ~= nil and hr ~= Nav.FLOOR then
             local below, spot = underSpot(h.body.x, h.body.y, hr)
             if below ~= nil then
@@ -646,6 +651,9 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                 local value = if near then 100 else 10
                 if brain.hunt then
                     value = if near then 140 else 90
+                end
+                if h.blue then
+                    value = math.max(value, 80 + 20 * (brain.coins[i] or 0)) -- a stun lays the target down for the taking
                 end
                 offer(value, { kind = 'bump', row = below, x = spot, slot = i, targetRow = hr })
             end
@@ -685,6 +693,10 @@ end
 -- is the current plan still about something real
 local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State, enemies: Enemies.State, players: { Players.Player }): boolean
     if plan.kind == 'kick' then
+        if plan.slot < 0 then
+            local h = players[-plan.slot]
+            return h.state == Players.STATE_NORMAL and h.blue and h.side and Nav.rowAt(h.body.x, h.body.y) == plan.targetRow
+        end
         local e = findEnemy(enemies, plan.slot)
         if e == nil or e.state ~= Enemies.STATE_FLIPPED or e.getUpTimer * 2 <= Npc.KICK_MARGIN then
             return false
@@ -838,11 +850,17 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         return intent(step.dir, true, false)
     end
     if plan.kind == 'kick' then
-        local e = findEnemy(enemies, plan.slot)
-        if e == nil then
-            return intent(0, false, false)
+        local tx = 0
+        if plan.slot < 0 then
+            tx = players[-plan.slot].body.x
+        else
+            local e = findEnemy(enemies, plan.slot)
+            if e == nil then
+                return intent(0, false, false)
+            end
+            tx = e.body.x
         end
-        local dx = Nav.dx(row, b.x, e.body.x)
+        local dx = Nav.dx(row, b.x, tx)
         return intent(if dx ~= 0 then sign(dx) else p.dir, math.abs(dx) > 8, false)
     elseif plan.kind == 'flip' or plan.kind == 'bump' then
         if math.abs(Nav.dx(row, b.x, plan.x)) > 2 or not stopped(b) then
@@ -1112,6 +1130,14 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
         for _, dead in ev.killed do
             if dead == me then
                 return Npc.DEATH + t
+            end
+        end
+        for _, i in ev.turnedBlue do
+            score += if i == me then -300 else 60 -- the target is a walking coin purse, and it is bad to be one
+        end
+        for _, hit in ev.beaten do
+            if hit[2] == me then
+                score += 200 * (brain.coins[hit[1]] or 1)
             end
         end
         if #ev.killed > 0 then

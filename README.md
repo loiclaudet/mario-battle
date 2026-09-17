@@ -19,8 +19,9 @@ jump locks a character, the run button turns a free card off (at least two stay 
 button) launches. a card nobody locked is played by the cpu, a strong one: it runs the battle 48 frames ahead on
 a clone before every move, flips enemies from below with frame-exact bumps, kicks them, hits the pow, and plays
 it against you: bumps the block under you, stomps you dizzy, rights a downed enemy under your feet. the round is
-a free for all: five coins, one per kicked enemy, the most wins; a death loses the coins and puts that many
-enemies back in the pipes, and the round goes on until one player is left. no player at all is a cpu demo. the
+a free for all: five coins, one per kicked enemy, the most wins. a player caught holding coins turns blue and
+becomes the target: lay him on his side and touch him to take his coins, while a hit from under stands him up;
+a tie at the top hands the target to the odd one out. no player at all is a cpu demo. the
 pads take the slots in the order they connect (B jumps, Y runs, plus starts and pauses), then the keyboard: `W A
 S D` + `G` jump + `F` run, and the arrows + `K` jump + `L` run. `F1` shows the collision boxes. the stage is
 picked at random from those in `scene/stages`.

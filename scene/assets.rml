@@ -46,6 +46,13 @@
     <ImageAsset file="assets/sprites/fly_flipped.png" samplerFilter="1" name="fly_flipped" id="8:60066"/>
     <ImageAsset file="assets/sprites/fly_walk_1.png" samplerFilter="1" name="fly_walk_1" id="8:48374"/>
     <ImageAsset file="assets/sprites/fly_walk_2.png" samplerFilter="1" name="fly_walk_2" id="8:38268"/>
+    <ImageAsset file="assets/sprites/luigi_blue_dead.png" samplerFilter="1" name="luigi_blue_dead" id="8:37632"/>
+    <ImageAsset file="assets/sprites/luigi_blue_jump.png" samplerFilter="1" name="luigi_blue_jump" id="8:15282"/>
+    <ImageAsset file="assets/sprites/luigi_blue_kick.png" samplerFilter="1" name="luigi_blue_kick" id="8:14657"/>
+    <ImageAsset file="assets/sprites/luigi_blue_skid.png" samplerFilter="1" name="luigi_blue_skid" id="8:7748"/>
+    <ImageAsset file="assets/sprites/luigi_blue_stand.png" samplerFilter="1" name="luigi_blue_stand" id="8:34844"/>
+    <ImageAsset file="assets/sprites/luigi_blue_stun.png" samplerFilter="1" name="luigi_blue_stun" id="8:18650"/>
+    <ImageAsset file="assets/sprites/luigi_blue_walk.png" samplerFilter="1" name="luigi_blue_walk" id="8:31313"/>
     <ImageAsset file="assets/sprites/luigi_dead.png" samplerFilter="1" name="luigi_dead" id="8:41764"/>
     <ImageAsset file="assets/sprites/luigi_jump.png" samplerFilter="1" name="luigi_jump" id="8:5558"/>
     <ImageAsset file="assets/sprites/luigi_kick.png" samplerFilter="1" name="luigi_kick" id="8:41925"/>
@@ -53,6 +60,13 @@
     <ImageAsset file="assets/sprites/luigi_stand.png" samplerFilter="1" name="luigi_stand" id="8:54015"/>
     <ImageAsset file="assets/sprites/luigi_stun.png" samplerFilter="1" name="luigi_stun" id="8:34206"/>
     <ImageAsset file="assets/sprites/luigi_walk.png" samplerFilter="1" name="luigi_walk" id="8:18293"/>
+    <ImageAsset file="assets/sprites/mario_blue_dead.png" samplerFilter="1" name="mario_blue_dead" id="8:14507"/>
+    <ImageAsset file="assets/sprites/mario_blue_jump.png" samplerFilter="1" name="mario_blue_jump" id="8:38521"/>
+    <ImageAsset file="assets/sprites/mario_blue_kick.png" samplerFilter="1" name="mario_blue_kick" id="8:26602"/>
+    <ImageAsset file="assets/sprites/mario_blue_skid.png" samplerFilter="1" name="mario_blue_skid" id="8:11183"/>
+    <ImageAsset file="assets/sprites/mario_blue_stand.png" samplerFilter="1" name="mario_blue_stand" id="8:23008"/>
+    <ImageAsset file="assets/sprites/mario_blue_stun.png" samplerFilter="1" name="mario_blue_stun" id="8:37137"/>
+    <ImageAsset file="assets/sprites/mario_blue_walk.png" samplerFilter="1" name="mario_blue_walk" id="8:39002"/>
     <ImageAsset file="assets/sprites/mario_dead.png" samplerFilter="1" name="mario_dead" id="8:59434"/>
     <ImageAsset file="assets/sprites/mario_jump.png" samplerFilter="1" name="mario_jump" id="8:40472"/>
     <ImageAsset file="assets/sprites/mario_kick.png" samplerFilter="1" name="mario_kick" id="8:23755"/>
@@ -72,6 +86,13 @@
     <ImageAsset file="assets/sprites/spiny_flipped.png" samplerFilter="1" name="spiny_flipped" id="8:12365"/>
     <ImageAsset file="assets/sprites/spiny_walk_1.png" samplerFilter="1" name="spiny_walk_1" id="8:35278"/>
     <ImageAsset file="assets/sprites/spiny_walk_2.png" samplerFilter="1" name="spiny_walk_2" id="8:4804"/>
+    <ImageAsset file="assets/sprites/waluigi_blue_dead.png" samplerFilter="1" name="waluigi_blue_dead" id="8:46156"/>
+    <ImageAsset file="assets/sprites/waluigi_blue_jump.png" samplerFilter="1" name="waluigi_blue_jump" id="8:6846"/>
+    <ImageAsset file="assets/sprites/waluigi_blue_kick.png" samplerFilter="1" name="waluigi_blue_kick" id="8:5741"/>
+    <ImageAsset file="assets/sprites/waluigi_blue_skid.png" samplerFilter="1" name="waluigi_blue_skid" id="8:53896"/>
+    <ImageAsset file="assets/sprites/waluigi_blue_stand.png" samplerFilter="1" name="waluigi_blue_stand" id="8:33045"/>
+    <ImageAsset file="assets/sprites/waluigi_blue_stun.png" samplerFilter="1" name="waluigi_blue_stun" id="8:26102"/>
+    <ImageAsset file="assets/sprites/waluigi_blue_walk.png" samplerFilter="1" name="waluigi_blue_walk" id="8:7549"/>
     <ImageAsset file="assets/sprites/waluigi_dead.png" samplerFilter="1" name="waluigi_dead" id="8:10291"/>
     <ImageAsset file="assets/sprites/waluigi_jump.png" samplerFilter="1" name="waluigi_jump" id="8:47649"/>
     <ImageAsset file="assets/sprites/waluigi_kick.png" samplerFilter="1" name="waluigi_kick" id="8:54514"/>
@@ -79,6 +100,13 @@
     <ImageAsset file="assets/sprites/waluigi_stand.png" samplerFilter="1" name="waluigi_stand" id="8:50910"/>
     <ImageAsset file="assets/sprites/waluigi_stun.png" samplerFilter="1" name="waluigi_stun" id="8:7689"/>
     <ImageAsset file="assets/sprites/waluigi_walk.png" samplerFilter="1" name="waluigi_walk" id="8:26786"/>
+    <ImageAsset file="assets/sprites/wario_blue_dead.png" samplerFilter="1" name="wario_blue_dead" id="8:13442"/>
+    <ImageAsset file="assets/sprites/wario_blue_jump.png" samplerFilter="1" name="wario_blue_jump" id="8:22320"/>
+    <ImageAsset file="assets/sprites/wario_blue_kick.png" samplerFilter="1" name="wario_blue_kick" id="8:14755"/>
+    <ImageAsset file="assets/sprites/wario_blue_skid.png" samplerFilter="1" name="wario_blue_skid" id="8:60294"/>
+    <ImageAsset file="assets/sprites/wario_blue_stand.png" samplerFilter="1" name="wario_blue_stand" id="8:44370"/>
+    <ImageAsset file="assets/sprites/wario_blue_stun.png" samplerFilter="1" name="wario_blue_stun" id="8:59064"/>
+    <ImageAsset file="assets/sprites/wario_blue_walk.png" samplerFilter="1" name="wario_blue_walk" id="8:1299"/>
     <ImageAsset file="assets/sprites/wario_dead.png" samplerFilter="1" name="wario_dead" id="8:4555"/>
     <ImageAsset file="assets/sprites/wario_jump.png" samplerFilter="1" name="wario_jump" id="8:7673"/>
     <ImageAsset file="assets/sprites/wario_kick.png" samplerFilter="1" name="wario_kick" id="8:5258"/>
@@ -97,7 +125,9 @@
     <AudioAsset file="assets/sfx/pow.wav" name="pow" id="8:34194"/>
     <!-- music, cut by tools/cut_music.py: the intro plays once, the loop is scheduled gaplessly by scripts/sfx.luau -->
     <AudioAsset file="assets/music/battle_intro.flac" volume="0.5" name="battle_intro" id="8:44085"/>
+    <AudioAsset file="assets/music/battle_intro_fast.flac" volume="0.5" name="battle_intro_fast" id="8:19612"/>
     <AudioAsset file="assets/music/battle_loop.flac" volume="0.5" name="battle_loop" id="8:12232"/>
+    <AudioAsset file="assets/music/battle_loop_fast.flac" volume="0.5" name="battle_loop_fast" id="8:5331"/>
     <!-- font, ofl licensed -->
     <FontAsset file="assets/fonts/PressStart2P-Regular.ttf" name="PressStart2P" id="8:850"/>
     <!-- scripts: modules first, game last, because require only finds modules declared above. folderPath makes them require("scripts/<name>") -->
