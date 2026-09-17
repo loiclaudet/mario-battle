@@ -82,6 +82,20 @@ return function(): Tests
                 expect(e.onGround).is(true)
                 expect(e.dir).is(if e.body.vx < 0 then -1 else 1)
             end)
+            test.case('an enemy that catches a player from behind turns and walks towards them', function(expect)
+                local s = Enemies.new()
+                local w = World.new()
+                local e = spinyAt(64) -- walking right
+                e.body.vx = Physics.ENEMY_SPAWN_VX
+                table.insert(s.list, e)
+                local p = Players.new(1)
+                Players.setController(p, 1)
+                p.body.x = 56 -- overlapping from the left, behind it
+                local ev = Enemies.update(s, w, { p }, e.slot, false)
+                expect(ev.killed[1]).is(1)
+                expect(e.dir).is(-1)
+                expect(e.body.vx < 0).is(true)
+            end)
             test.case('the same touch kills a driven player', function(expect)
                 local s = Enemies.new()
                 local w = World.new()

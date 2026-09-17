@@ -518,7 +518,10 @@ local function stepPlaying(self: Game)
             line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', flags, who)
         end
         for _, e in self.enemies.list do
-            line ..= string.format(' | %s%d %d,%d s%d', e.kind, e.slot, e.body.x, e.body.y, e.state)
+            -- the facing after the state, and a ! when it disagrees with the walk (a moonwalk)
+            local facing = if e.dir < 0 then '<' else '>'
+            local odd = if e.body.vx ~= 0 and e.body.vx * e.dir < 0 then '!' else ''
+            line ..= string.format(' | %s%d %d,%d s%d%s%s', e.kind, e.slot, e.body.x, e.body.y, e.state, facing, odd)
         end
         print(line)
     end

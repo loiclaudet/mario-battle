@@ -429,7 +429,14 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
         if e.state == Enemies.STATE_NORMAL then
             table.insert(ev.killed, i)
             e.animCnt = 0x20
+            -- it turns to face its victim, and walks that way: the facing is the sign of the walk, always
             e.dir = if p.body.x >= e.body.x then 1 else -1
+            if e.body.vx * e.dir < 0 then
+                e.body.vx = -e.body.vx
+            end
+            if e.restoreVx * e.dir < 0 then
+                e.restoreVx = -e.restoreVx
+            end
             return
         end
         if p.blue then
