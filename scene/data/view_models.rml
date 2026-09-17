@@ -1,17 +1,14 @@
 <Rive version="1" kind="fragment">
     <!-- view models are the contract between scripts/game.luau (writer) and the markup (reader).
-         ids: 9:1xx enums, 9:2xx Game, 9:3xx Player, 9:4xx Enemy, 9:5xx Pow, 9:6xx Fireball, 9:7xx MenuCursor. -->
+         ids: 9:1xx enums, 9:2xx Game, 9:3xx Player, 9:4xx Enemy, 9:5xx Pow, 9:6xx Fireball, 9:7xx MenuCursor,
+         9:8xx HudSlot, 9:9xx Menu, 9:95x Overlay. the component view models hold numbers 0 or 1 where a boolean
+         would read better: a placed component can only bind properties directly (no state machine conditions), so
+         those numbers are opacities. -->
 
     <DataEnumCustom name="Phase" id="9:100">
         <DataEnumValue key="title" value="Title" id="9:101"/>
         <DataEnumValue key="playing" value="Playing" id="9:102"/>
         <DataEnumValue key="over" value="Over" id="9:103"/>
-    </DataEnumCustom>
-
-    <DataEnumCustom name="Winner" id="9:110">
-        <DataEnumValue key="none" value="None" id="9:111"/>
-        <DataEnumValue key="mario" value="Mario" id="9:112"/>
-        <DataEnumValue key="luigi" value="Luigi" id="9:113"/>
     </DataEnumCustom>
 
     <DataEnumCustom name="EnemyPose" id="9:120">
@@ -23,31 +20,55 @@
 
     <ViewModel defaultInstanceId="9:201" name="Game" id="9:200">
         <ViewModelPropertyEnumCustom enumId="9:100" name="phase" id="9:210"/>
-        <ViewModelPropertyEnumCustom enumId="9:110" name="winner" id="9:211"/>
-        <ViewModelPropertyNumber name="coinsP1" id="9:212"/>
-        <ViewModelPropertyNumber name="coinsP2" id="9:213"/>
         <ViewModelPropertyNumber name="shakeY" id="9:214"/>
         <ViewModelPropertyNumber name="style" id="9:215"/>
         <ViewModelPropertyNumber name="debug" id="9:216"/>
-        <ViewModelPropertyBoolean name="paused" id="9:217"/>
-        <!-- start menu: one cursor per input slot, and whether each card is taken -->
-        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursorP1" id="9:230"/>
-        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursorP2" id="9:231"/>
-        <ViewModelPropertyBoolean name="marioLocked" id="9:232"/>
-        <ViewModelPropertyBoolean name="luigiLocked" id="9:233"/>
+        <!-- the components' data: each placement in game.rml binds one of these -->
+        <ViewModelPropertyViewModel viewModelReferenceId="9:950" name="overlay" id="9:254"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:900" name="menu" id="9:255"/>
+        <!-- one hud slot per player, each its own HudSlot instance -->
+        <ViewModelPropertyViewModel viewModelReferenceId="9:800" name="hud1" id="9:250"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:800" name="hud2" id="9:251"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:800" name="hud3" id="9:252"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:800" name="hud4" id="9:253"/>
         <ViewModelInstance exports="true" name="Default" id="9:201">
             <ViewModelInstanceEnum propertyValue="9:101" viewModelPropertyId="9:210" id="9:220"/>
-            <ViewModelInstanceEnum propertyValue="9:111" viewModelPropertyId="9:211" id="9:221"/>
-            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:212" id="9:222"/>
-            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:213" id="9:223"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:214" id="9:224"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:215" id="9:225"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:216" id="9:226"/>
-            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:217" id="9:227"/>
-            <ViewModelInstanceViewModel propertyValue="9:701" viewModelPropertyId="9:230" id="9:240"/>
-            <ViewModelInstanceViewModel propertyValue="9:702" viewModelPropertyId="9:231" id="9:241"/>
-            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:232" id="9:242"/>
-            <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:233" id="9:243"/>
+            <ViewModelInstanceViewModel propertyValue="9:951" viewModelPropertyId="9:254" id="9:264"/>
+            <ViewModelInstanceViewModel propertyValue="9:901" viewModelPropertyId="9:255" id="9:265"/>
+            <ViewModelInstanceViewModel propertyValue="9:801" viewModelPropertyId="9:250" id="9:260"/>
+            <ViewModelInstanceViewModel propertyValue="9:802" viewModelPropertyId="9:251" id="9:261"/>
+            <ViewModelInstanceViewModel propertyValue="9:803" viewModelPropertyId="9:252" id="9:262"/>
+            <ViewModelInstanceViewModel propertyValue="9:804" viewModelPropertyId="9:253" id="9:263"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <!-- one player's hud box: which letter (0 mario, 1 luigi, 2 wario, 3 waluigi), how many coins lit, shown (0 or 1) -->
+    <ViewModel defaultInstanceId="9:801" name="HudSlot" id="9:800">
+        <ViewModelPropertyNumber name="letter" id="9:810"/>
+        <ViewModelPropertyNumber name="coins" id="9:811"/>
+        <ViewModelPropertyNumber name="shown" id="9:812"/>
+        <ViewModelInstance exports="true" name="Slot1" id="9:801">
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:810" id="9:820"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:821"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:812" id="9:822"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="Slot2" id="9:802">
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:810" id="9:830"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:831"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:812" id="9:832"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="Slot3" id="9:803">
+            <ViewModelInstanceNumber propertyValue="2" viewModelPropertyId="9:810" id="9:840"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:841"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:812" id="9:842"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="Slot4" id="9:804">
+            <ViewModelInstanceNumber propertyValue="3" viewModelPropertyId="9:810" id="9:850"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:851"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:812" id="9:852"/>
         </ViewModelInstance>
     </ViewModel>
 
@@ -60,21 +81,84 @@
         <ViewModelPropertyNumber name="h" id="9:713"/>
         <ViewModelPropertyNumber name="markerX" id="9:714"/>
         <ViewModelPropertyNumber name="markerY" id="9:715"/>
+        <ViewModelPropertyNumber name="shown" id="9:716"/>
         <ViewModelInstance exports="true" name="P1" id="9:701">
-            <ViewModelInstanceNumber propertyValue="44.5" viewModelPropertyId="9:710" id="9:720"/>
-            <ViewModelInstanceNumber propertyValue="76.5" viewModelPropertyId="9:711" id="9:721"/>
+            <ViewModelInstanceNumber propertyValue="-1.5" viewModelPropertyId="9:710" id="9:720"/>
+            <ViewModelInstanceNumber propertyValue="74.5" viewModelPropertyId="9:711" id="9:721"/>
             <ViewModelInstanceNumber propertyValue="71" viewModelPropertyId="9:712" id="9:722"/>
-            <ViewModelInstanceNumber propertyValue="87" viewModelPropertyId="9:713" id="9:723"/>
-            <ViewModelInstanceNumber propertyValue="72" viewModelPropertyId="9:714" id="9:724"/>
+            <ViewModelInstanceNumber propertyValue="91" viewModelPropertyId="9:713" id="9:723"/>
+            <ViewModelInstanceNumber propertyValue="26" viewModelPropertyId="9:714" id="9:724"/>
             <ViewModelInstanceNumber propertyValue="64" viewModelPropertyId="9:715" id="9:725"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:716" id="9:726"/>
         </ViewModelInstance>
         <ViewModelInstance exports="true" name="P2" id="9:702">
-            <ViewModelInstanceNumber propertyValue="142.5" viewModelPropertyId="9:710" id="9:730"/>
-            <ViewModelInstanceNumber propertyValue="78.5" viewModelPropertyId="9:711" id="9:731"/>
+            <ViewModelInstanceNumber propertyValue="64.5" viewModelPropertyId="9:710" id="9:730"/>
+            <ViewModelInstanceNumber propertyValue="76.5" viewModelPropertyId="9:711" id="9:731"/>
             <ViewModelInstanceNumber propertyValue="67" viewModelPropertyId="9:712" id="9:732"/>
-            <ViewModelInstanceNumber propertyValue="83" viewModelPropertyId="9:713" id="9:733"/>
-            <ViewModelInstanceNumber propertyValue="168" viewModelPropertyId="9:714" id="9:734"/>
+            <ViewModelInstanceNumber propertyValue="87" viewModelPropertyId="9:713" id="9:733"/>
+            <ViewModelInstanceNumber propertyValue="90" viewModelPropertyId="9:714" id="9:734"/>
             <ViewModelInstanceNumber propertyValue="64" viewModelPropertyId="9:715" id="9:735"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:716" id="9:736"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="P3" id="9:703">
+            <ViewModelInstanceNumber propertyValue="130.5" viewModelPropertyId="9:710" id="9:740"/>
+            <ViewModelInstanceNumber propertyValue="78.5" viewModelPropertyId="9:711" id="9:741"/>
+            <ViewModelInstanceNumber propertyValue="63" viewModelPropertyId="9:712" id="9:742"/>
+            <ViewModelInstanceNumber propertyValue="83" viewModelPropertyId="9:713" id="9:743"/>
+            <ViewModelInstanceNumber propertyValue="154" viewModelPropertyId="9:714" id="9:744"/>
+            <ViewModelInstanceNumber propertyValue="64" viewModelPropertyId="9:715" id="9:745"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:716" id="9:746"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="P4" id="9:704">
+            <ViewModelInstanceNumber propertyValue="196.5" viewModelPropertyId="9:710" id="9:750"/>
+            <ViewModelInstanceNumber propertyValue="80.5" viewModelPropertyId="9:711" id="9:751"/>
+            <ViewModelInstanceNumber propertyValue="59" viewModelPropertyId="9:712" id="9:752"/>
+            <ViewModelInstanceNumber propertyValue="79" viewModelPropertyId="9:713" id="9:753"/>
+            <ViewModelInstanceNumber propertyValue="218" viewModelPropertyId="9:714" id="9:754"/>
+            <ViewModelInstanceNumber propertyValue="64" viewModelPropertyId="9:715" id="9:755"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:716" id="9:756"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <!-- the start menu: a cursor per input slot, and per card whether it is taken (the hop) and its label -->
+    <ViewModel defaultInstanceId="9:901" name="Menu" id="9:900">
+        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursor1" id="9:910"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursor2" id="9:911"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursor3" id="9:912"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:700" name="cursor4" id="9:913"/>
+        <ViewModelPropertyNumber name="lock1" id="9:920"/>
+        <ViewModelPropertyNumber name="lock2" id="9:921"/>
+        <ViewModelPropertyNumber name="lock3" id="9:922"/>
+        <ViewModelPropertyNumber name="lock4" id="9:923"/>
+        <ViewModelPropertyString name="mode1" id="9:930"/>
+        <ViewModelPropertyString name="mode2" id="9:931"/>
+        <ViewModelPropertyString name="mode3" id="9:932"/>
+        <ViewModelPropertyString name="mode4" id="9:933"/>
+        <ViewModelInstance exports="true" name="Default" id="9:901">
+            <ViewModelInstanceViewModel propertyValue="9:701" viewModelPropertyId="9:910" id="9:940"/>
+            <ViewModelInstanceViewModel propertyValue="9:702" viewModelPropertyId="9:911" id="9:941"/>
+            <ViewModelInstanceViewModel propertyValue="9:703" viewModelPropertyId="9:912" id="9:942"/>
+            <ViewModelInstanceViewModel propertyValue="9:704" viewModelPropertyId="9:913" id="9:943"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:920" id="9:944"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:921" id="9:945"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:922" id="9:946"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:923" id="9:947"/>
+            <ViewModelInstanceString propertyValue="" viewModelPropertyId="9:930" id="9:948"/>
+            <ViewModelInstanceString propertyValue="" viewModelPropertyId="9:931" id="9:949"/>
+            <ViewModelInstanceString propertyValue="OFF" viewModelPropertyId="9:932" id="9:934"/>
+            <ViewModelInstanceString propertyValue="OFF" viewModelPropertyId="9:933" id="9:935"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <!-- the in-round overlays: the pause banner and the winner banner (opacities 0 or 1, and the winner's line) -->
+    <ViewModel defaultInstanceId="9:951" name="Overlay" id="9:950">
+        <ViewModelPropertyNumber name="pauseShown" id="9:960"/>
+        <ViewModelPropertyNumber name="winnerShown" id="9:961"/>
+        <ViewModelPropertyString name="winnerText" id="9:962"/>
+        <ViewModelInstance exports="true" name="Default" id="9:951">
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:960" id="9:970"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:961" id="9:971"/>
+            <ViewModelInstanceString propertyValue="" viewModelPropertyId="9:962" id="9:972"/>
         </ViewModelInstance>
     </ViewModel>
 
@@ -92,6 +176,8 @@
     <DataEnumCustom name="Character" id="9:140">
         <DataEnumValue key="mario" value="Mario" id="9:141"/>
         <DataEnumValue key="luigi" value="Luigi" id="9:142"/>
+        <DataEnumValue key="wario" value="Wario" id="9:143"/>
+        <DataEnumValue key="waluigi" value="Waluigi" id="9:144"/>
     </DataEnumCustom>
 
     <ViewModel defaultInstanceId="9:301" name="Player" id="9:300">

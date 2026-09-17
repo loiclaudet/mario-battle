@@ -19,13 +19,14 @@ export type SlotView = { cursor: Rect, marker: { x: number, y: number } }
 
 Menu.CARDS = { 'mario', 'luigi' } -- card index = player index
 Menu.START = #Menu.CARDS + 1
-local CARD_RECTS: { Rect } = { { x = 48, y = 80, w = 64, h = 80 }, { x = 144, y = 80, w = 64, h = 80 } }
+-- four card places, 60 wide with 4 px gaps, as drawn by scene/components/menu.rml (tools/gen_ui_rml.py)
+local CARD_RECTS: { Rect } = { { x = 4, y = 80, w = 60, h = 80 }, { x = 68, y = 80, w = 60, h = 80 }, { x = 132, y = 80, w = 60, h = 80 }, { x = 196, y = 80, w = 60, h = 80 } }
 local START_RECT: Rect = { x = 104, y = 180, w = 48, h = 16 }
 Menu.CARD_RECTS = CARD_RECTS
 Menu.START_RECT = START_RECT
-Menu.CURSOR_OUTSET = { 4, 2 } -- px outside the target per slot: a 1 px gap to the frame, p2 sits 2 px inside p1
+Menu.CURSOR_OUTSET = { 6, 4, 2, 0 } -- px outside the target per slot: each cursor sits 2 px inside the previous one
 Menu.MARKER_W = 16 -- "1P" in the 8 px font
-Menu.MARKER_PITCH = 20 -- markers sharing a target sit this far apart
+Menu.MARKER_PITCH = 16 -- markers sharing a target sit this far apart (four on one card overflow it by 2 px a side)
 Menu.MARKER_LIFT = 16 -- marker top above the target top
 
 local function copyIntent(i: Input.Intent): Input.Intent

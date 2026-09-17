@@ -6,6 +6,8 @@
     <ImageAsset file="assets/stage/hud_coin.png" samplerFilter="1" name="hud_coin" id="8:60009"/>
     <ImageAsset file="assets/stage/hud_l.png" samplerFilter="1" name="hud_l" id="8:30507"/>
     <ImageAsset file="assets/stage/hud_m.png" samplerFilter="1" name="hud_m" id="8:39357"/>
+    <ImageAsset file="assets/stage/hud_w.png" samplerFilter="1" name="hud_w" id="8:21591"/>
+    <ImageAsset file="assets/stage/hud_wl.png" samplerFilter="1" name="hud_wl" id="8:18619"/>
     <ImageAsset file="assets/stage/ledge_ll.png" samplerFilter="1" name="ledge_ll" id="8:60735"/>
     <ImageAsset file="assets/stage/ledge_lr.png" samplerFilter="1" name="ledge_lr" id="8:56988"/>
     <ImageAsset file="assets/stage/ledge_ul.png" samplerFilter="1" name="ledge_ul" id="8:31191"/>
@@ -70,6 +72,20 @@
     <ImageAsset file="assets/sprites/spiny_flipped.png" samplerFilter="1" name="spiny_flipped" id="8:12365"/>
     <ImageAsset file="assets/sprites/spiny_walk_1.png" samplerFilter="1" name="spiny_walk_1" id="8:35278"/>
     <ImageAsset file="assets/sprites/spiny_walk_2.png" samplerFilter="1" name="spiny_walk_2" id="8:4804"/>
+    <ImageAsset file="assets/sprites/waluigi_dead.png" samplerFilter="1" name="waluigi_dead" id="8:10291"/>
+    <ImageAsset file="assets/sprites/waluigi_jump.png" samplerFilter="1" name="waluigi_jump" id="8:47649"/>
+    <ImageAsset file="assets/sprites/waluigi_kick.png" samplerFilter="1" name="waluigi_kick" id="8:54514"/>
+    <ImageAsset file="assets/sprites/waluigi_skid.png" samplerFilter="1" name="waluigi_skid" id="8:44151"/>
+    <ImageAsset file="assets/sprites/waluigi_stand.png" samplerFilter="1" name="waluigi_stand" id="8:50910"/>
+    <ImageAsset file="assets/sprites/waluigi_stun.png" samplerFilter="1" name="waluigi_stun" id="8:7689"/>
+    <ImageAsset file="assets/sprites/waluigi_walk.png" samplerFilter="1" name="waluigi_walk" id="8:26786"/>
+    <ImageAsset file="assets/sprites/wario_dead.png" samplerFilter="1" name="wario_dead" id="8:4555"/>
+    <ImageAsset file="assets/sprites/wario_jump.png" samplerFilter="1" name="wario_jump" id="8:7673"/>
+    <ImageAsset file="assets/sprites/wario_kick.png" samplerFilter="1" name="wario_kick" id="8:5258"/>
+    <ImageAsset file="assets/sprites/wario_skid.png" samplerFilter="1" name="wario_skid" id="8:55631"/>
+    <ImageAsset file="assets/sprites/wario_stand.png" samplerFilter="1" name="wario_stand" id="8:10166"/>
+    <ImageAsset file="assets/sprites/wario_stun.png" samplerFilter="1" name="wario_stun" id="8:47857"/>
+    <ImageAsset file="assets/sprites/wario_walk.png" samplerFilter="1" name="wario_walk" id="8:7834"/>
     <!-- sound effects, the mushroom kingdom rips (docs/rules.md has the credits) -->
     <AudioAsset file="assets/sfx/bump.wav" name="bump" id="8:38258"/>
     <AudioAsset file="assets/sfx/coin.wav" name="coin" id="8:11990"/>

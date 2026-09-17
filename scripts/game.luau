@@ -31,8 +31,17 @@ type Game = {
     powInst: Artboard<Data.Pow>?,
     powVm: Data.Pow?,
     fireballViews: { [number]: FireballView },
-    cursorP1: Input<Data.MenuCursor>?, -- the menu cursors, nested in the Game view model
-    cursorP2: Input<Data.MenuCursor>?,
+    -- the components' view models, nested in the Game view model and bound to the placements in game.rml
+    overlayVm: Input<Data.Overlay>?,
+    menuVm: Input<Data.Menu>?,
+    cursor1: Input<Data.MenuCursor>?, -- the menu cursors, one per input slot, inside Menu
+    cursor2: Input<Data.MenuCursor>?,
+    cursor3: Input<Data.MenuCursor>?,
+    cursor4: Input<Data.MenuCursor>?,
+    hudSlot1: Input<Data.HudSlot>?, -- one per player
+    hudSlot2: Input<Data.HudSlot>?,
+    hudSlot3: Input<Data.HudSlot>?,
+    hudSlot4: Input<Data.HudSlot>?,
     menu: Menu.State,
     brains: { Npc.Brain }, -- one per player, used when the player has no controller
     ready: boolean,
@@ -96,20 +105,45 @@ local function pushVm(self: Game)
         return
     end
     vm.phase.value = self.phase
-    vm.winner.value = self.winner
-    vm.coinsP1.value = self.coins[1]
-    vm.coinsP2.value = self.coins[2]
     vm.shakeY.value = -self.world.shakeY
     vm.style.value = self.style
-    vm.paused.value = self.paused
-    -- the menu: taken cards hop, the cursor outlines and markers follow scripts/menu.luau's layout
-    vm.marioLocked.value = Menu.isLocked(self.menu, 1)
-    vm.luigiLocked.value = Menu.isLocked(self.menu, 2)
+    -- the overlay component: the pause banner, the winner's line
+    local overlay = self.overlayVm
+    if overlay ~= nil then
+        overlay.pauseShown.value = if self.paused then 1 else 0
+        overlay.winnerShown.value = if self.phase == 'over' and self.winner ~= 'none' then 1 else 0
+        overlay.winnerText.value = string.upper(self.winner) .. ' WINS'
+    end
+    -- the hud components: one box per player
+    local huds: { Input<Data.HudSlot>? } = { self.hudSlot1, self.hudSlot2, self.hudSlot3, self.hudSlot4 }
+    for i, h in huds do
+        if h ~= nil then
+            local p = self.players[i]
+            h.letter.value = i - 1
+            h.coins.value = self.coins[i] or 0
+            h.shown.value = if p ~= nil then 1 else 0
+        end
+    end
+    -- the menu component: taken cards hop, the cursor outlines and markers follow scripts/menu.luau's layout
+    local menuVm = self.menuVm
+    if menuVm ~= nil then
+        local locks = { menuVm.lock1, menuVm.lock2, menuVm.lock3, menuVm.lock4 }
+        local modes = { menuVm.mode1, menuVm.mode2, menuVm.mode3, menuVm.mode4 }
+        for card = 1, 4 do
+            local exists = card <= #Menu.CARDS
+            locks[card].value = if exists and Menu.isLocked(self.menu, card) then 1 else 0
+            modes[card].value = if not exists then 'OFF' elseif Menu.isLocked(self.menu, card) then '' else 'CPU'
+        end
+    end
     if self.phase == 'title' then
-        local cursors: { Input<Data.MenuCursor>? } = { self.cursorP1, self.cursorP2 }
-        for i, view in Menu.layout(self.menu) do
-            local c = cursors[i]
-            if c ~= nil then
+        local cursors: { Input<Data.MenuCursor>? } = { self.cursor1, self.cursor2, self.cursor3, self.cursor4 }
+        local views = Menu.layout(self.menu)
+        for i, c in cursors do
+            if c == nil then
+                continue
+            end
+            local view = views[i]
+            if view ~= nil then
                 -- a 1 px stroke sits on pixel centres, so the rect is offset half a pixel and shrunk by one
                 c.x.value = view.cursor.x + 0.5
                 c.y.value = view.cursor.y + 0.5
@@ -117,6 +151,9 @@ local function pushVm(self: Game)
                 c.h.value = view.cursor.h - 1
                 c.markerX.value = view.marker.x
                 c.markerY.value = view.marker.y
+                c.shown.value = 1
+            else
+                c.shown.value = 0
             end
         end
     end
@@ -666,8 +703,16 @@ return function(context: Context): Layout<Game>
         powInst = nil,
         powVm = nil,
         fireballViews = {},
-        cursorP1 = nil,
-        cursorP2 = nil,
+        overlayVm = nil,
+        menuVm = nil,
+        cursor1 = nil,
+        cursor2 = nil,
+        cursor3 = nil,
+        cursor4 = nil,
+        hudSlot1 = nil,
+        hudSlot2 = nil,
+        hudSlot3 = nil,
+        hudSlot4 = nil,
         menu = Menu.new(2),
         brains = { Npc.new(1), Npc.new(2) },
         ready = false,
