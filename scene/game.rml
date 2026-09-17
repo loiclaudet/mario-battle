@@ -1,166 +1,25 @@
 <Rive version="1" kind="fragment">
     <!-- Game artboard: the nes framebuffer, 256x240. earlier siblings draw on top, so the order is
-         overlay (start menu, banners), hud coin fills, playfield script, stage strips.
-         ids: 0:1xx layout, 0:2xx stage, 0:3xx hud, 0:4xx overlay (0:46x 0:47x cards, 0:48x cursors and markers),
-         0:5xx state machine, 0:6xx animations, 0:7xx converters. -->
+         overlay component (pause and winner banners), the menu component in the Title solo, the playfield script
+         (players, enemies, fireballs, pow), the hud (four HudSlot components, under the sprites), the stage (one
+         component per layout in scene/stages, the Stage layer shows the one a round plays).
+         the components live in scene/components and bind to their own view model through the placement's
+         dataBindPathIds (Game.overlay, Game.menu, Game.hudN). ids: 0:1xx layout, 0:2xx stage, 0:3xx hud,
+         0:4xx overlay, 0:5xx state machine, 0:6xx animations; 0:61xxx are the coop ids the first push wrote. -->
     <Artboard defaultStateMachineId="0:500" viewModelId="9:200" viewModelInstanceId="9:201" clip="true" width="256" height="240" styleId="0:101" x="0" y="0" name="Game" id="0:100">
         <Fill name="Background" id="0:61780">
             <SolidColor colorValue="FF000000" name="Black" id="0:61781"/>
         </Fill>
         <LayoutComponentStyle name="Game Style" id="0:101"/>
 
-        <!-- overlay: title panel and winner banner, each a Solo the state machine switches -->
+        <!-- overlays: the pause and winner banners, on top of everything -->
         <Node name="Overlay" id="0:400">
-            <Solo activeComponentId="0:441" name="Pause" id="0:440">
-                <Node name="none" id="0:441"/>
-                <Node name="banner" id="0:442">
-                    <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="PauseText" id="0:443">
-                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:444">
-                            <Fill name="Fill" id="0:61782"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61783"/></Fill>
-                        </TextStylePaint>
-                        <TextValueRun styleId="0:444" text="PAUSE" name="Run" id="0:445"/>
-                    </Text>
-                </Node>
-            </Solo>
-            <Solo activeComponentId="0:411" name="Winner" id="0:410">
-                <Node name="none" id="0:411"/>
-                <Node name="mario" id="0:412">
-                    <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="MarioWins" id="0:415">
-                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:416">
-                            <Fill name="Fill" id="0:61787"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61788"/></Fill>
-                        </TextStylePaint>
-                        <TextValueRun styleId="0:416" text="MARIO WINS" name="Run" id="0:417"/>
-                    </Text>
-                </Node>
-                <Node name="luigi" id="0:413">
-                    <Text x="128" y="124" sizingValue="autoWidth" originX="0.5" originY="0" name="LuigiWins" id="0:419">
-                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:420">
-                            <Fill name="Fill" id="0:61792"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61793"/></Fill>
-                        </TextStylePaint>
-                        <TextValueRun styleId="0:420" text="LUIGI WINS" name="Run" id="0:421"/>
-                    </Text>
-                </Node>
-            </Solo>
-            <!-- the start menu, smb3 style: black screen, nes text, a card per brother and START below.
-                 the two cursor outlines and the 1P/2P markers follow Game.cursorP1/cursorP2, which
-                 scripts/menu.luau lays out; the card solos hop to the jump frame when the card is taken -->
+            <NestedArtboard artboardId="12:100" dataBindPathIds="9:200-9:254" x="0" y="0" name="OverlayView" id="0:61996"/>
+            <!-- the start menu component, shown by the Phase layer while the round is not on -->
             <Solo activeComponentId="0:432" name="Title" id="0:430">
                 <Node name="none" id="0:431"/>
-                <Node name="panel" id="0:432">
-                    <Text x="72" y="64" sizingValue="autoWidth" originX="0" originY="0" name="MarkerP1" id="0:484">
-                        <DataBindContext sourcePathIds="9:200-9:230-9:714" propertyKey="13" id="0:61927"/>
-                        <DataBindContext sourcePathIds="9:200-9:230-9:715" propertyKey="14" id="0:61928"/>
-                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:485">
-                            <Fill name="Fill" id="0:61929"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61930"/></Fill>
-                        </TextStylePaint>
-                        <TextValueRun styleId="0:485" text="1P" name="Run" id="0:486"/>
-                    </Text>
-                    <Text x="168" y="64" sizingValue="autoWidth" originX="0" originY="0" name="MarkerP2" id="0:487">
-                        <DataBindContext sourcePathIds="9:200-9:231-9:714" propertyKey="13" id="0:61931"/>
-                        <DataBindContext sourcePathIds="9:200-9:231-9:715" propertyKey="14" id="0:61932"/>
-                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:488">
-                            <Fill name="Fill" id="0:61933"><SolidColor colorValue="FF3CBCFC" name="Blue" id="0:61934"/></Fill>
-                        </TextStylePaint>
-                        <TextValueRun styleId="0:488" text="2P" name="Run" id="0:489"/>
-                    </Text>
-                    <Shape x="44.5" y="76.5" name="CursorP1" id="0:480">
-                        <DataBindContext sourcePathIds="9:200-9:230-9:710" propertyKey="13" id="0:61913"/>
-                        <DataBindContext sourcePathIds="9:200-9:230-9:711" propertyKey="14" id="0:61914"/>
-                        <Rectangle width="71" height="87" originX="0" originY="0" name="Path" id="0:61915">
-                            <DataBindContext sourcePathIds="9:200-9:230-9:712" propertyKey="20" id="0:61916"/>
-                            <DataBindContext sourcePathIds="9:200-9:230-9:713" propertyKey="21" id="0:61917"/>
-                        </Rectangle>
-                        <Stroke thickness="1" name="Stroke" id="0:61918"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61919"/></Stroke>
-                    </Shape>
-                    <Shape x="142.5" y="78.5" name="CursorP2" id="0:481">
-                        <DataBindContext sourcePathIds="9:200-9:231-9:710" propertyKey="13" id="0:61920"/>
-                        <DataBindContext sourcePathIds="9:200-9:231-9:711" propertyKey="14" id="0:61921"/>
-                        <Rectangle width="67" height="83" originX="0" originY="0" name="Path" id="0:61922">
-                            <DataBindContext sourcePathIds="9:200-9:231-9:712" propertyKey="20" id="0:61923"/>
-                            <DataBindContext sourcePathIds="9:200-9:231-9:713" propertyKey="21" id="0:61924"/>
-                        </Rectangle>
-                        <Stroke thickness="1" name="Stroke" id="0:61925"><SolidColor colorValue="FF3CBCFC" name="Blue" id="0:61926"/></Stroke>
-                    </Shape>
-                    <Node name="CardMario" id="0:460">
-                        <Solo activeComponentId="0:462" name="MarioPose" id="0:461">
-                            <Image assetId="8:19689" x="72" y="100" originX="0" originY="0" name="stand" id="0:462"/>
-                            <Image assetId="8:40472" x="72" y="100" originX="0" originY="0" name="jump" id="0:463"/>
-                        </Solo>
-                        <Text x="80" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="MarioName" id="0:464">
-                            <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:465">
-                                <Fill name="Fill" id="0:61903"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61904"/></Fill>
-                            </TextStylePaint>
-                            <TextValueRun styleId="0:465" text="MARIO" name="Run" id="0:466"/>
-                        </Text>
-                        <Shape x="48.5" y="80.5" name="MarioFrame" id="0:467">
-                            <Rectangle width="63" height="79" originX="0" originY="0" name="Path" id="0:61905"/>
-                            <Stroke thickness="1" name="Stroke" id="0:61906"><SolidColor colorValue="FFEA9E22" name="Orange" id="0:61907"/></Stroke>
-                        </Shape>
-                    </Node>
-                    <Node name="CardLuigi" id="0:470">
-                        <Solo activeComponentId="0:472" name="LuigiPose" id="0:471">
-                            <Image assetId="8:54015" x="168" y="100" originX="0" originY="0" name="stand" id="0:472"/>
-                            <Image assetId="8:5558" x="168" y="100" originX="0" originY="0" name="jump" id="0:473"/>
-                        </Solo>
-                        <Text x="176" y="136" sizingValue="autoWidth" originX="0.5" originY="0" name="LuigiName" id="0:474">
-                            <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:475">
-                                <Fill name="Fill" id="0:61908"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61909"/></Fill>
-                            </TextStylePaint>
-                            <TextValueRun styleId="0:475" text="LUIGI" name="Run" id="0:476"/>
-                        </Text>
-                        <Shape x="144.5" y="80.5" name="LuigiFrame" id="0:477">
-                            <Rectangle width="63" height="79" originX="0" originY="0" name="Path" id="0:61910"/>
-                            <Stroke thickness="1" name="Stroke" id="0:61911"><SolidColor colorValue="FFEA9E22" name="Orange" id="0:61912"/></Stroke>
-                        </Shape>
-                    </Node>
-                    <Text x="128" y="40" sizingValue="autoWidth" originX="0.5" originY="0" name="TitleText" id="0:434">
-                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:435">
-                            <Fill name="Fill" id="0:61797"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61798"/></Fill>
-                        </TextStylePaint>
-                        <TextValueRun styleId="0:435" text="MARIO BATTLE" name="Run" id="0:436"/>
-                    </Text>
-                    <Text x="128" y="184" sizingValue="autoWidth" originX="0.5" originY="0" name="StartText" id="0:437">
-                        <TextStylePaint fontSize="8" fontAssetId="8:850" name="Style" id="0:438">
-                            <Fill name="Fill" id="0:61799"><SolidColor colorValue="FFFFFFFF" name="White" id="0:61800"/></Fill>
-                        </TextStylePaint>
-                        <TextValueRun styleId="0:438" text="START" name="Run" id="0:439"/>
-                    </Text>
-                </Node>
+                <NestedArtboard artboardId="11:100" dataBindPathIds="9:200-9:255" x="0" y="0" name="MenuView" id="0:432"/>
             </Solo>
-        </Node>
-
-        <!-- hud: five coin fills per player, opacity 0 or 1 from coinsP1/coinsP2 through the slot range mappers -->
-        <Node name="Hud" id="0:300">
-            <Image assetId="8:60009" x="72" y="16" originX="0" originY="0" opacity="0" name="p1_coin_1" id="0:301">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:701" id="0:61804"/>
-            </Image>
-            <Image assetId="8:60009" x="80" y="16" originX="0" originY="0" opacity="0" name="p1_coin_2" id="0:302">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:702" id="0:61805"/>
-            </Image>
-            <Image assetId="8:60009" x="88" y="16" originX="0" originY="0" opacity="0" name="p1_coin_3" id="0:303">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:703" id="0:61806"/>
-            </Image>
-            <Image assetId="8:60009" x="96" y="16" originX="0" originY="0" opacity="0" name="p1_coin_4" id="0:304">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:704" id="0:61807"/>
-            </Image>
-            <Image assetId="8:60009" x="104" y="16" originX="0" originY="0" opacity="0" name="p1_coin_5" id="0:305">
-                <DataBindContext sourcePathIds="9:200-9:212" propertyKey="18" converterId="0:705" id="0:61808"/>
-            </Image>
-            <Image assetId="8:60009" x="160" y="16" originX="0" originY="0" opacity="0" name="p2_coin_1" id="0:306">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:701" id="0:61809"/>
-            </Image>
-            <Image assetId="8:60009" x="168" y="16" originX="0" originY="0" opacity="0" name="p2_coin_2" id="0:307">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:702" id="0:61810"/>
-            </Image>
-            <Image assetId="8:60009" x="176" y="16" originX="0" originY="0" opacity="0" name="p2_coin_3" id="0:308">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:703" id="0:61811"/>
-            </Image>
-            <Image assetId="8:60009" x="184" y="16" originX="0" originY="0" opacity="0" name="p2_coin_4" id="0:309">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:704" id="0:61812"/>
-            </Image>
-            <Image assetId="8:60009" x="192" y="16" originX="0" originY="0" opacity="0" name="p2_coin_5" id="0:310">
-                <DataBindContext sourcePathIds="9:200-9:213" propertyKey="18" converterId="0:705" id="0:61813"/>
-            </Image>
         </Node>
 
         <!-- playfield: the simulation. fill sized so resize gets 256x240 and local coords equal artboard coords -->
@@ -174,70 +33,94 @@
                 <ScriptInputArtboard artboardId="4:100" name="crabArtboard" id="0:61818"/>
                 <ScriptInputArtboard artboardId="5:100" name="powArtboard" id="0:61819"/>
                 <ScriptInputArtboard artboardId="6:100" name="fireballArtboard" id="0:61820"/>
-                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:230" name="cursorP1" id="0:61973"/>
-                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:231" name="cursorP2" id="0:61974"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:254" name="overlayVm" id="0:61986"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:255" name="menuVm" id="0:61987"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:255-9:910" name="cursor1" id="0:61988"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:255-9:911" name="cursor2" id="0:61989"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:255-9:912" name="cursor3" id="0:61990"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:255-9:913" name="cursor4" id="0:61991"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:250" name="hudSlot1" id="0:61992"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:251" name="hudSlot2" id="0:61993"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:252" name="hudSlot3" id="0:61994"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:253" name="hudSlot4" id="0:61995"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:256" name="stage1" id="0:62030"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:257" name="stage2" id="0:62031"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:258" name="stage3" id="0:62032"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:259" name="stage4" id="0:62033"/>
             </ScriptedLayout>
         </LayoutComponent>
 
-        <!-- stage, framebuffer coordinates from PRG/levels/2PVs/Typical.asm. y is bound to shakeY for the pow shake -->
-        <Node name="Stage" id="0:200">
-            <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14" id="0:61821"/>
-            <Image assetId="8:39357" x="52" y="12" originX="0" originY="0" name="hud_m" id="0:201"/>
-            <Image assetId="8:30507" x="140" y="12" originX="0" originY="0" name="hud_l" id="0:202"/>
-            <Image assetId="8:48161" x="0" y="16" originX="0" originY="0" name="pipe_tl" id="0:203"/>
-            <Image assetId="8:56482" x="224" y="16" originX="0" originY="0" name="pipe_tr" id="0:204"/>
-            <Image assetId="8:31191" x="0" y="48" originX="0" originY="0" name="ledge_ul" id="0:205"/>
-            <Image assetId="8:35412" x="160" y="48" originX="0" originY="0" name="ledge_ur" id="0:206"/>
-            <Image assetId="8:30408" x="64" y="96" originX="0" originY="0" name="platform_c" id="0:207"/>
-            <Image assetId="8:30000" x="0" y="112" originX="0" originY="0" name="stub_l" id="0:208"/>
-            <Image assetId="8:52755" x="224" y="112" originX="0" originY="0" name="stub_r" id="0:209"/>
-            <Image assetId="8:60735" x="0" y="160" originX="0" originY="0" name="ledge_ll" id="0:210"/>
-            <Image assetId="8:56988" x="160" y="160" originX="0" originY="0" name="ledge_lr" id="0:211"/>
-            <Image assetId="8:6166" x="0" y="176" originX="0" originY="0" name="pipe_bl" id="0:212"/>
-            <Image assetId="8:5269" x="224" y="176" originX="0" originY="0" name="pipe_br" id="0:213"/>
-            <Image assetId="8:2606" x="0" y="208" originX="0" originY="0" name="floor" id="0:214"/>
+        <!-- hud: one HudSlot component per player, below the playfield so a player jumping through the top row passes
+             in front of the coins; y bound to shakeY like the stage, hidden with the stage on the title -->
+        <Node name="Hud" id="0:300">
+            <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14" id="0:61975"/>
+            <NestedArtboard artboardId="10:100" dataBindPathIds="9:200-9:250" x="8" y="0" name="HudSlot1" id="0:61976"/>
+            <NestedArtboard artboardId="10:100" dataBindPathIds="9:200-9:251" x="68" y="0" name="HudSlot2" id="0:61977"/>
+            <NestedArtboard artboardId="10:100" dataBindPathIds="9:200-9:252" x="128" y="0" name="HudSlot3" id="0:61978"/>
+            <NestedArtboard artboardId="10:100" dataBindPathIds="9:200-9:253" x="188" y="0" name="HudSlot4" id="0:61979"/>
         </Node>
 
-        <!-- one frame animations, one per overlay state. the title ones also hide the stage strips (opacity of 0:200),
-             so the menu is the black screen the rom draws -->
+        <!-- the stages: one component per layout (scene/stages), the Stage layer shows the one Game.stage names.
+             y bound to shakeY for the pow shake, hidden by the title animations -->
+        <Solo activeComponentId="0:61997" name="Stages" id="0:200">
+            <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14" id="0:61821"/>
+            <NestedArtboard artboardId="21:100" dataBindPathIds="9:200-9:256" x="0" y="0" name="Stage1" id="0:61997"/>
+            <NestedArtboard artboardId="22:100" dataBindPathIds="9:200-9:257" x="0" y="0" name="Stage2" id="0:61998"/>
+        </Solo>
+
+        <!-- one frame animations: the title solo, and the stage and hud hidden with it so the menu is the black screen
+             the rom draws -->
         <LinearAnimation loopValue="loop" duration="1" name="Title Show" id="0:601">
             <KeyedObject objectId="0:430" id="0:61822"><KeyedProperty propertyKey="296" id="0:61823"><KeyFrameId value="0:432" frame="0" id="0:61824"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:200" id="0:61947"><KeyedProperty propertyKey="18" id="0:61948"><KeyFrameDouble value="0" frame="0" id="0:61949"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:300" id="0:61980"><KeyedProperty propertyKey="18" id="0:61981"><KeyFrameDouble value="0" frame="0" id="0:61982"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation loopValue="loop" duration="1" name="Title Hide" id="0:602">
             <KeyedObject objectId="0:430" id="0:61825"><KeyedProperty propertyKey="296" id="0:61826"><KeyFrameId value="0:431" frame="0" id="0:61827"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:200" id="0:61950"><KeyedProperty propertyKey="18" id="0:61951"><KeyFrameDouble value="1" frame="0" id="0:61952"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:300" id="0:61983"><KeyedProperty propertyKey="18" id="0:61984"><KeyFrameDouble value="1" frame="0" id="0:61985"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Mario Stand" id="0:608">
-            <KeyedObject objectId="0:461" id="0:61935"><KeyedProperty propertyKey="296" id="0:61936"><KeyFrameId value="0:462" frame="0" id="0:61937"/></KeyedProperty></KeyedObject>
+
+        <LinearAnimation loopValue="loop" duration="1" name="Stage 1" id="0:612">
+            <KeyedObject objectId="0:200" id="0:62020"><KeyedProperty propertyKey="296" id="0:62021"><KeyFrameId value="0:61997" frame="0" id="0:62022"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Mario Jump" id="0:609">
-            <KeyedObject objectId="0:461" id="0:61938"><KeyedProperty propertyKey="296" id="0:61939"><KeyFrameId value="0:463" frame="0" id="0:61940"/></KeyedProperty></KeyedObject>
-        </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Luigi Stand" id="0:610">
-            <KeyedObject objectId="0:471" id="0:61941"><KeyedProperty propertyKey="296" id="0:61942"><KeyFrameId value="0:472" frame="0" id="0:61943"/></KeyedProperty></KeyedObject>
-        </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Luigi Jump" id="0:611">
-            <KeyedObject objectId="0:471" id="0:61944"><KeyedProperty propertyKey="296" id="0:61945"><KeyFrameId value="0:473" frame="0" id="0:61946"/></KeyedProperty></KeyedObject>
-        </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Winner None" id="0:603">
-            <KeyedObject objectId="0:410" id="0:61828"><KeyedProperty propertyKey="296" id="0:61829"><KeyFrameId value="0:411" frame="0" id="0:61830"/></KeyedProperty></KeyedObject>
-        </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Winner Mario" id="0:604">
-            <KeyedObject objectId="0:410" id="0:61831"><KeyedProperty propertyKey="296" id="0:61832"><KeyFrameId value="0:412" frame="0" id="0:61833"/></KeyedProperty></KeyedObject>
-        </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Winner Luigi" id="0:605">
-            <KeyedObject objectId="0:410" id="0:61834"><KeyedProperty propertyKey="296" id="0:61835"><KeyFrameId value="0:413" frame="0" id="0:61836"/></KeyedProperty></KeyedObject>
-        </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Pause Off" id="0:606">
-            <KeyedObject objectId="0:440" id="0:61837"><KeyedProperty propertyKey="296" id="0:61838"><KeyFrameId value="0:441" frame="0" id="0:61839"/></KeyedProperty></KeyedObject>
-        </LinearAnimation>
-        <LinearAnimation loopValue="loop" duration="1" name="Pause On" id="0:607">
-            <KeyedObject objectId="0:440" id="0:61840"><KeyedProperty propertyKey="296" id="0:61841"><KeyFrameId value="0:442" frame="0" id="0:61842"/></KeyedProperty></KeyedObject>
+        <LinearAnimation loopValue="loop" duration="1" name="Stage 2" id="0:613">
+            <KeyedObject objectId="0:200" id="0:62023"><KeyedProperty propertyKey="296" id="0:62024"><KeyFrameId value="0:61998" frame="0" id="0:62025"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
 
         <StateMachine name="Game" id="0:500">
-            <!-- Phase: Title, Playing, Over follow Game.phase -->
+            <!-- Stage: which stage component is shown, from Game.stage -->
+            <StateMachineLayer name="Stage" id="0:580">
+                <AnyState x="60" y="-100" id="0:581"/>
+                <ExitState x="560" y="-100" id="0:582"/>
+                <EntryState x="0" y="0" id="0:583">
+                    <StateTransition stateToId="0:585" id="0:584"/>
+                </EntryState>
+                <AnimationState animationId="0:612" x="160" y="0" id="0:585">
+                    <StateTransition stateToId="0:586" duration="0" id="0:62000">
+                        <TransitionViewModelCondition opValue="equal" id="0:62001">
+                            <TransitionPropertyViewModelComparator id="0:62002">
+                                <BindablePropertyNumber id="0:62003">
+                                    <DataBindContext sourcePathIds="9:200-9:218" propertyKey="636" id="0:62004"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="2" id="0:62005"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <AnimationState animationId="0:613" x="320" y="0" id="0:586">
+                    <StateTransition stateToId="0:585" duration="0" id="0:62010">
+                        <TransitionViewModelCondition opValue="equal" id="0:62011">
+                            <TransitionPropertyViewModelComparator id="0:62012">
+                                <BindablePropertyNumber id="0:62013">
+                                    <DataBindContext sourcePathIds="9:200-9:218" propertyKey="636" id="0:62014"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="1" id="0:62015"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
             <StateMachineLayer name="Phase" id="0:510">
                 <AnyState x="60" y="-100" id="0:511"/>
                 <ExitState x="560" y="-100" id="0:512"/>
@@ -311,161 +194,6 @@
                     </StateTransition>
                 </AnimationState>
             </StateMachineLayer>
-            <!-- Winner: banner follows Game.winner -->
-            <StateMachineLayer name="Winner" id="0:530">
-                <AnyState x="60" y="-100" id="0:531"/>
-                <ExitState x="560" y="-100" id="0:532"/>
-                <EntryState x="0" y="0" id="0:533">
-                    <StateTransition stateToId="0:540" id="0:534"/>
-                </EntryState>
-                <AnimationState animationId="0:603" x="160" y="0" id="0:540">
-                    <StateTransition stateToId="0:541" duration="0" id="0:543">
-                        <TransitionViewModelCondition opValue="equal" id="0:61873">
-                            <TransitionPropertyViewModelComparator id="0:61874">
-                                <BindablePropertyEnum id="0:61875">
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61876"/>
-                                </BindablePropertyEnum>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:112" id="0:61877"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                    <StateTransition stateToId="0:542" duration="0" id="0:544">
-                        <TransitionViewModelCondition opValue="equal" id="0:61878">
-                            <TransitionPropertyViewModelComparator id="0:61879">
-                                <BindablePropertyEnum id="0:61880">
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61881"/>
-                                </BindablePropertyEnum>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:113" id="0:61882"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-                <AnimationState animationId="0:604" x="320" y="0" id="0:541">
-                    <StateTransition stateToId="0:540" duration="0" id="0:545">
-                        <TransitionViewModelCondition opValue="equal" id="0:61883">
-                            <TransitionPropertyViewModelComparator id="0:61884">
-                                <BindablePropertyEnum id="0:61885">
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61886"/>
-                                </BindablePropertyEnum>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:111" id="0:61887"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-                <AnimationState animationId="0:605" x="480" y="0" id="0:542">
-                    <StateTransition stateToId="0:540" duration="0" id="0:546">
-                        <TransitionViewModelCondition opValue="equal" id="0:61888">
-                            <TransitionPropertyViewModelComparator id="0:61889">
-                                <BindablePropertyEnum id="0:61890">
-                                    <DataBindContext sourcePathIds="9:200-9:211" propertyKey="637" id="0:61891"/>
-                                </BindablePropertyEnum>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueEnumComparator value="9:111" id="0:61892"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-            </StateMachineLayer>
-            <!-- Pause: banner follows Game.paused -->
-            <StateMachineLayer name="Pause" id="0:550">
-                <AnyState x="60" y="-100" id="0:551"/>
-                <ExitState x="560" y="-100" id="0:552"/>
-                <EntryState x="0" y="0" id="0:553">
-                    <StateTransition stateToId="0:560" id="0:554"/>
-                </EntryState>
-                <AnimationState animationId="0:606" x="160" y="0" id="0:560">
-                    <StateTransition stateToId="0:561" duration="0" id="0:562">
-                        <TransitionViewModelCondition opValue="equal" id="0:61893">
-                            <TransitionPropertyViewModelComparator id="0:61894">
-                                <BindablePropertyBoolean id="0:61895">
-                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634" id="0:61896"/>
-                                </BindablePropertyBoolean>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="true" id="0:61897"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-                <AnimationState animationId="0:607" x="320" y="0" id="0:561">
-                    <StateTransition stateToId="0:560" duration="0" id="0:563">
-                        <TransitionViewModelCondition opValue="equal" id="0:61898">
-                            <TransitionPropertyViewModelComparator id="0:61899">
-                                <BindablePropertyBoolean id="0:61900">
-                                    <DataBindContext sourcePathIds="9:200-9:217" propertyKey="634" id="0:61901"/>
-                                </BindablePropertyBoolean>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="false" id="0:61902"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-            </StateMachineLayer>
-            <!-- Mario Lock / Luigi Lock: the card's brother hops while Game.marioLocked / luigiLocked -->
-            <StateMachineLayer name="Mario Lock" id="0:570">
-                <AnyState x="60" y="-100" id="0:571"/>
-                <ExitState x="560" y="-100" id="0:572"/>
-                <EntryState x="0" y="0" id="0:573">
-                    <StateTransition stateToId="0:575" id="0:574"/>
-                </EntryState>
-                <AnimationState animationId="0:608" x="160" y="0" id="0:575">
-                    <StateTransition stateToId="0:576" duration="0" id="0:577">
-                        <TransitionViewModelCondition opValue="equal" id="0:61953">
-                            <TransitionPropertyViewModelComparator id="0:61954">
-                                <BindablePropertyBoolean id="0:61955">
-                                    <DataBindContext sourcePathIds="9:200-9:232" propertyKey="634" id="0:61956"/>
-                                </BindablePropertyBoolean>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="true" id="0:61957"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-                <AnimationState animationId="0:609" x="320" y="0" id="0:576">
-                    <StateTransition stateToId="0:575" duration="0" id="0:578">
-                        <TransitionViewModelCondition opValue="equal" id="0:61958">
-                            <TransitionPropertyViewModelComparator id="0:61959">
-                                <BindablePropertyBoolean id="0:61960">
-                                    <DataBindContext sourcePathIds="9:200-9:232" propertyKey="634" id="0:61961"/>
-                                </BindablePropertyBoolean>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="false" id="0:61962"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-            </StateMachineLayer>
-            <StateMachineLayer name="Luigi Lock" id="0:590">
-                <AnyState x="60" y="-100" id="0:591"/>
-                <ExitState x="560" y="-100" id="0:592"/>
-                <EntryState x="0" y="0" id="0:593">
-                    <StateTransition stateToId="0:595" id="0:594"/>
-                </EntryState>
-                <AnimationState animationId="0:610" x="160" y="0" id="0:595">
-                    <StateTransition stateToId="0:596" duration="0" id="0:597">
-                        <TransitionViewModelCondition opValue="equal" id="0:61963">
-                            <TransitionPropertyViewModelComparator id="0:61964">
-                                <BindablePropertyBoolean id="0:61965">
-                                    <DataBindContext sourcePathIds="9:200-9:233" propertyKey="634" id="0:61966"/>
-                                </BindablePropertyBoolean>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="true" id="0:61967"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-                <AnimationState animationId="0:611" x="320" y="0" id="0:596">
-                    <StateTransition stateToId="0:595" duration="0" id="0:598">
-                        <TransitionViewModelCondition opValue="equal" id="0:61968">
-                            <TransitionPropertyViewModelComparator id="0:61969">
-                                <BindablePropertyBoolean id="0:61970">
-                                    <DataBindContext sourcePathIds="9:200-9:233" propertyKey="634" id="0:61971"/>
-                                </BindablePropertyBoolean>
-                            </TransitionPropertyViewModelComparator>
-                            <TransitionValueBooleanComparator value="false" id="0:61972"/>
-                        </TransitionViewModelCondition>
-                    </StateTransition>
-                </AnimationState>
-            </StateMachineLayer>
         </StateMachine>
     </Artboard>
-
-    <DataConverterRangeMapper minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Coin slot 1" id="0:701"/>
-    <DataConverterRangeMapper minInput="1" maxInput="2" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Coin slot 2" id="0:702"/>
-    <DataConverterRangeMapper minInput="2" maxInput="3" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Coin slot 3" id="0:703"/>
-    <DataConverterRangeMapper minInput="3" maxInput="4" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Coin slot 4" id="0:704"/>
-    <DataConverterRangeMapper minInput="4" maxInput="5" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" name="Coin slot 5" id="0:705"/>
 </Rive>

@@ -39,7 +39,62 @@ return function(): Tests
                 table.insert(s.list, e)
                 local p = Players.new(1)
                 local ev = Enemies.update(s, w, { p }, e.slot, false)
-                expect(ev.killed).is(1)
+                expect(ev.killed[1]).is(1)
+            end)
+            test.case('walking into a bottom pipe raises the entered event once, coming out of a top pipe does not', function(expect)
+                local s = Enemies.new()
+                local w = World.new()
+                local e = spinyAt(200) -- walking right on the floor towards the right pipe's entrance at 208
+                e.body.vx = Physics.ENEMY_SPAWN_VX
+                table.insert(s.list, e)
+                local p = Players.new(1)
+                p.halt = 0xFFFF
+                local entered = 0
+                local atTop = false
+                local frames = 0
+                for _ = 1, 200 do
+                    frames += 1
+                    local ev = Enemies.update(s, w, { p }, frames, false)
+                    if ev.entered then
+                        entered += 1
+                    end
+                    if e.body.y == Stage.SPAWN_Y then
+                        atTop = true
+                    end
+                end
+                expect(entered).is(1) -- once at x 208, then it rides the pipe and comes out of a top pipe without a second one
+                expect(atTop).is(true)
+            end)
+            test.case('a walker drifted by a one foot hit faces its walk again once it lands', function(expect)
+                local s = Enemies.new()
+                local w = World.new()
+                local e = spinyAt(100) -- walking right on the floor
+                e.body.vx = Physics.ENEMY_SPAWN_VX
+                table.insert(s.list, e)
+                local p = Players.new(1)
+                p.halt = 0xFFFF
+                -- the block under its left foot bounces: it is thrown back the way it came, on its feet or on
+                -- its back, and lands walking on
+                World.bump(w, e.body.x + 4, e.body.y + 16)
+                for f = 1, 60 do
+                    Enemies.update(s, w, { p }, f, false)
+                end
+                expect(e.onGround).is(true)
+                expect(e.dir).is(if e.body.vx < 0 then -1 else 1)
+            end)
+            test.case('an enemy that catches a player from behind turns and walks towards them', function(expect)
+                local s = Enemies.new()
+                local w = World.new()
+                local e = spinyAt(64) -- walking right
+                e.body.vx = Physics.ENEMY_SPAWN_VX
+                table.insert(s.list, e)
+                local p = Players.new(1)
+                Players.setController(p, 1)
+                p.body.x = 56 -- overlapping from the left, behind it
+                local ev = Enemies.update(s, w, { p }, e.slot, false)
+                expect(ev.killed[1]).is(1)
+                expect(e.dir).is(-1)
+                expect(e.body.vx < 0).is(true)
             end)
             test.case('the same touch kills a driven player', function(expect)
                 local s = Enemies.new()
@@ -49,7 +104,7 @@ return function(): Tests
                 local p = Players.new(1)
                 Players.setController(p, 1)
                 local ev = Enemies.update(s, w, { p }, e.slot, false)
-                expect(ev.killed).is(1)
+                expect(ev.killed[1]).is(1)
             end)
         end)
     end

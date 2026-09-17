@@ -59,19 +59,24 @@ export type State = {
     spawnCnt2: number,
     tooLongCnt: number,
     count: number, -- enemies spawned so far this round
+    quota: number, -- how many the round spawns
     nextIsLast: boolean,
     style: number,
     random: number,
 }
 
-export type Events = { flip: boolean, kick: boolean, coin: number, kicks: { number }, killed: number, fireball: boolean, ender: boolean, spawned: boolean }
+Enemies.QUOTA = 5
+
+-- entered: an enemy walked into a bottom pipe this frame (the pipe sound). killed lists every player touched by
+-- a live enemy this frame, kicks every kicker
+export type Events = { flip: boolean, kick: boolean, coin: number, kicks: { number }, killed: { number }, fireball: boolean, ender: boolean, entered: boolean }
 
 local function noEvents(): Events
-    return { flip = false, kick = false, coin = 0, kicks = {}, killed = 0, fireball = false, ender = false, spawned = false }
+    return { flip = false, kick = false, coin = 0, kicks = {}, killed = {}, fireball = false, ender = false, entered = false }
 end
 
 function Enemies.new(): State
-    return { list = {}, spawnCnt = 0, spawnCnt2 = 0, tooLongCnt = 0, count = 0, nextIsLast = false, style = 0, random = 1 }
+    return { list = {}, spawnCnt = 0, spawnCnt2 = 0, tooLongCnt = 0, count = 0, quota = Enemies.QUOTA, nextIsLast = false, style = 0, random = 1 }
 end
 
 function Enemies.reset(s: State, style: number)
@@ -80,9 +85,11 @@ function Enemies.reset(s: State, style: number)
     s.spawnCnt2 = 0
     s.tooLongCnt = 0
     s.count = 0
+    s.quota = Enemies.QUOTA
     s.nextIsLast = false
     s.style = style
 end
+
 
 -- Vs_Randomize stand-in: a small lcg, only used to pick a top pipe when recycling
 local function random01(s: State): number
@@ -96,11 +103,11 @@ local function spawnVx(dir: number, fast: boolean): number
 end
 
 local function spawn(s: State): Enemy
-    local kind = SETS[s.style + 1][s.count + 1]
+    local kind = SETS[s.style + 1][s.count % 5 + 1] -- past the five, the set repeats
     local side = s.count % 2 -- 0 left pipe walking right, 1 right pipe walking left
     local dir = if side == 0 then 1 else -1
     s.count += 1
-    local last = s.count == 5 and s.nextIsLast
+    local last = s.count == s.quota and s.nextIsLast
     local e: Enemy = {
         slot = s.count,
         kind = kind,
@@ -145,9 +152,8 @@ function Enemies.spawner(s: State, halted: boolean, ev: Events)
             return
         end
     end
-    if s.count < 5 and s.spawnCnt == 0 then
+    if s.count < s.quota and s.spawnCnt == 0 then
         spawn(s)
-        ev.spawned = true
     end
 end
 
@@ -196,13 +202,17 @@ local function handleHitUnder(e: Enemy, w: World.State, probe: World.Probe, ev: 
 end
 
 -- Vs_EnemyUsePipes. returns true when the enemy teleported to a top pipe this frame
-local function usePipes(s: State, e: Enemy): boolean
+local function usePipes(s: State, e: Enemy, ev: Events): boolean
     local b = e.body
-    if b.y < 160 then
+    if b.y < Stage.BOTTOM_PIPE_Y - 16 then
         return false
     end
     local side = if e.dir > 0 then 1 else 2
     if b.x == Stage.BOTTOM_PIPE_ENTRANCE_X[side] then
+        -- x sits on the entrance for a few frames at pipe speed: the sound is the first of them
+        if e.pipeTimer == 0 then
+            ev.entered = true
+        end
         e.pipeTimer = Enemies.RECYCLE_PIPE_FRAMES
         return false
     end
@@ -247,7 +257,7 @@ end
 
 local function walkerNormal(s: State, e: Enemy, w: World.State, ev: Events)
     local b = e.body
-    if usePipes(s, e) then
+    if usePipes(s, e, ev) then
         return
     end
     move(e)
@@ -270,7 +280,9 @@ local function walkerNormal(s: State, e: Enemy, w: World.State, ev: Events)
             e.animCnt += 1
         end
         if vyBefore >= 0x10 and e.restoreVx ~= 0 then
+            -- the walk comes back the way it went, and the sprite faces it again (the hit drift turned it)
             b.vx = e.restoreVx
+            e.dir = if b.vx < 0 then -1 else 1
             e.restoreVx = 0
         end
     else
@@ -280,7 +292,7 @@ end
 
 local function flyNormal(s: State, e: Enemy, w: World.State, ev: Events)
     local b = e.body
-    if usePipes(s, e) then
+    if usePipes(s, e, ev) then
         return
     end
     if e.getUpTimer > 0 then
@@ -407,7 +419,7 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
     end
     local ex, ey, ew, eh = World.enemyBox(e.body)
     for i, p in players do
-        if p.state ~= Players.STATE_NORMAL or p.halt > 0 then
+        if not Players.touchable(p) then
             continue
         end
         local px, py, pw, ph = World.playerBox(p.body)
@@ -415,10 +427,20 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
             continue
         end
         if e.state == Enemies.STATE_NORMAL then
-            ev.killed = i
+            table.insert(ev.killed, i)
             e.animCnt = 0x20
+            -- it turns to face its victim, and walks that way: the facing is the sign of the walk, always
             e.dir = if p.body.x >= e.body.x then 1 else -1
+            if e.body.vx * e.dir < 0 then
+                e.body.vx = -e.body.vx
+            end
+            if e.restoreVx * e.dir < 0 then
+                e.restoreVx = -e.restoreVx
+            end
             return
+        end
+        if p.blue then
+            continue -- the target takes no coins: a downed enemy is nothing to him
         end
         -- kicked off. two enemies can go in one frame, so every kick is listed with its kicker
         ev.kick = true
@@ -432,11 +454,11 @@ local function collidePlayers(e: Enemy, players: { Players.Player }, frame: numb
     end
 end
 
--- the fourth coin flags the survivor as last and gives it a speed grade
+-- the fourth coin flags the survivors as last and gives each a speed grade, once
 function Enemies.markLast(s: State)
     s.nextIsLast = true
     for _, e in s.list do
-        if e.state ~= Enemies.STATE_DYING then
+        if e.state ~= Enemies.STATE_DYING and not e.last then
             e.body.vx = Physics.fasterVx(e.body.vx)
             e.last = true
         end

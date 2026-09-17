@@ -1,7 +1,8 @@
 --!strict
--- the arena as five rows (floor, lower ring, centre, stubs, upper ring) and the ways between them.
--- the jumps and drops are not hand listed: at load the real player physics runs once per row end,
--- so every launch window and landing spot is exactly what the game will do.
+-- the arena as rows (one per platform top, the two halves of a ledge pair joined through the seam into a ring)
+-- and the ways between them. the rows come from Stage.PLATFORMS and the jumps and drops are not hand listed:
+-- at load the real player physics runs once per row end, so every launch window and landing spot is exactly
+-- what the game will do. Nav.build runs at require and again whenever Stage.load reads another map.
 local Stage = require('scripts/stage')
 local Physics = require('scripts/physics')
 local World = require('scripts/world')
@@ -15,19 +16,9 @@ export type Row = { name: string, y: number, x0: number, x1: number }
 export type Link = { from: number, to: number, kind: 'jump' | 'drop', dir: number, lo: number, hi: number, landX: number, frames: number }
 export type Step = { kind: 'move' | 'jump' | 'drop', x: number, dir: number }
 
-local ROWS: { Row } = {
-    { name = 'floor', y = 192, x0 = 0, x1 = 256 },
-    { name = 'lower', y = 144, x0 = 160, x1 = 352 },
-    { name = 'centre', y = 80, x0 = 64, x1 = 192 },
-    { name = 'stubs', y = 96, x0 = 224, x1 = 288 },
-    { name = 'upper', y = 32, x0 = 160, x1 = 352 },
-}
+local ROWS: { Row } = {}
 Nav.ROWS = ROWS
-Nav.FLOOR = 1
-Nav.LOWER = 2
-Nav.CENTRE = 3
-Nav.STUBS = 4
-Nav.UPPER = 5
+Nav.FLOOR = 1 -- the lowest row, the only one without ends
 
 Nav.RUN_PX = 1.5 -- px per frame at full run, for travel estimates
 Nav.SIM_FRAMES = 120
@@ -74,9 +65,15 @@ function Nav.rowAt(x: number, y: number): number?
     return nil
 end
 
+-- is this row a full ring with no ends (the floor)
+function Nav.endless(row: number): boolean
+    local r = ROWS[row]
+    return r.x1 - r.x0 >= 256
+end
+
 -- signed distance along a row from x to tx, the short way round on the floor
 function Nav.dx(row: number, x: number, tx: number): number
-    if row == Nav.FLOOR then
+    if Nav.endless(row) then
         return (tx - x + 128) % 256 - 128
     end
     local r = ROWS[row]
@@ -176,16 +173,55 @@ local function findDrop(from: number, endX: number, dir: number)
     end
 end
 
-for i, r in ROWS do
-    if r.x1 - r.x0 >= 256 then
-        continue -- the floor has no ends
+local BUMP: { [number]: number } = {}
+
+-- the rows of the loaded stage: each platform top as a row at the standing y (top - 16), the two platforms
+-- meeting at the seam on one height joined into a ring (x1 past 256), the widest one first so the floor is row 1,
+-- then every jump and drop between them
+function Nav.build()
+    table.clear(ROWS)
+    table.clear(LINKS)
+    table.clear(BUMP)
+    local segs: { Row } = {}
+    for _, p in Stage.PLATFORMS do
+        table.insert(segs, { name = '', y = p.y - 16, x0 = p.x, x1 = p.x + p.w })
     end
-    findDrop(i, r.x0, -1)
-    findDrop(i, r.x1, 1)
-    for j, lower in ROWS do
-        if lower.y > r.y and lower.y - r.y <= 70 then
-            findJump(j, i, r.x0, 1)
-            findJump(j, i, r.x1, -1)
+    for _, a in segs do
+        if a.x0 == 0 and a.x1 < Stage.WIDTH then
+            for _, b in segs do
+                if b ~= a and b.y == a.y and b.x1 == Stage.WIDTH then
+                    -- a ring: b runs to the seam and a carries on past it
+                    b.x1 = Stage.WIDTH + a.x1
+                    a.x1 = -1 -- dropped below
+                end
+            end
+        end
+    end
+    for _, s in segs do
+        if s.x1 > s.x0 then
+            table.insert(ROWS, s)
+        end
+    end
+    table.sort(ROWS, function(a: Row, b: Row)
+        if a.y ~= b.y then
+            return a.y > b.y
+        end
+        return a.x0 < b.x0
+    end)
+    for i, r in ROWS do
+        r.name = if i == 1 then 'floor' else `row{i}`
+    end
+    for i, r in ROWS do
+        if r.x1 - r.x0 >= 256 then
+            continue -- the floor has no ends
+        end
+        findDrop(i, r.x0, -1)
+        findDrop(i, r.x1, 1)
+        for j, lower in ROWS do
+            if lower.y > r.y and lower.y - r.y <= 70 then
+                findJump(j, i, r.x0, 1)
+                findJump(j, i, r.x1, -1)
+            end
         end
     end
 end
@@ -261,7 +297,6 @@ function Nav.inWindow(row: number, x: number, step: Step): boolean
 end
 
 -- frames from a full jump on `below` until the head bumps the platform of `row`, nil when out of reach
-local BUMP: { [number]: number } = {}
 function Nav.bumpFrames(below: number, row: number): number?
     local key = below * 8 + row
     if BUMP[key] ~= nil then
@@ -296,5 +331,8 @@ function Nav.bumpFrames(below: number, row: number): number?
     BUMP[key] = frames
     return if frames > 0 then frames else nil
 end
+
+Nav.build()
+Stage.onLoad(Nav.build)
 
 return Nav

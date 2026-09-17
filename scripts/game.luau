@@ -10,12 +10,24 @@ local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
 local Menu = require('scripts/menu')
 local Npc = require('scripts/npc')
+local Sim = require('scripts/sim')
 
 type Phase = 'title' | 'playing' | 'over'
-type Winner = 'none' | 'mario' | 'luigi'
+type Character = 'mario' | 'luigi' | 'wario' | 'waluigi'
+-- a coin on its way from where it was won to the hud, eased in over FLIGHT_FRAMES
+type Flight = { x0: number, y0: number, x1: number, y1: number, t: number, player: number }
+local FLIGHT_FRAMES = 30
+local FLIGHT_GAP = 6 -- frames between two coins leaving the same spot
+local BLINK = 4 -- frames per half of an invincible player's blink
+local BLUE_FRAMES = 40
+local HUD_X = { 8, 68, 128, 188 } -- the hud slots, as placed in game.rml
+local COIN_X, COIN_Y = 16, 4 -- the first coin fill inside a slot, 8 px apart
+type Winner = 'none' | Character
+local CHARACTERS: { Character } = { 'mario', 'luigi', 'wario', 'waluigi' } -- card and player index to name
 
 local STEP = 1 / 60
-local OVER_FRAMES = 0x80 -- Vs_TimeToExit
+local OVER_FRAMES = 0x80 -- Vs_TimeToExit: the result holds this long before the MENU button appears
+local DEMO_OVER_FRAMES = 0x80 * 4 -- a cpu only round goes back on its own after this
 local HALT = 0xFF
 
 type EnemyView = { inst: Artboard<Data.Enemy>, vm: Data.Enemy }
@@ -31,8 +43,24 @@ type Game = {
     powInst: Artboard<Data.Pow>?,
     powVm: Data.Pow?,
     fireballViews: { [number]: FireballView },
-    cursorP1: Input<Data.MenuCursor>?, -- the menu cursors, nested in the Game view model
-    cursorP2: Input<Data.MenuCursor>?,
+    -- the components' view models, nested in the Game view model and bound to the placements in game.rml
+    overlayVm: Input<Data.Overlay>?,
+    menuVm: Input<Data.Menu>?,
+    cursor1: Input<Data.MenuCursor>?, -- the menu cursors, one per input slot, inside Menu
+    cursor2: Input<Data.MenuCursor>?,
+    cursor3: Input<Data.MenuCursor>?,
+    cursor4: Input<Data.MenuCursor>?,
+    hudSlot1: Input<Data.HudSlot>?, -- one per player
+    hudSlot2: Input<Data.HudSlot>?,
+    hudSlot3: Input<Data.HudSlot>?,
+    hudSlot4: Input<Data.HudSlot>?,
+    stage1: Input<Data.StageData>?, -- the stages in scene/stages, an empty map means no stage in that slot
+    stage2: Input<Data.StageData>?,
+    stage3: Input<Data.StageData>?,
+    stage4: Input<Data.StageData>?,
+    stage: number, -- the one this round plays, 1 based
+    seed: number, -- the stage pick's lcg
+    stageForced: boolean, -- --data=stage=n: play that stage every round
     menu: Menu.State,
     brains: { Npc.Brain }, -- one per player, used when the player has no controller
     ready: boolean,
@@ -47,17 +75,25 @@ type Game = {
     enemies: Enemies.State,
     enemyViews: { [number]: EnemyView }, -- by enemy slot
     fireballs: Fireballs.State,
-    bumpCooldown: number,
+    round: Sim.Snap, -- the live round state Sim.step advances: the world, enemies, fireballs, players and coins
+    shownCoins: { number }, -- what the hud shows: a coin lights once its sprite has flown there
+    flights: { Flight }, -- coin sprites on their way to the hud
+    blueFade: { number }, -- per player, 0 normal to 1 blue, eased over BLUE_FRAMES
+    off: { boolean }, -- per player, sitting this round out (the menu's off cards)
+    lastKilled: number, -- the death that ended the round, whose fall the over phase waits for
     coins: { number },
     phase: Phase,
     winner: Winner,
     overFrames: number,
+    overArmed: boolean, -- the over screen takes a press only once every button has been let go
     style: number,
     debug: number, -- --data=debug=1 spawns a fireball at once, 2 the ender, 4 the boxes, 8 a round trace on the console
     paused: boolean,
     prevStart: boolean,
     acc: number,
     blockImage: Image?,
+    coinImage: Image?,
+    letterImages: { Image? }, -- each character's initial, drawn over a target's head when two are blue
     sampler: ImageSampler,
     black: Paint,
     path: Path,
@@ -66,8 +102,6 @@ type Game = {
     boxPaint: Paint,
     size: Vector,
 }
-
-local PIPES = { { 0, 16 }, { 224, 16 }, { 0, 176 }, { 224, 176 } }
 
 local function buildPipeMask(path: Path)
     path:reset()
@@ -78,14 +112,48 @@ local function buildPipeMask(path: Path)
     path:lineTo(Vector.xy(0, Stage.HEIGHT))
     path:close()
     -- each pipe the other way round, so the clockwise fill rule subtracts it
-    for _, p in PIPES do
-        local x, y = p[1], p[2]
-        path:moveTo(Vector.xy(x, y))
-        path:lineTo(Vector.xy(x, y + 32))
-        path:lineTo(Vector.xy(x + 32, y + 32))
-        path:lineTo(Vector.xy(x + 32, y))
+    for _, p in Stage.PIPES do
+        path:moveTo(Vector.xy(p.x, p.y))
+        path:lineTo(Vector.xy(p.x, p.y + p.h))
+        path:lineTo(Vector.xy(p.x + p.w, p.y + p.h))
+        path:lineTo(Vector.xy(p.x + p.w, p.y))
         path:close()
     end
+end
+
+-- the stages with a map, in slot order
+local function stageMaps(self: Game): { string }
+    local maps: { string } = {}
+    for _, s in { self.stage1, self.stage2, self.stage3, self.stage4 } do
+        if s ~= nil then
+            local map: string = s.map.value
+            if map ~= '' then
+                table.insert(maps, map)
+            end
+        end
+    end
+    return maps
+end
+
+-- pick the stage a round plays: --data=stage=n forces one, else a random one when there are several
+local function pickStage(self: Game)
+    local maps = stageMaps(self)
+    if #maps == 0 then
+        return -- the typical arena stage.luau loaded at require stays
+    end
+    local vm = self.vm
+    local forced = if vm ~= nil then math.floor(vm.stage.value) else 0
+    local index = forced
+    if forced < 1 or forced > #maps or self.stageForced == false then
+        self.seed = (self.seed * 1103515245 + 12345 + self.world.frame) % 2147483648
+        index = self.seed % #maps + 1
+    end
+    self.stage = index
+    if vm ~= nil then
+        vm.stage.value = index
+    end
+    Stage.load(maps[index])
+    buildPipeMask(self.pipeMask)
 end
 
 -- view model -------------------------------------------------------------------------------------
@@ -96,20 +164,47 @@ local function pushVm(self: Game)
         return
     end
     vm.phase.value = self.phase
-    vm.winner.value = self.winner
-    vm.coinsP1.value = self.coins[1]
-    vm.coinsP2.value = self.coins[2]
     vm.shakeY.value = -self.world.shakeY
     vm.style.value = self.style
-    vm.paused.value = self.paused
-    -- the menu: taken cards hop, the cursor outlines and markers follow scripts/menu.luau's layout
-    vm.marioLocked.value = Menu.isLocked(self.menu, 1)
-    vm.luigiLocked.value = Menu.isLocked(self.menu, 2)
+    -- the overlay component: the pause banner, the winner's line
+    local overlay = self.overlayVm
+    if overlay ~= nil then
+        overlay.pauseShown.value = if self.paused then 1 else 0
+        overlay.winnerShown.value = if self.phase == 'over' and self.winner ~= 'none' then 1 else 0
+        overlay.winnerText.value = string.upper(self.winner) .. ' WINS'
+        overlay.menuShown.value = if self.phase == 'over' and self.overFrames <= 0 then 1 else 0
+    end
+    -- the hud components: one box per player
+    local huds: { Input<Data.HudSlot>? } = { self.hudSlot1, self.hudSlot2, self.hudSlot3, self.hudSlot4 }
+    for i, h in huds do
+        if h ~= nil then
+            local p = self.players[i]
+            h.letter.value = i - 1
+            h.coins.value = self.shownCoins[i] or 0
+            h.coinsBlue.value = if p ~= nil and p.blue then self.shownCoins[i] or 0 else 0
+            h.shown.value = if p ~= nil and p.state == Players.STATE_NORMAL then 1 else 0 -- gone with the player
+        end
+    end
+    -- the menu component: taken cards hop, the cursor outlines and markers follow scripts/menu.luau's layout
+    local menuVm = self.menuVm
+    if menuVm ~= nil then
+        local locks = { menuVm.lock1, menuVm.lock2, menuVm.lock3, menuVm.lock4 }
+        local modes = { menuVm.mode1, menuVm.mode2, menuVm.mode3, menuVm.mode4 }
+        for card = 1, #Menu.CARDS do
+            local role = Menu.roleFor(self.menu, card)
+            locks[card].value = if type(role) == 'number' then 1 else 0
+            modes[card].value = if role == 'cpu' then 'CPU' elseif role == 'off' then 'OFF' else ''
+        end
+    end
     if self.phase == 'title' then
-        local cursors: { Input<Data.MenuCursor>? } = { self.cursorP1, self.cursorP2 }
-        for i, view in Menu.layout(self.menu) do
-            local c = cursors[i]
-            if c ~= nil then
+        local cursors: { Input<Data.MenuCursor>? } = { self.cursor1, self.cursor2, self.cursor3, self.cursor4 }
+        local views = Menu.layout(self.menu)
+        for i, c in cursors do
+            if c == nil then
+                continue
+            end
+            local view = views[i]
+            if view ~= nil then
                 -- a 1 px stroke sits on pixel centres, so the rect is offset half a pixel and shrunk by one
                 c.x.value = view.cursor.x + 0.5
                 c.y.value = view.cursor.y + 0.5
@@ -117,6 +212,9 @@ local function pushVm(self: Game)
                 c.h.value = view.cursor.h - 1
                 c.markerX.value = view.marker.x
                 c.markerY.value = view.marker.y
+                c.shown.value = 1
+            else
+                c.shown.value = 0
             end
         end
     end
@@ -124,6 +222,7 @@ local function pushVm(self: Game)
         local pvm = self.playerVm[i]
         if pvm ~= nil then
             pvm.pose.value = p.pose
+            pvm.blue.value = self.blueFade[i] or 0
         end
     end
     for _, e in self.enemies.list do
@@ -185,7 +284,11 @@ local function startRound(self: Game)
         if bit32.band(self.debug, 4) ~= 0 then
             self.showBoxes = true
         end
+        if not self.stageForced and vm.stage.value ~= self.stage then
+            self.stageForced = true -- --data=stage=n set it before the first round
+        end
     end
+    pickStage(self)
     World.reset(self.world)
     Enemies.reset(self.enemies, self.style)
     self.enemyViews = {}
@@ -193,10 +296,16 @@ local function startRound(self: Game)
     self.fireballViews = {}
     for i, p in self.players do
         Players.reset(p)
+        if self.off[i] then
+            p.state = Players.STATE_OFF
+        end
         self.brains[i] = Npc.new(i)
     end
-    self.coins = { 0, 0 }
-    self.bumpCooldown = 0
+    Sim.resetScore(self.round)
+    self.shownCoins = { 0, 0, 0, 0 }
+    self.flights = {}
+    self.blueFade = { 0, 0, 0, 0 }
+    self.lastKilled = 0
     self.winner = 'none'
     self.phase = 'playing'
     self.overFrames = 0
@@ -215,6 +324,7 @@ local function endRound(self: Game, winner: Winner)
     self.phase = 'over'
     self.winner = winner
     self.overFrames = OVER_FRAMES
+    self.overArmed = false
     for _, p in self.players do
         if p.state == Players.STATE_NORMAL then
             p.halt = HALT
@@ -225,24 +335,35 @@ local function endRound(self: Game, winner: Winner)
 end
 
 -- a live enemy or a fireball touched a player: everything freezes and they fall off the screen
-local function killPlayer(self: Game, index: number)
-    local victim = self.players[index]
-    if victim.state ~= Players.STATE_NORMAL then
+-- a player died this step (Sim.step already dropped their coins and gave them back as enemies). with others
+-- still alive the round goes on around the falling body; with one left the round is theirs once the body is gone
+local function onDeath(self: Game, index: number)
+    if not self.players[index].blue then
+        play(self, 'player_down') -- a beaten target goes quietly, like a kicked enemy
+    end
+    -- the round is over when nobody else can win: one player left, or one contender left beside the targets
+    local alive = Players.alive(self.players)
+    local contenders = Sim.contenders(self.round)
+    if #alive > 1 and #contenders > 1 then
         return
     end
-    Players.kill(victim)
+    if #alive > 1 and #contenders == 1 and #alive - #contenders > 0 then
+        -- the last contender wins at once over the targets left standing
+        endRound(self, CHARACTERS[contenders[1]])
+        return
+    end
     local bank = self.sfx
     if bank ~= nil then
         Sfx.stopMusic(bank)
     end
-    play(self, 'player_down')
     for i, p in self.players do
-        if i ~= index then
+        if i ~= index and p.state == Players.STATE_NORMAL then
             p.halt = HALT
         end
     end
     Enemies.haltAll(self.enemies)
     Fireballs.haltAll(self.fireballs)
+    self.lastKilled = index
 end
 
 -- one 1/60 step ----------------------------------------------------------------------------------
@@ -256,100 +377,181 @@ local function intentFor(self: Game, p: Players.Player): Input.Intent
     return Input.intent(self.input, slot)
 end
 
-local function stepPlaying(self: Game)
-    World.update(self.world)
+-- coins in the air for a player
+local function flightsFor(self: Game, player: number): number
+    local n = 0
+    for _, f in self.flights do
+        if f.player == player then
+            n += 1
+        end
+    end
+    return n
+end
+
+-- a coin leaves (x, y) for the next free fill of the player's hud slot, after `delay` frames
+local function launchCoin(self: Game, player: number, x: number, y: number, delay: number?)
+    local slot = self.shownCoins[player] + flightsFor(self, player) + 1
+    if slot > 5 then
+        return
+    end
+    table.insert(self.flights, { x0 = x + 4, y0 = y + 4, x1 = HUD_X[player] + COIN_X + 8 * (slot - 1), y1 = COIN_Y, t = -(delay or 0), player = player })
+end
+
+-- the coins fly with an ease in, and light their fill on arrival; the blue fades settle towards the state
+local function stepEffects(self: Game)
+    local kept: { Flight } = {}
+    for _, f in self.flights do
+        f.t += 1
+        if f.t >= FLIGHT_FRAMES then
+            self.shownCoins[f.player] = math.min(5, self.shownCoins[f.player] + 1)
+        else
+            table.insert(kept, f)
+        end
+    end
+    self.flights = kept
+    for i, c in self.coins do
+        if self.shownCoins[i] > c then
+            self.shownCoins[i] = c -- beaten or dead: the fills go out
+        end
+    end
     for i, p in self.players do
-        local ev = Players.update(p, self.world, intentFor(self, p))
-        if ev.jump then
+        local target = if p.blue then 1 else 0
+        local v = self.blueFade[i] or 0
+        if v < target then
+            v = math.min(1, v + 1 / BLUE_FRAMES)
+        elseif v > target then
+            v = 0
+        end
+        self.blueFade[i] = v
+    end
+end
+
+local function stepPlaying(self: Game)
+    local intents: { Input.Intent } = {}
+    for i, p in self.players do
+        intents[i] = if p.state == Players.STATE_NORMAL then intentFor(self, p) else Input.NONE
+    end
+    local debugSpawn: number? = nil
+    if bit32.band(self.debug, 3) ~= 0 and self.world.frame == 30 then
+        debugSpawn = if bit32.band(self.debug, 2) ~= 0 then 2 else 1
+    end
+    local ev = Sim.step(self.round, intents, debugSpawn)
+    stepEffects(self)
+    ensureEnemyViews(self)
+    ensureFireballViews(self)
+    for i, _ in self.players do
+        if ev.jumped[i] then
             play(self, 'jump')
         end
-        if ev.bump then
+        if ev.bumped[i] or ev.stunned[i] then
             play(self, 'bump')
-        end
-        if ev.stun then
-            play(self, 'bump')
-        end
-        if ev.pow then
-            play(self, 'pow')
         end
     end
-    local cooldown, stunned = Players.bumpEachOther(self.players[1], self.players[2], self.bumpCooldown)
-    self.bumpCooldown = cooldown
-    if stunned then
+    if ev.pow then
+        play(self, 'pow')
+    end
+    if ev.flip then
         play(self, 'bump')
     end
-
-    local halted = false
-    for _, p in self.players do
-        if p.halt > 0 or p.state == Players.STATE_DYING then
-            halted = true
+    if ev.entered then
+        play(self, 'pipe') -- only the walk into a bottom pipe, the top pipes stay quiet
+    end
+    if #ev.kicks > 0 then
+        play(self, 'kick')
+        play(self, 'coin')
+    end
+    -- every coin won this step flies from where it was won to its hud slot; the beaten target's coins fly from him
+    for _, who in ev.kicks do
+        launchCoin(self, who, self.players[who].body.x, self.players[who].body.y)
+    end
+    for _, hit in ev.beaten do
+        play(self, 'coin')
+        local victim, by = hit[1], hit[2]
+        local n = self.coins[by] - self.shownCoins[by] - flightsFor(self, by)
+        for k = 1, n do
+            launchCoin(self, by, self.players[victim].body.x, self.players[victim].body.y, (k - 1) * FLIGHT_GAP) -- one after the other
         end
     end
-    local eev = Enemies.update(self.enemies, self.world, self.players, self.world.frame, halted)
-    ensureEnemyViews(self)
-    if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 15 == 0 then
-        -- a round trace for tuning the cpu: paste it back with what the human was doing
-        local line = string.format('%5d c%d-%d', self.world.frame, self.coins[1], self.coins[2])
-        for i, p in self.players do
-            local plan = self.brains[i].plan
-            local who = if Players.isNpc(p) then (if plan then plan.kind .. '>' .. plan.row .. ',' .. plan.x else '-') else 'human'
-            line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', if p.dizzy > 0 then 'D' else '', who)
+    for _, i in ev.sided do
+        play(self, 'bump')
+    end
+    if ev.suddenDeath then
+        -- the last coins can end the round on the target: the theme starts over, faster
+        local bank = self.sfx
+        if bank ~= nil then
+            Sfx.startMusic(bank, true)
         end
-        for _, e in self.enemies.list do
-            line ..= string.format(' | %s%d %d,%d s%d', e.kind, e.slot, e.body.x, e.body.y, e.state)
+    end
+    if ev.fireball then
+        play(self, 'fireball')
+    end
+    if bit32.band(self.debug, 8) ~= 0 and (#ev.killed > 0 or #ev.turnedBlue > 0 or #ev.beaten > 0 or #ev.sided > 0) then
+        -- the round's events, on the frame they happen, with the sounds the game played for them
+        local line = string.format('%5d event', self.world.frame)
+        for _, i in ev.turnedBlue do
+            line ..= string.format(' blue p%d', i)
+        end
+        for _, i in ev.sided do
+            line ..= string.format(' side p%d', i)
+        end
+        for _, hit in ev.beaten do
+            line ..= string.format(' p%d beat p%d', hit[2], hit[1])
+        end
+        for _, i in ev.killed do
+            line ..= string.format(' dead p%d%s', i, if self.players[i].blue then ' (quiet)' else ' (player_down)')
         end
         print(line)
     end
-    if eev.flip then
-        play(self, 'bump')
-    end
-    if eev.killed > 0 then
-        killPlayer(self, eev.killed)
-        return
-    end
-    if eev.kick then
-        play(self, 'kick')
-        play(self, 'coin')
-        for _, who in eev.kicks do
-            self.coins[who] += 1
+    if bit32.band(self.debug, 8) ~= 0 and self.world.frame % 15 == 0 then
+        -- a round trace for tuning the cpu: paste it back with what the human was doing
+        local line = string.format('%5d c', self.world.frame)
+        for i, c in self.coins do
+            line ..= (if i > 1 then '-' else '') .. tostring(c)
         end
-        if self.coins[1] + self.coins[2] == 4 then
-            Enemies.markLast(self.enemies)
+        for i, p in self.players do
+            if p.state == Players.STATE_OFF then
+                continue
+            end
+            local plan = self.brains[i].plan
+            local who = if Players.isNpc(p) then (if plan then plan.kind .. '>' .. plan.row .. ',' .. plan.x else '-') else 'human'
+            local flags = (if p.dizzy > 0 then 'D' else '') .. (if p.blue then 'B' else '') .. (if p.side then 'S' else '') .. (if p.invincible > 0 then 'I' else '')
+            line ..= string.format(' | p%d %d,%d %s%s %s', i, p.body.x, p.body.y, if p.onGround then 'g' else 'a', flags, who)
         end
-    end
-    if bit32.band(self.debug, 3) ~= 0 and self.world.frame == 30 then
-        if bit32.band(self.debug, 2) ~= 0 then
-            eev.ender = true
-        else
-            eev.fireball = true
+        for _, e in self.enemies.list do
+            -- the facing after the state, and a ! when it disagrees with the walk (a moonwalk)
+            local facing = if e.dir < 0 then '<' else '>'
+            local odd = if e.body.vx ~= 0 and e.body.vx * e.dir < 0 then '!' else ''
+            line ..= string.format(' | %s%d %d,%d s%d%s%s', e.kind, e.slot, e.body.x, e.body.y, e.state, facing, odd)
         end
+        print(line)
     end
-    if eev.fireball or eev.ender then
-        -- level with a random player, like Vs_Random picking the y
-        local target = self.players[self.world.frame % 2 + 1]
-        if eev.ender then
-            Fireballs.spawnEnder(self.fireballs, self.enemies.spawnCnt2, target.body.y)
-        else
-            Fireballs.spawnHorz(self.fireballs, self.enemies.spawnCnt2, target.body.y)
-        end
-        play(self, 'fireball')
+    for _, i in ev.killed do
+        onDeath(self, i)
     end
-    local fev = Fireballs.update(self.fireballs, self.world, self.players, self.world.frame)
-    ensureFireballViews(self)
-    if fev.killed > 0 then
-        killPlayer(self, fev.killed)
-        return
-    end
-
-    -- a dying player ends the round once they have fallen off the screen
-    for i, p in self.players do
-        if p.state == Players.STATE_DYING and p.body.y > Stage.HEIGHT + 16 then
-            endRound(self, if i == 1 then 'luigi' else 'mario')
+    -- a lone contender beside targets wins at once, however that came about
+    if self.lastKilled == 0 then
+        local alive = Players.alive(self.players)
+        local contenders = Sim.contenders(self.round)
+        if #contenders == 1 and #alive > 1 then
+            endRound(self, CHARACTERS[contenders[1]])
             return
         end
     end
-    if self.coins[1] + self.coins[2] >= 5 then
-        endRound(self, if self.coins[1] >= self.coins[2] then 'mario' else 'luigi')
+    -- the last death ends the round once the body has fallen off the screen
+    if self.lastKilled > 0 then
+        if self.players[self.lastKilled].body.y > Players.GONE_Y then
+            local alive = Players.alive(self.players)
+            endRound(self, if #alive == 1 then CHARACTERS[alive[1]] else 'none')
+        end
+        return
+    end
+    -- the five coins out: the round is the leader's, unless two share the top, then sudden death goes on
+    -- around the target until someone stands alone
+    if Sim.total(self.round) >= Sim.COINS_TO_WIN then
+        local leader = Sim.leader(self.round)
+        if leader > 0 then
+            endRound(self, CHARACTERS[leader])
+        end
     end
 end
 
@@ -371,7 +573,10 @@ local function backToTitle(self: Game)
     for _, p in self.players do
         Players.reset(p)
     end
-    self.coins = { 0, 0 }
+    Sim.resetScore(self.round)
+    self.shownCoins = { 0, 0, 0, 0 }
+    self.flights = {}
+    self.blueFade = { 0, 0, 0, 0 }
     Menu.rearm(self.menu)
 end
 
@@ -394,12 +599,15 @@ local function stepTitle(self: Game)
     if ev.locked then
         play(self, 'jump')
     end
-    if ev.unlocked or ev.refused then
+    if ev.unlocked or ev.refused or ev.toggled then
         play(self, 'bump')
     end
     if ev.launch then
+        -- each card: a human's slot, the cpu, or nobody
         for i, p in self.players do
-            Players.setController(p, Menu.controllerFor(self.menu, i))
+            local role = Menu.roleFor(self.menu, i)
+            Players.setController(p, if type(role) == 'number' then role else nil)
+            self.off[i] = role == 'off'
         end
         startRound(self)
     end
@@ -438,9 +646,25 @@ local function step(self: Game)
         World.update(self.world)
         Enemies.update(self.enemies, self.world, self.players, self.world.frame, true)
         Fireballs.update(self.fireballs, self.world, self.players, self.world.frame)
+        stepEffects(self)
         self.overFrames -= 1
+        -- the result stays up: the winner's line, the huds as they ended. a jump or start on any slot goes back
+        -- to the menu once the MENU button is up and every button has been let go; a cpu only round goes
+        -- back on its own
         if self.overFrames <= 0 then
-            backToTitle(self)
+            local pressed = false
+            for i = 1, Input.SLOTS do
+                local it = Input.intent(self.input, i)
+                pressed = pressed or it.jump or it.start
+            end
+            if not pressed then
+                self.overArmed = true
+            elseif self.overArmed then
+                backToTitle(self)
+            end
+            if not hasHuman(self) and self.overFrames <= -DEMO_OVER_FRAMES then
+                backToTitle(self)
+            end
         end
     end
 end
@@ -471,10 +695,12 @@ local function ensureReady(self: Game)
     self.ready = true
     self.sfx = Sfx.load(context)
     self.blockImage = context:image('block')
+    self.coinImage = context:image('hud_coin')
+    self.letterImages = { context:image('letter_m'), context:image('letter_l'), context:image('letter_w'), context:image('letter_wl') }
     buildPipeMask(self.pipeMask)
-    for i = 1, 2 do
+    for i = 1, #self.players do
         local pvm = Data.Player.new()
-        pvm.character.value = if i == 1 then 'mario' else 'luigi'
+        pvm.character.value = CHARACTERS[i]
         self.playerVm[i] = pvm
         self.playerInst[i] = self.playerArtboard:instance(pvm)
     end
@@ -514,9 +740,13 @@ end
 
 -- drawing ----------------------------------------------------------------------------------------
 
-local function drawInstance(renderer: Renderer, inst: Artboard<any>, x: number, y: number, flip: boolean)
+local function drawInstance(renderer: Renderer, inst: Artboard<any>, x: number, y: number, flip: boolean, side: boolean?)
     renderer:save()
-    if flip then
+    if side then
+        -- on his side: a quarter turn about the sprite's centre, the head the way he faces
+        local turn = Mat2D.withTranslation(x + 8, y + 8) * Mat2D.withRotation(math.rad(if flip then -90 else 90)) * Mat2D.withTranslation(-8, -8)
+        renderer:transform(turn)
+    elseif flip then
         renderer:transform(Mat2D.withScaleAndTranslation(-1, 1, x + 16, y))
     else
         renderer:transform(Mat2D.withTranslation(x, y))
@@ -526,12 +756,12 @@ local function drawInstance(renderer: Renderer, inst: Artboard<any>, x: number, 
 end
 
 -- entities near an edge are drawn on both sides so the wrap is seamless
-local function drawWrapped(renderer: Renderer, inst: Artboard<any>, x: number, y: number, flip: boolean)
-    drawInstance(renderer, inst, x, y, flip)
+local function drawWrapped(renderer: Renderer, inst: Artboard<any>, x: number, y: number, flip: boolean, side: boolean?)
+    drawInstance(renderer, inst, x, y, flip, side)
     if x > Stage.WIDTH - 16 then
-        drawInstance(renderer, inst, x - Stage.WIDTH, y, flip)
+        drawInstance(renderer, inst, x - Stage.WIDTH, y, flip, side)
     elseif x < 0 then
-        drawInstance(renderer, inst, x + Stage.WIDTH, y, flip)
+        drawInstance(renderer, inst, x + Stage.WIDTH, y, flip, side)
     end
 end
 
@@ -551,6 +781,21 @@ local function outline(self: Game, renderer: Renderer, x: number, y: number, w: 
 end
 
 local function drawBoxes(self: Game, renderer: Renderer)
+    -- the stage's map over its art: every solid tile tinted, so a map that drifted from the art shows
+    local tint = Paint.with({ color = Color.rgba(255, 0, 255, 90) })
+    for row = 0, Stage.ROWS - 1 do
+        for col = 0, Stage.COLS - 1 do
+            if Stage.solidAt(col * Stage.TILE, row * Stage.TILE) then
+                self.path:reset()
+                self.path:moveTo(Vector.xy(col * Stage.TILE, row * Stage.TILE))
+                self.path:lineTo(Vector.xy(col * Stage.TILE + Stage.TILE, row * Stage.TILE))
+                self.path:lineTo(Vector.xy(col * Stage.TILE + Stage.TILE, row * Stage.TILE + Stage.TILE))
+                self.path:lineTo(Vector.xy(col * Stage.TILE, row * Stage.TILE + Stage.TILE))
+                self.path:close()
+                renderer:drawPath(self.path, tint)
+            end
+        end
+    end
     for _, p in self.players do
         outline(self, renderer, World.playerBox(p.body))
     end
@@ -614,16 +859,48 @@ function draw(self: Game, renderer: Renderer)
             end
         end
     end
+    local blues = 0
+    for _, p in self.players do
+        if p.blue and p.state == Players.STATE_NORMAL then
+            blues += 1
+        end
+    end
     for i, p in self.players do
         local inst = self.playerInst[i]
-        if inst ~= nil then
-            drawWrapped(renderer, inst, p.body.x, p.body.y, p.dir < 0)
+        local blink = p.invincible > 0 and (self.world.frame // BLINK) % 2 == 1
+        if inst ~= nil and p.state ~= Players.STATE_OFF and not blink then
+            drawWrapped(renderer, inst, p.body.x, p.body.y, p.dir < 0, p.side)
+            if p.blue and blues >= 2 then
+                -- two targets look alike: the initial floats over each one's head
+                local letter = self.letterImages[i]
+                if letter ~= nil then
+                    renderer:save()
+                    renderer:transform(Mat2D.withTranslation(p.body.x + 4, p.body.y - 11))
+                    renderer:drawImage(letter, self.sampler, 'srcOver', 1)
+                    renderer:restore()
+                end
+            end
         end
     end
     if self.showBoxes then
         drawBoxes(self, renderer)
     end
     renderer:restore()
+    -- the coins on their way to the hud, over everything and unshaken
+    local coin = self.coinImage
+    if coin ~= nil then
+        for _, f in self.flights do
+            if f.t < 0 then
+                continue -- not left yet
+            end
+            local k = f.t / FLIGHT_FRAMES
+            k = k * k -- ease in
+            renderer:save()
+            renderer:transform(Mat2D.withTranslation(f.x0 + (f.x1 - f.x0) * k, f.y0 + (f.y1 - f.y0) * k))
+            renderer:drawImage(coin, self.sampler, 'srcOver', 1)
+            renderer:restore()
+        end
+    end
 end
 
 -- input ------------------------------------------------------------------------------------------
@@ -653,6 +930,16 @@ function gamepadEvent(self: Game, event: GamepadEvent)
 end
 
 return function(context: Context): Layout<Game>
+    local world = World.new()
+    local enemies = Enemies.new()
+    local fireballs = Fireballs.new()
+    local players: { Players.Player } = {}
+    local brains: { Npc.Brain } = {}
+    for i = 1, #Menu.CARDS do
+        players[i] = Players.new(i)
+        brains[i] = Npc.new(i)
+    end
+    local round = Sim.live(world, enemies, fireballs, players)
     return {
         playerArtboard = late(),
         spinyArtboard = late(),
@@ -663,24 +950,44 @@ return function(context: Context): Layout<Game>
         powInst = nil,
         powVm = nil,
         fireballViews = {},
-        cursorP1 = nil,
-        cursorP2 = nil,
-        menu = Menu.new(2),
-        brains = { Npc.new(1), Npc.new(2) },
+        overlayVm = nil,
+        menuVm = nil,
+        cursor1 = nil,
+        cursor2 = nil,
+        cursor3 = nil,
+        cursor4 = nil,
+        hudSlot1 = nil,
+        hudSlot2 = nil,
+        hudSlot3 = nil,
+        hudSlot4 = nil,
+        stage1 = nil,
+        stage2 = nil,
+        stage3 = nil,
+        stage4 = nil,
+        stage = 1,
+        seed = 7,
+        stageForced = false,
+        menu = Menu.new(Input.SLOTS),
+        brains = brains,
         ready = false,
         context = nil,
         vm = nil,
         sfx = nil,
         input = Input.new(),
-        world = World.new(),
-        players = { Players.new(1), Players.new(2) },
+        world = world,
+        players = players,
         playerInst = {},
         playerVm = {},
-        enemies = Enemies.new(),
+        enemies = enemies,
         enemyViews = {},
-        fireballs = Fireballs.new(),
-        bumpCooldown = 0,
-        coins = { 0, 0 },
+        fireballs = fireballs,
+        round = round,
+        coins = round.coins,
+        off = { false, false, false, false },
+        lastKilled = 0,
+        shownCoins = { 0, 0, 0, 0 },
+        flights = {},
+        blueFade = { 0, 0, 0, 0 },
         phase = 'title',
         winner = 'none',
         overFrames = 0,
@@ -690,6 +997,9 @@ return function(context: Context): Layout<Game>
         prevStart = false,
         acc = 0,
         blockImage = nil,
+        coinImage = nil,
+        letterImages = {},
+        overArmed = false,
         sampler = ImageSampler('clamp', 'clamp', 'nearest'),
         black = Paint.with({ color = Color.rgb(0, 0, 0) }),
         path = Path.new(),

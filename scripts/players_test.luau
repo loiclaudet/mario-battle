@@ -111,7 +111,7 @@ return function(): Tests
                 for _ = 1, 60 do
                     Players.update(p, w, Input.NONE)
                 end
-                expect(p.body.x).is(Stage.PLAYER_START_X[2])
+                expect(p.body.x).is(Stage.PLAYER_START[2].x)
                 expect(p.body.y).is(Stage.FLOOR_TOP - 16)
                 expect(p.pose).is('stand')
             end)

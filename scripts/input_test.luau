@@ -42,6 +42,24 @@ return function(): Tests
                 expect(Input.intent(s, 1).down).is(true)
                 expect(Input.intent(s, 1).up).is(false)
             end)
+            test.case('four slots: the pads first, then the keyboard sets, then nothing', function(expect)
+                local s = Input.new()
+                expect(Input.present(s, 1)).is(true) -- keyboard set 1
+                expect(Input.present(s, 2)).is(true)
+                expect(Input.present(s, 3)).is(false)
+                Input.keyDown(s, 65) -- A: set 1 left
+                expect(Input.intent(s, 1).left).is(true)
+                Input.padEvent(s, pad({ dpadRight = true }))
+                -- one pad: it takes slot 1, the keyboard sets move to slots 2 and 3
+                expect(Input.intent(s, 1).right).is(true)
+                expect(Input.intent(s, 1).left).is(false)
+                expect(Input.intent(s, 2).left).is(true)
+                Input.keyDown(s, 263) -- left arrow: set 2
+                expect(Input.intent(s, 3).left).is(true)
+                expect(Input.present(s, 3)).is(true)
+                expect(Input.present(s, 4)).is(false)
+                expect(Input.intent(s, 4).left).is(false)
+            end)
             test.case('the shared empty intent is all false', function(expect)
                 expect(Input.NONE.left).is(false)
                 expect(Input.NONE.up).is(false)

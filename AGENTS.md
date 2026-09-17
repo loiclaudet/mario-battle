@@ -2,8 +2,9 @@
 
 Rive CLI project: the 2 player "Mario Bros." battle game from Super Mario Bros. 3 (NES), enemy stages only.
 Rules and every physics constant are transcribed from the SMB3 disassembly, see `docs/rules.md` before
-changing any number. one deliberate deviation: `Physics.TURN_DECEL` is 2 where the rom uses 1 (lodz's call, the
-rom's turn-around slid too long for him); keep it labelled as such.
+changing any number. one deliberate deviation: the turn-around brake is 2 above walking speed and 1 below
+(`Physics.turnDecel`) where the rom uses 1 throughout (lodz's call, the rom's slide was too long, a flat 2 too
+sharp); keep it labelled as such.
 
 ## layout
 
@@ -33,7 +34,7 @@ at once, and `--data-dump` after `--advance=90s` shows the coins the two brains 
 keystroke through the Playfield's `FocusData`, so p2's keyboard paths are checkable headlessly too, and
 `--data-dump` prints the whole bound view model (the nested cursors included). spell the `--gamepad` flags out,
 this shell is zsh and an unquoted variable holding several flags is passed as one argument. `--data=style=n` (0..5) picks the enemy set, `--data=debug=1`
-spawns a fireball at once, `--data=debug=2` the game ender, `--data=debug=4` (or F1 live) draws the collision boxes, `--data=debug=8` prints a round trace every 30 frames (coins, both players with the cpu's plan, every enemy), which is how a lost round against the cpu gets diagnosed: `rive . --fit=contain --data=debug=8` and paste the terminal. component artboards render alone with
+spawns a fireball at once, `--data=debug=2` the game ender, `--data=debug=4` (or F1 live) draws the collision boxes, `--data=debug=8` prints a round trace every 15 frames (the coins, every player in the round with the cpu's plan, every enemy), which is how a lost round against the cpu gets diagnosed: `rive . --fit=contain --data=debug=8` and paste the terminal. component artboards render alone with
 `--artboard=Spiny --data=last=true --data=pose=flipped`.
 
 play it: `rive . --fit=contain` (the default fit reflows the artboard to the window; contain keeps 256x240 and
@@ -78,3 +79,27 @@ after `cut_music.py` copy the new sample counts from `tools/music_cuts.json` int
   `table.freeze` makes the value's type read-only, which then fails against the mutable type elsewhere
 - `Shape` + `Rectangle originX="0" originY="0"` + `Stroke thickness="1"` at half pixel coordinates draws a
   crisp 1 px outline; x, y, width and height (keys 13, 14, 20, 21) are all bindable
+- a `NestedArtboard` placement gets its own data through `dataBindPathIds="9:200-<ViewModelPropertyViewModel>"`
+  (`isStateful` + a `<ViewModelInstance>` child is exported but not read back by the cli runtime). direct
+  property binds inside the component then follow the placement, but the component's state machine does not:
+  a condition on its view model reads the artboard's authored instance, so every placement shows the same
+  state. the hud, menu and overlay components (tools/gen_ui_rml.py) therefore use direct binds only: numbers
+  0 or 1 as opacities, a `DataConverterFormula` band (`max(0, 1 - sqrt((i - k)^2))`) to pick one image by
+  index, text runs bound by key 268. each still needs an empty state machine or no bind runs. check with
+  `rive . --data-dump=<file>` (`nested[]`, one entry per placement with its own instance)
+- a nested `ViewModelPropertyViewModel` reached through a three segment path
+  (`ScriptInputViewModelProperty dataBindPathIds="9:200-9:255-9:910"`) is the way to type a nested property
+  in luau; `Data.Menu` exposes a nested property only as an untyped `PropertyViewModel`
+- luau cannot read a node's name, width or height, so a stage cannot be read from its art: it carries its
+  geometry as a tile map string in its view model (scripts/stage.luau, tools/gen_stages_rml.py), and
+  `--data=debug=4` tints the map's solid tiles over the art so a drift shows
+- generated markup: `tools/gen_enemy_rml.py` (enemies), `tools/gen_player_rml.py` (the four characters and
+  their blue takes, cross faded by `Player.blue`), `tools/gen_ui_rml.py` (hud slot, menu, overlay),
+  `tools/gen_stages_rml.py` (stages and the StageData view model), `tools/make_hud.py` (the four hud boxes),
+  `tools/recolor_sprites.py` (wario, waluigi and every blue take), `tools/fast_music.py` (the 1.2x theme).
+  edit the generator, not the output
+- a dashed stroke is `DashPath` (with `offset`) holding `Dash` children inside the `Stroke`; the menu cursors
+  share one rect and differ by their dash offset
+- there is no `rive pull`: the rml is the source, `rive push` only sends revisions to the editor
+- `--data=stage=n` plays stage n every round (the pick is random when there are several), `--data=style=n`
+  the enemy set

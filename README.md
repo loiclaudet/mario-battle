@@ -14,13 +14,17 @@ rive login            # once
 rive . --fit=contain  # opens the viewer, resize it to full screen
 ```
 
-the title is a start menu: each player moves a cursor over the mario and luigi cards, jump locks a brother,
-jump on START (or the start button) launches. a brother nobody locked is played by the cpu, a strong one: it
-runs the battle 48 frames ahead on a clone before every move, flips enemies from below with frame-exact bumps,
-kicks them, hits the pow, and plays it against you: bumps the block under you, stomps you dizzy, rights a downed
-enemy under your feet. one player fights it, no player at all is a cpu vs cpu demo. gamepads first (first pad is p1,
-second p2, B jumps, Y runs, plus starts and pauses), keyboard fills the empty slots: p1 on `W A S D` + `G`
-jump + `F` run, p2 on the arrows + `K` jump + `L` run. `F1` shows the collision boxes.
+the title is a start menu: up to four players move a cursor over the mario, luigi, wario and waluigi cards,
+jump locks a character, the run button turns a free card off (at least two stay on), jump on START (or the start
+button) launches. a card nobody locked is played by the cpu, a strong one: it runs the battle 48 frames ahead on
+a clone before every move, flips enemies from below with frame-exact bumps, kicks them, hits the pow, and plays
+it against you: bumps the block under you, stomps you dizzy, rights a downed enemy under your feet. the round is
+a free for all: five coins, one per kicked enemy, the most wins. a player caught holding coins turns blue and
+becomes the target: lay him on his side and touch him to take his coins, while a hit from under stands him up;
+a tie at the top hands the target to the odd one out. no player at all is a cpu demo. the
+pads take the slots in the order they connect (B jumps, Y runs, plus starts and pauses), then the keyboard: `W A
+S D` + `G` jump + `F` run, and the arrows + `K` jump + `L` run. `F1` shows the collision boxes. the stage is
+picked at random from those in `scene/stages`.
 
 five enemies come out of the top pipes. bump the platform under one to flip it, touch it while it is on its
 back to kick it off and take its coin. three coins win. touching a live enemy or a fireball ends the round.
@@ -28,10 +32,13 @@ the pow block in the middle flips everything on the ground, three times.
 
 ## how it is built
 
-- `scene/game.rml` is the 256x240 artboard: stage strips cut from the original tiles, the coin hud, title,
-  winner and pause overlays, and a state machine whose layers follow view model values
+- `scene/game.rml` is the 256x240 artboard: it places the components (the overlays, the start menu, four hud
+  slots, one stage per layout) and hosts the playfield script; a state machine shows the menu and the stage
 - `scene/components/` holds one component artboard per entity (Player, Spiny, FighterFly, Sidestepper, Pow,
-  Fireball): frames in a `Solo`, one animation per pose, a small state machine driven by the entity's view model
+  Fireball): frames in a `Solo`, one animation per pose, a small state machine driven by the entity's view
+  model; and the hud slot, menu and overlay components, bound to their own view model where they are placed
+- `scene/stages/` holds one component artboard per stage: the art, and a tile map the simulation plays
+  (see `docs/rules.md`, "stages"); with several stages a round picks one at random
 - `scripts/` is the game: a fixed 60 step loop in `game.luau`, with `players`, `enemies`, `fireballs`, `world`,
   `physics` and `stage` modules and their unit tests (`rive . --test`)
 - `docs/rules.md` has every constant with the label it came from in the disassembly, and the credits

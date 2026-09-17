@@ -13,19 +13,27 @@ export type Slot = {
     locked: number, -- 0, or the card this slot is locked on
     prev: Input.Intent, -- last frame, for edge detection
 }
-export type State = { slots: { Slot } }
-export type Events = { moved: boolean, locked: boolean, unlocked: boolean, refused: boolean, launch: boolean }
+-- off: the cards nobody plays this round (neither a human nor the cpu). the run button on an unlocked card
+-- toggles it; at least two cards stay on
+export type State = { slots: { Slot }, off: { boolean } }
+export type Events = { moved: boolean, locked: boolean, unlocked: boolean, refused: boolean, launch: boolean, toggled: boolean }
+export type Role = 'cpu' | 'off' | number -- who plays a card: the cpu, nobody, or the input slot locked on it
 export type SlotView = { cursor: Rect, marker: { x: number, y: number } }
 
-Menu.CARDS = { 'mario', 'luigi' } -- card index = player index
+Menu.CARDS = { 'mario', 'luigi', 'wario', 'waluigi' } -- card index = player index
+Menu.MIN_ON = 2
 Menu.START = #Menu.CARDS + 1
-local CARD_RECTS: { Rect } = { { x = 48, y = 80, w = 64, h = 80 }, { x = 144, y = 80, w = 64, h = 80 } }
-local START_RECT: Rect = { x = 104, y = 180, w = 48, h = 16 }
+-- a 2x2 grid of 60x80 cards, as drawn by scene/components/menu.rml (tools/gen_ui_rml.py): mario and luigi on
+-- the top row, wario and waluigi below, START under them. left and right move along a row, up and down
+-- between them, down from the bottom row goes to START
+Menu.COLUMNS = 2
+local CARD_RECTS: { Rect } = { { x = 64, y = 28, w = 60, h = 80 }, { x = 132, y = 28, w = 60, h = 80 }, { x = 64, y = 124, w = 60, h = 80 }, { x = 132, y = 124, w = 60, h = 80 } }
+local START_RECT: Rect = { x = 104, y = 216, w = 48, h = 16 }
 Menu.CARD_RECTS = CARD_RECTS
 Menu.START_RECT = START_RECT
-Menu.CURSOR_OUTSET = { 4, 2 } -- px outside the target per slot: a 1 px gap to the frame, p2 sits 2 px inside p1
+Menu.CURSOR_OUTSET = 4 -- px outside the target for every cursor: the same rect, told apart by their dashes
 Menu.MARKER_W = 16 -- "1P" in the 8 px font
-Menu.MARKER_PITCH = 20 -- markers sharing a target sit this far apart
+Menu.MARKER_PITCH = 16 -- markers sharing a target sit this far apart (four on one card overflow it by 2 px a side)
 Menu.MARKER_LIFT = 16 -- marker top above the target top
 
 local function copyIntent(i: Input.Intent): Input.Intent
@@ -34,12 +42,35 @@ end
 
 -- slot i starts on card i, nothing locked
 function Menu.new(slots: number): State
-    local m: State = { slots = {} }
+    local m: State = { slots = {}, off = {} }
     for i = 1, slots do
         local card = (i - 1) % #Menu.CARDS + 1
         m.slots[i] = { focus = card, card = card, locked = 0, prev = copyIntent(Input.NONE) }
     end
+    for card = 1, #Menu.CARDS do
+        m.off[card] = false
+    end
     return m
+end
+
+-- who plays a card once the round starts
+function Menu.roleFor(m: State, card: number): Role
+    local slot = Menu.controllerFor(m, card)
+    if slot ~= nil then
+        return slot
+    end
+    return if m.off[card] then 'off' else 'cpu'
+end
+
+-- how many cards are in the round
+function Menu.onCount(m: State): number
+    local n = 0
+    for card = 1, #Menu.CARDS do
+        if Menu.roleFor(m, card) ~= 'off' then
+            n += 1
+        end
+    end
+    return n
 end
 
 -- the slot locked on a card, nil when the card goes to an npc
@@ -58,7 +89,7 @@ end
 
 -- one frame: every slot reads its intent, presses count on the edge
 function Menu.update(m: State, intents: { Input.Intent }): Events
-    local ev: Events = { moved = false, locked = false, unlocked = false, refused = false, launch = false }
+    local ev: Events = { moved = false, locked = false, unlocked = false, refused = false, launch = false, toggled = false }
     for i, s in m.slots do
         local intent = intents[i] or Input.NONE
         local prev = s.prev
@@ -67,6 +98,7 @@ function Menu.update(m: State, intents: { Input.Intent }): Events
         local up = intent.up and not prev.up
         local down = intent.down and not prev.down
         local jump = intent.jump and not prev.jump
+        local run = intent.run and not prev.run
         local start = intent.start and not prev.start
         if start then
             ev.launch = true
@@ -79,12 +111,21 @@ function Menu.update(m: State, intents: { Input.Intent }): Events
                 ev.launch = true
             end
         else
-            if left and s.focus > 1 then
+            local col = (s.focus - 1) % Menu.COLUMNS
+            if left and col > 0 then
                 s.focus -= 1
                 s.card = s.focus
                 ev.moved = true
-            elseif right and s.focus < #Menu.CARDS then
+            elseif right and col < Menu.COLUMNS - 1 and s.focus < #Menu.CARDS then
                 s.focus += 1
+                s.card = s.focus
+                ev.moved = true
+            elseif up and s.focus > Menu.COLUMNS then
+                s.focus -= Menu.COLUMNS
+                s.card = s.focus
+                ev.moved = true
+            elseif down and s.focus + Menu.COLUMNS <= #Menu.CARDS then
+                s.focus += Menu.COLUMNS
                 s.card = s.focus
                 ev.moved = true
             elseif down then
@@ -98,8 +139,19 @@ function Menu.update(m: State, intents: { Input.Intent }): Events
                     ev.refused = true
                 else
                     s.locked = s.focus
+                    m.off[s.focus] = false -- taking a card turns it on
                     s.focus = Menu.START
                     ev.locked = true
+                end
+            elseif run then
+                -- an unlocked card goes cpu / off, while at least two cards stay on
+                if Menu.isLocked(m, s.focus) then
+                    ev.refused = true
+                elseif not m.off[s.focus] and Menu.onCount(m) <= Menu.MIN_ON then
+                    ev.refused = true
+                else
+                    m.off[s.focus] = not m.off[s.focus]
+                    ev.toggled = true
                 end
             end
         end
@@ -115,6 +167,7 @@ function Menu.rearm(m: State)
         s.focus = Menu.START
         s.prev.jump = true
         s.prev.start = true
+        s.prev.run = true
     end
 end
 
@@ -135,7 +188,7 @@ function Menu.layout(m: State): { SlotView }
     local views: { SlotView } = {}
     local placed: { [number]: number } = {}
     for i, s in m.slots do
-        local out = Menu.CURSOR_OUTSET[i] or 0
+        local out = Menu.CURSOR_OUTSET
         local r = Menu.targetRect(s.focus)
         local t = targets[i]
         local tr = Menu.targetRect(t)

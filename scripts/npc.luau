@@ -14,7 +14,7 @@ local Sim = require('scripts/sim')
 
 local Npc = {}
 
-export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'shadow' | 'post' | 'escape'
+export type Kind = 'kick' | 'flip' | 'pow' | 'trap' | 'deny' | 'bump' | 'stomp' | 'shadow' | 'post' | 'escape' | 'flee'
 -- row and x: where to stand. slot: the enemy slot or player index it is about. targetRow: the row the target walks.
 -- block: for a deny, the block bumped when it is not the downed enemy's own but one on the rival's way to it
 export type Plan = { kind: Kind, row: number, x: number, slot: number, targetRow: number, block: number? }
@@ -46,8 +46,8 @@ Npc.IMMINENT = 6 -- inside this many frames a threat overrides even an escape in
 Npc.ESCAPE_GAP = 28 -- px between the launch point and the threat when we jump
 Npc.KICK_MARGIN = 24 -- frames a flipped enemy must still be down after the trip to it
 Npc.EVADE_FRAMES = 10
-Npc.POSTS = { { 1, 100 }, { 1, 148 }, { 2, 48 }, { 2, 208 } } -- row and x of the waiting spots, each with room to hop
-Npc.POW_X = 120 -- stand here to punch the pow
+Npc.POSTS = {} :: { { number } } -- row and x of the waiting spots, from Npc.configure
+Npc.POW_X = 120 -- stand here to punch the pow, from Npc.configure
 Npc.TRAP_REACH = 20 -- px between the human and a downed enemy when the pow rights it under their feet
 Npc.POW_FRAMES = 8 -- frames from the jump under the pow to the hit, measured by npc_test
 Npc.LAND_PX = 24 -- clearance wanted around a landing spot
@@ -487,6 +487,49 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
     local row = brain.lastRow
     local bestScore = -math.huge
     local best: Plan? = nil
+    if p.blue then
+        -- the target: no more coins to chase, only the other players to keep away from. the spot the
+        -- nearest rival needs longest to reach, our own trip counted against it
+        local spots: { { number } } = {}
+        for _, post in Npc.POSTS do
+            table.insert(spots, post)
+        end
+        for r, seg in Nav.ROWS do
+            local width = seg.x1 - seg.x0
+            for k = 1, 3 do
+                table.insert(spots, { r, Stage.wrapX(seg.x0 + width * k // 4) })
+            end
+        end
+        for _, spot in spots do
+            local sr, sx = spot[1], spot[2]
+            local theirs = math.huge
+            for i, h in players do
+                if i ~= brain.index and h.state == Players.STATE_NORMAL and h.halt == 0 then
+                    local hr, hx, ht = playerLanding(h)
+                    if hr ~= nil then
+                        theirs = math.min(theirs, ht + Nav.travel(hr, hx, sr, sx))
+                    end
+                end
+            end
+            if theirs == math.huge then
+                theirs = Npc.FAR
+            end
+            local mine = Nav.travel(row, b.x, sr, sx)
+            if mine < Npc.FAR then
+                local danger_ = danger(sr, sx, mine + Npc.DANGER_FRAMES, enemies, fireballs, 0)
+                local score = math.min(theirs, Npc.FAR) / 2 - mine / 4 - Npc.DANGER_COST * danger_
+                if score > bestScore then
+                    bestScore = score
+                    local flee: Plan = { kind = 'flee', row = sr, x = sx, slot = 0, targetRow = sr }
+                    best = flee
+                end
+            end
+        end
+        local fled = best
+        if fled ~= nil then
+            return fled
+        end
+    end
     -- every spot is worth less the longer the trip, the more live enemies it will have around it, and
     -- when a rival gets there first (a kick is theirs then, a flip is a gift to them)
     local function offer(value: number, plan: Plan)
@@ -634,6 +677,21 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             continue
         end
         local hr = if h.onGround then Nav.rowAt(h.body.x, h.body.y) else nil
+        if h.blue and h.side and hr ~= nil then
+            -- the target on his side: touch him and his coins are ours (worth more the more he holds)
+            offer(110 + 30 * (brain.coins[i] or 0), { kind = 'kick', row = hr, x = h.body.x, slot = -i, targetRow = hr })
+            continue
+        end
+        if h.blue and h.invincible == 0 and not p.blue then
+            -- the target standing: a stomp lays him down, the surest way; so does the pow while he is grounded
+            local sr, sx, _ = playerLanding(h)
+            if sr ~= nil then
+                offer(100 + 20 * (brain.coins[i] or 0), { kind = 'stomp', row = sr, x = sx, slot = i, targetRow = sr })
+            end
+            if h.onGround and Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 then
+                offer(70 + 10 * (brain.coins[i] or 0), { kind = 'pow', row = Nav.FLOOR, x = Npc.POW_X, slot = 0, targetRow = Nav.FLOOR })
+            end
+        end
         if hr ~= nil and hr ~= Nav.FLOOR then
             local below, spot = underSpot(h.body.x, h.body.y, hr)
             if below ~= nil then
@@ -646,6 +704,9 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
                 local value = if near then 100 else 10
                 if brain.hunt then
                     value = if near then 140 else 90
+                end
+                if h.blue then
+                    value = math.max(value, 80 + 20 * (brain.coins[i] or 0)) -- a stun lays the target down for the taking
                 end
                 offer(value, { kind = 'bump', row = below, x = spot, slot = i, targetRow = hr })
             end
@@ -666,15 +727,18 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         -- the pipes alternate, left first: be under the block the next one is flipped from and kept on, the
         -- centre platform's edge (the stub is earlier but the bounce carries the enemy off its block)
         local side = enemies.count % 2
-        local ex = if side == 0 then 48 else 192
-        local below, spot = underSpot(ex, Nav.ROWS[Nav.UPPER].y, Nav.UPPER)
-        if below ~= nil then
-            offer(45, { kind = 'post', row = below, x = spot, slot = 0, targetRow = below })
+        local ex = if side == 0 then Stage.SPAWN_X[1] + 32 else Stage.SPAWN_X[2] - 32
+        local spawnRow = Nav.rowAt(ex, Stage.SPAWN_Y)
+        if spawnRow ~= nil then
+            local below, spot = underSpot(ex, Stage.SPAWN_Y, spawnRow)
+            if below ~= nil then
+                offer(45, { kind = 'post', row = below, x = spot, slot = 0, targetRow = below })
+            end
         end
     end
     local chosen = best -- a plain local narrows, the upvalue the offers write does not
     if chosen == nil then
-        return { kind = 'post', row = Nav.FLOOR, x = 80, slot = 0, targetRow = Nav.FLOOR }
+        return { kind = 'post', row = Nav.FLOOR, x = Npc.POW_X - 40, slot = 0, targetRow = Nav.FLOOR }
     end
     return chosen
 end
@@ -682,6 +746,10 @@ end
 -- is the current plan still about something real
 local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State, enemies: Enemies.State, players: { Players.Player }): boolean
     if plan.kind == 'kick' then
+        if plan.slot < 0 then
+            local h = players[-plan.slot]
+            return h.state == Players.STATE_NORMAL and h.blue and h.side and Nav.rowAt(h.body.x, h.body.y) == plan.targetRow
+        end
         local e = findEnemy(enemies, plan.slot)
         if e == nil or e.state ~= Enemies.STATE_FLIPPED or e.getUpTimer * 2 <= Npc.KICK_MARGIN then
             return false
@@ -721,11 +789,14 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
         return er ~= nil and rivalTravel(brain, players, er, e.body.x) < Npc.TRAP_FAR
     elseif plan.kind == 'escape' then
         return brain.lastRow ~= plan.row
+    elseif plan.kind == 'flee' then
+        return true
     elseif plan.kind == 'bump' then
         local h = players[plan.slot]
         return h.state == Players.STATE_NORMAL and (not h.onGround or Nav.rowAt(h.body.x, h.body.y) == plan.targetRow)
     elseif plan.kind == 'stomp' then
-        return players[plan.slot].dizzy > 0
+        local h = players[plan.slot]
+        return h.state == Players.STATE_NORMAL and (h.dizzy > 0 or (h.blue and not h.side))
     end
     return true
 end
@@ -835,11 +906,17 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         return intent(step.dir, true, false)
     end
     if plan.kind == 'kick' then
-        local e = findEnemy(enemies, plan.slot)
-        if e == nil then
-            return intent(0, false, false)
+        local tx = 0
+        if plan.slot < 0 then
+            tx = players[-plan.slot].body.x
+        else
+            local e = findEnemy(enemies, plan.slot)
+            if e == nil then
+                return intent(0, false, false)
+            end
+            tx = e.body.x
         end
-        local dx = Nav.dx(row, b.x, e.body.x)
+        local dx = Nav.dx(row, b.x, tx)
         return intent(if dx ~= 0 then sign(dx) else p.dir, math.abs(dx) > 8, false)
     elseif plan.kind == 'flip' or plan.kind == 'bump' then
         if math.abs(Nav.dx(row, b.x, plan.x)) > 2 or not stopped(b) then
@@ -972,8 +1049,16 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         return moveTo(row, b, players[plan.slot].body.x)
     elseif plan.kind == 'stomp' then
         local h = players[plan.slot]
+        local hr = Nav.rowAt(h.body.x, h.body.y)
+        if hr ~= nil and hr ~= row then
+            -- on another row: get to his, the trip is the same as to any spot there
+            local step = Nav.step(row, b.x, hr, h.body.x)
+            if step ~= nil and step.kind == 'move' then
+                return moveTo(row, b, step.x)
+            end
+        end
         local dx = Nav.dx(row, b.x, h.body.x)
-        if math.abs(dx) < 20 then
+        if math.abs(dx) < 20 and math.abs(h.body.y - b.y) <= 8 then
             return jump(brain, sign(dx), 8)
         end
         return moveTo(row, b, h.body.x)
@@ -1088,8 +1173,8 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
     for i, p in snap.players do
         if i == me then
             minds[i] = Sim.copy(brain)
-        elseif Players.isNpc(p) and brains ~= nil and brains[i] ~= nil then
-            minds[i] = Sim.copy(brains[i])
+        elseif Players.isNpc(p) and brains ~= nil and brains[i] ~= nil and Players.active(players) <= 2 then
+            minds[i] = Sim.copy(brains[i]) -- in a bigger round the other cpus keep their motion, a policy each is too dear
         end
     end
     local score = 0
@@ -1106,10 +1191,43 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
             end
         end
         local ev = Sim.step(snap, intents)
-        if ev.killed == me then
-            return Npc.DEATH + t
-        elseif ev.killed > 0 then
-            return 5000 - t
+        for _, dead in ev.killed do
+            if dead == me then
+                return Npc.DEATH + t
+            end
+        end
+        for _, i in ev.turnedBlue do
+            score += if i == me then -300 else 60 -- the target is a walking coin purse, and it is bad to be one
+        end
+        for _, i in ev.sided do
+            if i == me then
+                score -= 500 -- on our side we are a coin purse on the floor
+            end
+        end
+        if snap.players[me].blue then
+            -- the target keeps its distance from every rival
+            local mine_ = snap.players[me].body
+            for i, h in snap.players do
+                if i ~= me and h.state == Players.STATE_NORMAL then
+                    local d = math.abs(wrapDx(mine_.x, h.body.x)) + math.abs(mine_.y - h.body.y)
+                    if d < 64 then
+                        score -= (64 - d) / 8
+                    end
+                end
+            end
+        end
+        for _, hit in ev.beaten do
+            if hit[2] == me then
+                score += 200 * (brain.coins[hit[1]] or 1)
+            end
+        end
+        if #ev.killed > 0 then
+            -- a rival down: the round is ours when nobody else can win, a big step otherwise
+            local contenders = Sim.contenders(snap)
+            if #contenders <= 1 and (#contenders == 0 or contenders[1] == me) then
+                return 5000 - t
+            end
+            score += 150 * #ev.killed
         end
         if ev.coin == me then
             score += if hunt then -200 else 200 -- hunting, a coin only brings the round's end closer, and it is lost
@@ -1177,7 +1295,7 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
             end
         end
         local mine = coins[brain.index] or 0
-        local hunt = mine + (Npc.COINS_TO_WIN - total) < best
+        local hunt = mine + (Npc.COINS_TO_WIN - total) < best and not p.blue
         if hunt ~= brain.hunt then
             brain.hunt = hunt
             brain.plan = nil
@@ -1229,5 +1347,32 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
     brain.overrideLeft = bestHold - 1
     return bestMacro
 end
+
+-- the stage dependent spots: the pow, and the waiting posts (either side of the pow on the floor, and the middle
+-- of each ledge on the lowest row above it, each with room to hop). runs at require and after every Stage.load
+function Npc.configure()
+    Npc.POW_X = Stage.POW_X
+    Npc.POSTS = { { Nav.FLOOR, Stage.POW_X - 20 }, { Nav.FLOOR, Stage.POW_X + 28 } }
+    local lowest: number? = nil
+    for _, p in Stage.PLATFORMS do
+        if p.w < Stage.WIDTH and (lowest == nil or p.y > lowest) then
+            lowest = p.y
+        end
+    end
+    if lowest ~= nil then
+        for _, p in Stage.PLATFORMS do
+            if p.y == lowest then
+                local x = Stage.wrapX(p.x + p.w // 2 - 8)
+                local row = Nav.rowAt(x, p.y - 16)
+                if row ~= nil then
+                    table.insert(Npc.POSTS, { row, x })
+                end
+            end
+        end
+    end
+end
+
+Npc.configure()
+Stage.onLoad(Npc.configure)
 
 return Npc

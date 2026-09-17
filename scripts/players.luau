@@ -9,6 +9,8 @@ local Players = {}
 
 Players.STATE_NORMAL = 1
 Players.STATE_DYING = 2
+Players.STATE_OFF = 3 -- not in this round: never updated, drawn or touched
+Players.GONE_Y = 240 + 16 -- a dying body past this has left the screen
 Players.WALK_RATE = { 0x10, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xE0 } -- Vs_WalkCntRate by |vx| / 4
 Players.KICK_FRAMES = 0x0C
 Players.BUMP_COOLDOWN = 8
@@ -31,7 +33,16 @@ export type Player = {
     walkFrame: number,
     pose: Pose,
     prevJump: boolean,
+    -- the target: a player who would have died holding coins while others fight on, or the odd one out of a
+    -- tie, wears the last enemy's blue. any stun puts a blue player on his side, where he stays until a hit from
+    -- under his feet rights him; touched there by another player he is beaten and his coins change hands
+    blue: boolean,
+    side: boolean,
+    invincible: number, -- frames left of the grace a new target gets: enemies, flames, players and bounces pass him by
+    settle: number, -- frames after a righting in which the same bounce (14 frames) or pow (16) cannot stun him again
 }
+
+Players.INVINCIBLE_FRAMES = 275 -- the theme's intro at 1.2x (5.5 s / 1.2 at 60 fps)
 
 export type Events = { jump: boolean, bump: boolean, stun: boolean, pow: boolean, kick: boolean }
 
@@ -39,8 +50,8 @@ function Players.new(index: number): Player
     local p: Player = {
         index = index,
         controller = nil,
-        body = Physics.newBody(Stage.PLAYER_START_X[index], Stage.FLOOR_TOP - 16),
-        dir = if index == 1 then 1 else -1,
+        body = Physics.newBody(Stage.PLAYER_START[index].x, Stage.PLAYER_START[index].y),
+        dir = Stage.PLAYER_START[index].dir,
         state = Players.STATE_NORMAL,
         onGround = true,
         jumped = false,
@@ -52,6 +63,10 @@ function Players.new(index: number): Player
         walkFrame = 0,
         pose = 'stand',
         prevJump = true, -- the press that started the round must not also jump
+        blue = false,
+        side = false,
+        invincible = 0,
+        settle = 0,
     }
     return p
 end
@@ -81,6 +96,10 @@ function Players.reset(p: Player)
     p.walkFrame = fresh.walkFrame
     p.pose = fresh.pose
     p.prevJump = fresh.prevJump
+    p.blue = fresh.blue
+    p.side = fresh.side
+    p.invincible = fresh.invincible
+    p.settle = fresh.settle
 end
 
 local function noEvents(): Events
@@ -92,6 +111,50 @@ function Players.stun(p: Player, kickDir: number)
     p.dizzy = Physics.STUN_FRAMES
     p.body.vy = Physics.STUN_VY
     p.body.vx = Physics.STUN_VX * kickDir
+    if p.blue then
+        p.side = true -- a blue player lands on his side and stays there
+    end
+end
+
+-- the target: from now on a stun lays him on his side. he starts with a grace period nothing can touch him in
+function Players.makeBlue(p: Player)
+    p.blue = true
+    p.invincible = Players.INVINCIBLE_FRAMES
+end
+
+-- can enemies, flames and other players touch this player right now
+function Players.touchable(p: Player): boolean
+    return p.state == Players.STATE_NORMAL and p.halt == 0 and p.invincible == 0
+end
+
+-- a hit from under a blue player on his side stands him up again; the bounce that did it must not stun him
+-- back down while it is still going
+function Players.right(p: Player)
+    p.side = false
+    p.dizzy = 0
+    p.settle = 18
+end
+
+-- the players still in the round and alive
+function Players.alive(players: { Player }): { number }
+    local out: { number } = {}
+    for i, p in players do
+        if p.state == Players.STATE_NORMAL then
+            table.insert(out, i)
+        end
+    end
+    return out
+end
+
+-- the players in the round, alive or dying
+function Players.active(players: { Player }): number
+    local n = 0
+    for _, p in players do
+        if p.state ~= Players.STATE_OFF then
+            n += 1
+        end
+    end
+    return n
 end
 
 function Players.kill(p: Player)
@@ -140,11 +203,23 @@ end
 function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     local ev = noEvents()
     local b = p.body
+    if p.state == Players.STATE_OFF then
+        return ev
+    end
     if p.halt > 0 then
         p.halt -= 1
         return ev
     end
+    if p.invincible > 0 then
+        p.invincible -= 1
+    end
+    if p.settle > 0 then
+        p.settle -= 1
+    end
     if p.state == Players.STATE_DYING then
+        if b.y > Players.GONE_Y then
+            return ev -- off the screen, nothing more to fall through
+        end
         Physics.applyY(b)
         if b.vy < Physics.TERMINAL_VY then
             b.vy = math.min(b.vy + Physics.DEATH_GRAVITY, Physics.TERMINAL_VY)
@@ -154,9 +229,12 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     end
 
     -- horizontal control. the stun does not lock it: the lockout at PRG009_A4E4 is NOPed out in the shipped rom,
-    -- so a dizzy player keeps steering and may jump; the stun is the launch plus 18 frames of the dizzy sprite
+    -- so a dizzy player keeps steering and may jump; the stun is the launch plus 18 frames of the dizzy sprite.
+    -- on his side a blue player has no control at all
     local dirPressed = 0
-    if intent.left then
+    if p.side then
+        intent = Input.NONE
+    elseif intent.left then
         dirPressed = -1
     elseif intent.right then
         dirPressed = 1
@@ -208,15 +286,21 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     end
     powCollide(p, w, ev)
 
-    -- a bounced block under the feet, or the pow while grounded, stuns
-    if p.onGround and (probe.underHit or w.powCnt > 0) then
-        local kickDir = if b.vx < 0 then -1 else 1
-        if probe.underHit then
-            kickDir = if (b.x + 8) % 16 < 8 then -1 else 1
+    -- a bounced block under the feet, or the pow while grounded, stuns; it rights a blue player on his side.
+    -- a target in his grace, or just righted, is not moved by it
+    if p.onGround and (probe.underHit or w.powCnt > 0) and p.settle == 0 and p.invincible == 0 then
+        if p.side then
+            Players.right(p)
+            ev.stun = true
+        else
+            local kickDir = if b.vx < 0 then -1 else 1
+            if probe.underHit then
+                kickDir = if (b.x + 8) % 16 < 8 then -1 else 1
+            end
+            Players.stun(p, kickDir)
+            ev.stun = true
+            p.onGround = false
         end
-        Players.stun(p, kickDir)
-        ev.stun = true
-        p.onGround = false
     end
 
     -- animation (PRG009_A662 onward)
@@ -241,6 +325,9 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     if p.dizzy > 0 then
         p.dizzy -= 1
         frame = 4
+    end
+    if p.side then
+        frame = 4 -- the dizzy frame, drawn on its side by the game
     end
     if p.kick > 0 then
         p.kick -= 1
@@ -281,6 +368,9 @@ function Players.bumpEachOther(a: Player, b: Player, cooldown: number): (number,
         if bottom.onGround then
             bottom.body.vy = 0
             bottom.dizzy = Physics.STUN_FRAMES
+            if bottom.blue then
+                bottom.side = true -- a stomp lays the target on his side
+            end
             stunned = true
         end
     else

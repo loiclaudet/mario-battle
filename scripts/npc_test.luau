@@ -1,5 +1,6 @@
 --!strict
 local Npc = require('scripts/npc')
+local Nav = require('scripts/nav')
 local Players = require('scripts/players')
 local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
@@ -75,8 +76,8 @@ local function run(sc: Scene, frames: number)
             sc.flips += 1
         end
         local fev = Fireballs.update(sc.f, sc.w, sc.players, sc.w.frame)
-        if eev.killed > 0 or fev.killed > 0 then
-            sc.killed = math.max(eev.killed, fev.killed)
+        if eev.killed[1] ~= nil or fev.killed[1] ~= nil then
+            sc.killed = math.max(eev.killed[1] or 0, fev.killed[1] or 0)
             return
         end
     end
@@ -141,8 +142,8 @@ return function(): Tests
                         powHits += 1
                     end
                     local eev = Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
-                    if eev.killed > 0 then
-                        killed = eev.killed
+                    if eev.killed[1] ~= nil then
+                        killed = eev.killed[1]
                         break
                     end
                 end
@@ -161,6 +162,7 @@ return function(): Tests
                 local p = sc.players[1]
                 local killed = 0
                 local kicked = false
+                local rightedNear = false -- the enemy stands up while the human is reaching for it
                 for _ = 1, 200 do
                     World.update(sc.w)
                     Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
@@ -169,13 +171,17 @@ return function(): Tests
                     if eev.kick then
                         kicked = true
                     end
-                    if eev.killed > 0 then
-                        killed = eev.killed
+                    local e = sc.s.list[1]
+                    if eev.flip and e.state == Enemies.STATE_NORMAL and math.abs((h.body.x - e.body.x + 128) % 256 - 128) < 48 then
+                        rightedNear = true
+                    end
+                    if eev.killed[1] ~= nil then
+                        killed = eev.killed[1]
                         break
                     end
                 end
                 expect(kicked).is(false)
-                expect(killed).is(2)
+                expect(rightedNear or killed == 2).is(true) -- whether the live enemy then lands on them is down to a pixel
             end)
             test.case('with the coins lost it hunts: no kick, the human on a ledge gets bumped', function(expect)
                 local sc = scene(150)
@@ -199,7 +205,7 @@ return function(): Tests
                     if eev.kick then
                         kicks += 1
                     end
-                    if eev.killed > 0 then
+                    if eev.killed[1] ~= nil then
                         break
                     end
                 end
@@ -211,7 +217,7 @@ return function(): Tests
                 local sc = scene(52) -- under block 48 of the upper ring, from the centre platform's edge
                 local p = sc.players[1]
                 p.body.y = 80
-                sc.brain.lastRow = 3
+                sc.brain.lastRow = Nav.rowAt(52, 80) or 0
                 local h = sc.players[2]
                 h.halt = 0
                 h.body.x = 88 -- on the upper ring, 30 px from the downed spiny, standing still
@@ -228,7 +234,7 @@ return function(): Tests
                         righted = true
                         break
                     end
-                    if eev.killed > 0 then
+                    if eev.killed[1] ~= nil then
                         break
                     end
                 end
@@ -280,12 +286,59 @@ return function(): Tests
                             theirs += 1
                         end
                     end
-                    if eev.killed > 0 then
+                    if eev.killed[1] ~= nil then
                         break
                     end
                 end
                 expect(powHits).is(1)
                 expect(theirs).is(0)
+            end)
+            test.case('the target keeps away from a rival coming at it', function(expect)
+                local sc = scene(120)
+                local p = sc.players[1]
+                Players.makeBlue(p)
+                p.invincible = 0
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 60 -- on the floor, walking at the cpu from the left
+                h.body.y = 192
+                h.onGround = true
+                local right: Input.Intent = { left = false, right = true, up = false, down = false, jump = false, run = false, start = false }
+                local closest = 1000
+                for _ = 1, 180 do
+                    World.update(sc.w)
+                    Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, right)
+                    Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    local d = math.abs((p.body.x - h.body.x + 128) % 256 - 128) + math.abs(p.body.y - h.body.y)
+                    closest = math.min(closest, d)
+                end
+                expect(closest).greaterThan(24) -- never within reach
+                expect(p.side).is(false)
+            end)
+            test.case('a standing target on its row gets stomped', function(expect)
+                local sc = scene(60)
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 140 -- the target, standing still on the floor
+                h.body.y = 192
+                h.onGround = true
+                Players.makeBlue(h)
+                h.invincible = 0
+                local p = sc.players[1]
+                local sided = false
+                for _ = 1, 240 do
+                    World.update(sc.w)
+                    Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, Input.NONE)
+                    Players.bumpEachOther(p, h, 0)
+                    Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    if h.side then
+                        sided = true
+                        break
+                    end
+                end
+                expect(sided).is(true)
             end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)

@@ -9,18 +9,26 @@ units: 60 frames per second, velocities in 1/16 px per frame (raw), positions in
 
 ## controls
 
-| player | gamepad (first pad = p1, second = p2) | keyboard fallback |
-|---|---|---|
-| p1 | dpad or left stick, B jump, Y run, plus start (nintendo layout) | W A S D, G jump, F run, enter start |
-| p2 | same on the second pad | arrows, K jump, L run, space start |
+four input slots. the pads take the slots in the order they connect; the two keyboard sets fill the slots after
+them (no pad: keyboard set 1 is slot 1 and set 2 is slot 2; one pad: it is slot 1, the sets are slots 2 and 3).
+a slot with nothing behind it has no cursor.
 
-the title is a start menu in the smb3 style: a card per brother, START below, one cursor per slot (p1 white,
-p2 blue, each with its 1P or 2P marker). left and right move between the cards, down goes to START, up comes
-back. jump on a card locks that brother (the marker stays on it and the brother hops), jump on your own card
-unlocks it, a card the other player took refuses. jump on START, or the start button anywhere, launches. a
-brother nobody locked is played by the cpu (see the npc section), under the same rules as you. start pauses a
-round with a human in it and ends a cpu vs cpu demo. after a round the menu returns with the locks kept and
-the cursors on START, so a jump replays. play with `rive . --fit=contain`.
+| device | controls |
+|---|---|
+| a pad | dpad or left stick, B jump, Y run, plus start (nintendo layout) |
+| keyboard set 1 | W A S D, G jump, F run, enter start |
+| keyboard set 2 | arrows, K jump, L run, space start |
+
+the title is a start menu in the smb3 style: a card per character in a 2x2 grid (mario and luigi above,
+wario and waluigi below), START under them, one cursor per slot (the same dashed rect for all, in white, grey,
+cyan and tan, none of the characters' colours with the dash pattern shifted 2 px per slot, each with its 1P..4P marker). left, right, up
+and down move between the cards, down from the bottom row goes to START, up comes back. jump on a card locks that character (the marker stays on it and the
+character hops), jump on your own card unlocks it, a card another player took refuses. the run button on a free
+card turns it off and on again (OFF under the name: nobody plays it; CPU: the cpu does), with at least two cards
+on; taking an off card turns it on. jump on START, or the start button anywhere, launches with every card that
+is on: the locked ones for their players, the rest for the cpu (see the npc section), under the same rules as
+you. start pauses a round with a human in it and ends a cpu only demo. after a round the menu returns with the
+locks and the off cards kept and the cursors on START, so a jump replays. play with `rive . --fit=contain`.
 `Input.PAD_LAYOUT` in `scripts/input.luau` is `nintendo` (jump on the east slot, run on the north slot, which is
 B and Y on a switch pro controller); set it to `xbox` for south jump / west run. F1 toggles the collision box
 overlay (`--data=debug=4` headless).
@@ -38,8 +46,26 @@ overlay (`--data=debug=4` headless).
 | floor | 0 | 208 | 256x32 |
 | pow | 120 | 152 | 16 wide, box 15 / 12 / 10 tall after 0 / 1 / 2 hits (`Vs_POWHeight` 1, 4, 6), gone after 3 |
 
-x wraps at 256 (one byte in the rom). mario starts at x 64 facing right, luigi at 176 facing left.
-the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 160, y 16, 8 px apart.
+x wraps at 256 (one byte in the rom). mario starts at x 64 facing right, luigi at 176 facing left, wario at 8 and
+waluigi at 232 on the lower ledges above the bottom pipes. the hud boxes sit at x 8, 68, 128 and 188, y 0
+(60x17 each); the five coin slots start 16 px in, y 4, 8 px apart.
+
+## stages (scene/stages, scripts/stage.luau)
+
+the arena above is the `typical` stage. a stage is a component artboard in `scene/stages/<name>.rml` holding the
+art, bound to its own `StageData` instance whose `map` is the geometry the simulation plays: 30 rows of 32 tiles
+of 8 px, rows joined with `|`, `#` solid, `T` and `B` the top left tile of a 32x32 top and bottom pipe (scenery:
+the top ones spawn, the bottom ones recycle), `P` the top left tile of the pow, `1`..`4` where each player's
+16x16 body starts (facing right on the left half). `Stage.load` derives everything else: the collision grid,
+the platforms, the spawn x, the pipe entrances and limits, the pow, the starts; nav rebuilds its rows (one per
+platform top, the two halves of a ledge pair joined through the seam, lowest first) and their jumps, and the
+cpu its waiting posts. the art is free, the map must match it: `--data=debug=4` (F1) tints every solid tile
+over the art. with one stage the game plays it, with several a round picks one at random; `--data=stage=n`
+forces one. to add a stage: add its rectangles to `STAGES` in `tools/gen_stages_rml.py` and run it (it writes
+the rml and the view model instance from the same numbers), then in `scene/game.rml` give the `Stages` solo a
+`NestedArtboard` bound to `9:200-9:25x`, the `Stage` layer a state, and the playfield a `stageN` input, with a
+`stageN` property on `Game` pointing at the new instance. the second shipped stage, `steps`, has the centre
+platform and the stubs two tiles lower; the cpu is tuned on `typical` and plays `steps` less well.
 
 ## player (`VsPlayer_Normal`)
 
@@ -48,7 +74,7 @@ the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 1
 | walk cap | 0x0C | 0.75 |
 | run cap, B held | 0x18 | 1.5 |
 | acceleration, deceleration, friction | 1 per frame | 0.0625 |
-| turning against the motion | 2 per frame (`Physics.TURN_DECEL`, lodz's tweak: the rom uses 1 here too) | 0.125 |
+| turning against the motion | 2 per frame above walking speed, 1 at or below (`Physics.turnDecel`; lodz's tweak: the rom uses 1 at every speed, a flat 2 was too sharp). a full run stops in 18 frames, the rom takes 24 | 0.125 / 0.0625 |
 | jump | -0x42 | -4.125 (every reachable entry of `Vs_PlayerJumpHeightBySpd`) |
 | gravity | +2 always, +3 more when falling or when A is not held | |
 | terminal fall | 0x40 | 4.0 |
@@ -125,10 +151,35 @@ where those contact rows put them; the sheet had them bottom aligned.
 
 ## round
 
-five coins exist, one per kicked enemy, and two enemies kicked in the same frame are two coins (the kick event
-lists its kickers, a single flag once lost one and left the round unfinishable). the round ends when the two counts reach five (most coins wins, mario on
-a tie, impossible here) or when a player dies. the result holds 128 frames (`Vs_TimeToExit`) then the menu
-returns with the next style, the locks kept.
+a free for all for up to four: five coins exist, one per kicked enemy, and two enemies kicked in the same
+frame are two coins (the rom's counter only grows by one there, and the second kick in a frame is a case it never
+meets). every coin won flies from where it was won to its hud slot with an ease in (30 frames) before its
+fill lights. the round ends when one player has the most coins with the five out, or when one player is left
+alive, or when one player is left who is not a target (a target cannot win, so the last other player standing
+takes the round at once). a touch by a live enemy or a flame kills a player without coins, or with one other
+player alive: he falls off the screen and the round goes on around the body, or ends when nobody else is left.
+the same touch kills when a target already stands and only two contenders are left, since a second target
+would leave one contender, who wins on the spot.
+a dead player's hud goes out with him; a target's coins show in blue. a target takes no coins: he may still flip
+walkers from below, but a downed enemy is nothing to him, he walks through it. holding coins
+with two or more others alive he becomes **the target** instead, standing where he was and keeping his coins:
+he wears the last enemy's blue (a 40 frame fade that does not stop play) and gets 275 frames of grace (the
+theme's intro at 1.2x) in which he blinks and nothing moves him: no enemy, flame or player touches him, a
+bounced block or the pow under his feet does not stun him, and no sound plays. after it, any stun (a bumped block, the pow, a stomp) or a touch by an enemy or a flame
+lays him on his side (a quarter turn) with no control until a hit from under his feet (a bumped block or the
+pow) stands him up, the bounce that did it leaving him be while it lasts; a stomp on his head is the surest way. another player touching him on his side beats him:
+the coins change hands (no kick sound and no death sound; they fly to the beater's hud one after the other)
+and he falls off. with the five coins out and two players
+sharing the top, the player with coins below them becomes the target the same way, and that is sudden death:
+the theme starts over at 1.2x, a leader beating him takes his coins and wins, a player below beating him takes
+the coins and becomes the target in turn, until someone stands alone at the top.
+the result stays up, the winner's line over the arena and the huds as they ended, and after 128 frames
+(`Vs_TimeToExit`) a MENU button appears: jump or start on any slot returns to the menu with the next style, the
+locks and the off cards kept (a cpu only round returns on its own). two targets at once can happen (a tie's
+target plus a player caught holding coins): each wears his initial over his head then, and whoever beats
+either takes that one's coins. mario and luigi start on the floor at x 64 and 176, wario and waluigi on the lower ledges above the
+bottom pipes at 8 and 232, every start facing the middle. `scripts/sim.luau` is the one round step: the game
+plays it on its live state and the cpu on a clone, so the rules cannot drift between them.
 
 ## npc (scripts/npc.luau, scripts/nav.luau, scripts/sim.luau)
 
@@ -152,7 +203,8 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   first lost to a human who simply waited.
 
 - `nav.luau` sees the arena as five rows: floor, lower ring (the two lower ledges join through the wrap), centre
-  platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
+  platform, the two stubs (a ring too), upper ring, all derived from the stage's platforms at load (one row per
+  platform top, lowest first, a ledge pair joined through the seam). the jumps and drops between rows are found at load by running
   the real player once per row end, from a standstill and at full run, so every launch window and landing spot
   is what the game does; a route aims 2 px inside a window, and the last step to it is walked, not waited out
   (the walk stops within 2 px of its target, which once left the cpu a pixel short of a window for 120 frames).
@@ -187,8 +239,15 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   4 px of margin). no block in time means no deny, the kick is tried instead; a human who lingers within
   64 px of it, waiting for the cpu to leave, gets it righted at them once 90 frames of patience are out;
   bump the block under the human (30, 100 with a live enemy within 40 px of them); stomp the human while they
-  are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
-  or a stub while nothing has spawned yet, where the first enemy walks out right above).
+  are dizzy on the same row (25); otherwise wait at the safest post (either side of the pow on the floor, the
+  middle of each ledge on the lowest row, or under the first block the next enemy steps on while nothing has
+  spawned yet).
+- the target: a blue cpu chases nothing any more. every replan it picks the spot the nearest rival needs
+  longest to reach (the posts and three points on every row, its own trip and any live enemy near the spot
+  counted against it) and goes there, and its look ahead counts every frame within 64 px of a rival against
+  it, landing on its side as a loss. a blue rival is a coin purse: one on his side is walked into like a
+  kick, one standing is stomped (100, +20 per coin he holds, the surest stun), bumped from under, or powed
+  while grounded (70).
 - the hunt: when no coin left can put it ahead (you have 3, or 2 to its 0 with... in short, the arithmetic says
   the coins are lost), it stops kicking and flipping altogether, since a coin only ends the round and a downed
   enemy is a harmless one. it goes for your death instead: bump the block under you (90, 140 with a live enemy
@@ -205,6 +264,8 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   backgrounds sheet ripped by Doc von Schmeltwick (spriters-resource.com), player poses and blue palettes from
   the Super Mario Wiki gallery for Mario Bros. (Super Mario Bros. 3). blue skins are palette swaps learned from
   the wiki pairs (`tools/slice_sprites.py`)
+- the faster theme for the target is the same cut at 1.2x (`tools/fast_music.py`, ffmpeg atempo); the blue
+  takes of the four characters are palette swaps in the last enemy's blues (`tools/recolor_sprites.py`)
 - sounds: The Mushroom Kingdom wav archive (themushroomkingdom.net), ask-first, credit link owed. the pow uses
   the thwomp sample, no rip of the real pow hit exists
 - music: the super mario all-stars rendition of the smb3 enemy battle theme, 30 s transcode from the Super Mario
