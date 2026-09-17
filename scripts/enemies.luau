@@ -198,7 +198,7 @@ end
 -- Vs_EnemyUsePipes. returns true when the enemy teleported to a top pipe this frame
 local function usePipes(s: State, e: Enemy, ev: Events): boolean
     local b = e.body
-    if b.y < 160 then
+    if b.y < Stage.BOTTOM_PIPE_Y - 16 then
         return false
     end
     local side = if e.dir > 0 then 1 else 2

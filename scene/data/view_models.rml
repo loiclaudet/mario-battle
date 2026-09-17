@@ -23,7 +23,12 @@
         <ViewModelPropertyNumber name="shakeY" id="9:214"/>
         <ViewModelPropertyNumber name="style" id="9:215"/>
         <ViewModelPropertyNumber name="debug" id="9:216"/>
+        <ViewModelPropertyNumber name="stage" id="9:218"/>
         <!-- the components' data: each placement in game.rml binds one of these -->
+        <ViewModelPropertyViewModel viewModelReferenceId="9:1000" name="stage1" id="9:256"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:1000" name="stage2" id="9:257"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:1000" name="stage3" id="9:258"/>
+        <ViewModelPropertyViewModel viewModelReferenceId="9:1000" name="stage4" id="9:259"/>
         <ViewModelPropertyViewModel viewModelReferenceId="9:950" name="overlay" id="9:254"/>
         <ViewModelPropertyViewModel viewModelReferenceId="9:900" name="menu" id="9:255"/>
         <!-- one hud slot per player, each its own HudSlot instance -->
@@ -36,6 +41,11 @@
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:214" id="9:224"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:215" id="9:225"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:216" id="9:226"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:218" id="9:228"/>
+            <ViewModelInstanceViewModel propertyValue="9:1001" viewModelPropertyId="9:256" id="9:266"/>
+            <ViewModelInstanceViewModel propertyValue="9:1002" viewModelPropertyId="9:257" id="9:267"/>
+            <ViewModelInstanceViewModel propertyValue="9:1009" viewModelPropertyId="9:258" id="9:268"/>
+            <ViewModelInstanceViewModel propertyValue="9:1009" viewModelPropertyId="9:259" id="9:269"/>
             <ViewModelInstanceViewModel propertyValue="9:951" viewModelPropertyId="9:254" id="9:264"/>
             <ViewModelInstanceViewModel propertyValue="9:901" viewModelPropertyId="9:255" id="9:265"/>
             <ViewModelInstanceViewModel propertyValue="9:801" viewModelPropertyId="9:250" id="9:260"/>
@@ -216,6 +226,24 @@
             <ViewModelInstanceEnum propertyValue="9:121" viewModelPropertyId="9:410" id="9:420"/>
             <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:411" id="9:421"/>
             <ViewModelInstanceBoolean propertyValue="false" viewModelPropertyId="9:412" id="9:422"/>
+        </ViewModelInstance>
+    </ViewModel>
+    <!-- a stage's data: its name and the tile map scripts/stage.luau reads (see the header of that file for the
+         characters). one exported instance per stage in scene/stages, each stage artboard bound to its own. -->
+    <ViewModel defaultInstanceId="9:1001" name="StageData" id="9:1000">
+        <ViewModelPropertyString name="name" id="9:1010"/>
+        <ViewModelPropertyString name="map" id="9:1011"/>
+        <ViewModelInstance exports="true" name="Typical" id="9:1001">
+            <ViewModelInstanceString propertyValue="typical" viewModelPropertyId="9:1010" id="9:1110"/>
+            <ViewModelInstanceString propertyValue="................................|................................|T...........................T...|................................|................................|................................|############........############|############........############|................................|................................|................................|................................|........################........|........################........|####........................####|####........................####|................................|................................|.3...........................4..|...............P................|############........############|############........############|B...........................B...|................................|........1.............2.........|................................|################################|################################|################################|################################" viewModelPropertyId="9:1011" id="9:1111"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="Steps" id="9:1002">
+            <ViewModelInstanceString propertyValue="steps" viewModelPropertyId="9:1010" id="9:1120"/>
+            <ViewModelInstanceString propertyValue="................................|................................|T...........................T...|................................|................................|................................|############........############|############........############|................................|................................|................................|................................|................................|................................|........################........|........################........|####........................####|####........................####|.3...........................4..|...............P................|############........############|############........############|B...........................B...|................................|........1.............2.........|................................|################################|################################|################################|################################" viewModelPropertyId="9:1011" id="9:1121"/>
+        </ViewModelInstance>
+        <ViewModelInstance exports="true" name="Empty" id="9:1009">
+            <ViewModelInstanceString propertyValue="" viewModelPropertyId="9:1010" id="9:1090"/>
+            <ViewModelInstanceString propertyValue="" viewModelPropertyId="9:1011" id="9:1091"/>
         </ViewModelInstance>
     </ViewModel>
 </Rive>

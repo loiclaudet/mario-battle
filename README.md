@@ -28,10 +28,13 @@ the pow block in the middle flips everything on the ground, three times.
 
 ## how it is built
 
-- `scene/game.rml` is the 256x240 artboard: stage strips cut from the original tiles, the coin hud, title,
-  winner and pause overlays, and a state machine whose layers follow view model values
+- `scene/game.rml` is the 256x240 artboard: it places the components (the overlays, the start menu, four hud
+  slots, one stage per layout) and hosts the playfield script; a state machine shows the menu and the stage
 - `scene/components/` holds one component artboard per entity (Player, Spiny, FighterFly, Sidestepper, Pow,
-  Fireball): frames in a `Solo`, one animation per pose, a small state machine driven by the entity's view model
+  Fireball): frames in a `Solo`, one animation per pose, a small state machine driven by the entity's view
+  model; and the hud slot, menu and overlay components, bound to their own view model where they are placed
+- `scene/stages/` holds one component artboard per stage: the art, and a tile map the simulation plays
+  (see `docs/rules.md`, "stages"); with several stages a round picks one at random
 - `scripts/` is the game: a fixed 60 step loop in `game.luau`, with `players`, `enemies`, `fireballs`, `world`,
   `physics` and `stage` modules and their unit tests (`rive . --test`)
 - `docs/rules.md` has every constant with the label it came from in the disassembly, and the credits

@@ -46,8 +46,8 @@ Npc.IMMINENT = 6 -- inside this many frames a threat overrides even an escape in
 Npc.ESCAPE_GAP = 28 -- px between the launch point and the threat when we jump
 Npc.KICK_MARGIN = 24 -- frames a flipped enemy must still be down after the trip to it
 Npc.EVADE_FRAMES = 10
-Npc.POSTS = { { 1, 100 }, { 1, 148 }, { 2, 48 }, { 2, 208 } } -- row and x of the waiting spots, each with room to hop
-Npc.POW_X = 120 -- stand here to punch the pow
+Npc.POSTS = {} :: { { number } } -- row and x of the waiting spots, from Npc.configure
+Npc.POW_X = 120 -- stand here to punch the pow, from Npc.configure
 Npc.TRAP_REACH = 20 -- px between the human and a downed enemy when the pow rights it under their feet
 Npc.POW_FRAMES = 8 -- frames from the jump under the pow to the hit, measured by npc_test
 Npc.LAND_PX = 24 -- clearance wanted around a landing spot
@@ -666,15 +666,18 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
         -- the pipes alternate, left first: be under the block the next one is flipped from and kept on, the
         -- centre platform's edge (the stub is earlier but the bounce carries the enemy off its block)
         local side = enemies.count % 2
-        local ex = if side == 0 then 48 else 192
-        local below, spot = underSpot(ex, Nav.ROWS[Nav.UPPER].y, Nav.UPPER)
-        if below ~= nil then
-            offer(45, { kind = 'post', row = below, x = spot, slot = 0, targetRow = below })
+        local ex = if side == 0 then Stage.SPAWN_X[1] + 32 else Stage.SPAWN_X[2] - 32
+        local spawnRow = Nav.rowAt(ex, Stage.SPAWN_Y)
+        if spawnRow ~= nil then
+            local below, spot = underSpot(ex, Stage.SPAWN_Y, spawnRow)
+            if below ~= nil then
+                offer(45, { kind = 'post', row = below, x = spot, slot = 0, targetRow = below })
+            end
         end
     end
     local chosen = best -- a plain local narrows, the upvalue the offers write does not
     if chosen == nil then
-        return { kind = 'post', row = Nav.FLOOR, x = 80, slot = 0, targetRow = Nav.FLOOR }
+        return { kind = 'post', row = Nav.FLOOR, x = Npc.POW_X - 40, slot = 0, targetRow = Nav.FLOOR }
     end
     return chosen
 end
@@ -1229,5 +1232,32 @@ function Npc.think(brain: Brain, p: Players.Player, w: World.State, enemies: Ene
     brain.overrideLeft = bestHold - 1
     return bestMacro
 end
+
+-- the stage dependent spots: the pow, and the waiting posts (either side of the pow on the floor, and the middle
+-- of each ledge on the lowest row above it, each with room to hop). runs at require and after every Stage.load
+function Npc.configure()
+    Npc.POW_X = Stage.POW_X
+    Npc.POSTS = { { Nav.FLOOR, Stage.POW_X - 20 }, { Nav.FLOOR, Stage.POW_X + 28 } }
+    local lowest: number? = nil
+    for _, p in Stage.PLATFORMS do
+        if p.w < Stage.WIDTH and (lowest == nil or p.y > lowest) then
+            lowest = p.y
+        end
+    end
+    if lowest ~= nil then
+        for _, p in Stage.PLATFORMS do
+            if p.y == lowest then
+                local x = Stage.wrapX(p.x + p.w // 2 - 8)
+                local row = Nav.rowAt(x, p.y - 16)
+                if row ~= nil then
+                    table.insert(Npc.POSTS, { row, x })
+                end
+            end
+        end
+    end
+end
+
+Npc.configure()
+Stage.onLoad(Npc.configure)
 
 return Npc

@@ -79,3 +79,22 @@ after `cut_music.py` copy the new sample counts from `tools/music_cuts.json` int
   `table.freeze` makes the value's type read-only, which then fails against the mutable type elsewhere
 - `Shape` + `Rectangle originX="0" originY="0"` + `Stroke thickness="1"` at half pixel coordinates draws a
   crisp 1 px outline; x, y, width and height (keys 13, 14, 20, 21) are all bindable
+- a `NestedArtboard` placement gets its own data through `dataBindPathIds="9:200-<ViewModelPropertyViewModel>"`
+  (`isStateful` + a `<ViewModelInstance>` child is exported but not read back by the cli runtime). direct
+  property binds inside the component then follow the placement, but the component's state machine does not:
+  a condition on its view model reads the artboard's authored instance, so every placement shows the same
+  state. the hud, menu and overlay components (tools/gen_ui_rml.py) therefore use direct binds only: numbers
+  0 or 1 as opacities, a `DataConverterFormula` band (`max(0, 1 - sqrt((i - k)^2))`) to pick one image by
+  index, text runs bound by key 268. each still needs an empty state machine or no bind runs. check with
+  `rive . --data-dump=<file>` (`nested[]`, one entry per placement with its own instance)
+- a nested `ViewModelPropertyViewModel` reached through a three segment path
+  (`ScriptInputViewModelProperty dataBindPathIds="9:200-9:255-9:910"`) is the way to type a nested property
+  in luau; `Data.Menu` exposes a nested property only as an untyped `PropertyViewModel`
+- luau cannot read a node's name, width or height, so a stage cannot be read from its art: it carries its
+  geometry as a tile map string in its view model (scripts/stage.luau, tools/gen_stages_rml.py), and
+  `--data=debug=4` tints the map's solid tiles over the art so a drift shows
+- generated markup: `tools/gen_enemy_rml.py` (enemies), `tools/gen_ui_rml.py` (hud slot, menu, overlay),
+  `tools/gen_stages_rml.py` (stages and the StageData view model), `tools/make_hud.py` (the four hud boxes),
+  `tools/recolor_sprites.py` (wario and waluigi). edit the generator, not the output
+- `--data=stage=n` plays stage n every round (the pick is random when there are several), `--data=style=n`
+  the enemy set

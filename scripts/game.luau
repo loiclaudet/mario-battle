@@ -42,6 +42,13 @@ type Game = {
     hudSlot2: Input<Data.HudSlot>?,
     hudSlot3: Input<Data.HudSlot>?,
     hudSlot4: Input<Data.HudSlot>?,
+    stage1: Input<Data.StageData>?, -- the stages in scene/stages, an empty map means no stage in that slot
+    stage2: Input<Data.StageData>?,
+    stage3: Input<Data.StageData>?,
+    stage4: Input<Data.StageData>?,
+    stage: number, -- the one this round plays, 1 based
+    seed: number, -- the stage pick's lcg
+    stageForced: boolean, -- --data=stage=n: play that stage every round
     menu: Menu.State,
     brains: { Npc.Brain }, -- one per player, used when the player has no controller
     ready: boolean,
@@ -76,8 +83,6 @@ type Game = {
     size: Vector,
 }
 
-local PIPES = { { 0, 16 }, { 224, 16 }, { 0, 176 }, { 224, 176 } }
-
 local function buildPipeMask(path: Path)
     path:reset()
     -- the screen, clockwise
@@ -87,14 +92,48 @@ local function buildPipeMask(path: Path)
     path:lineTo(Vector.xy(0, Stage.HEIGHT))
     path:close()
     -- each pipe the other way round, so the clockwise fill rule subtracts it
-    for _, p in PIPES do
-        local x, y = p[1], p[2]
-        path:moveTo(Vector.xy(x, y))
-        path:lineTo(Vector.xy(x, y + 32))
-        path:lineTo(Vector.xy(x + 32, y + 32))
-        path:lineTo(Vector.xy(x + 32, y))
+    for _, p in Stage.PIPES do
+        path:moveTo(Vector.xy(p.x, p.y))
+        path:lineTo(Vector.xy(p.x, p.y + p.h))
+        path:lineTo(Vector.xy(p.x + p.w, p.y + p.h))
+        path:lineTo(Vector.xy(p.x + p.w, p.y))
         path:close()
     end
+end
+
+-- the stages with a map, in slot order
+local function stageMaps(self: Game): { string }
+    local maps: { string } = {}
+    for _, s in { self.stage1, self.stage2, self.stage3, self.stage4 } do
+        if s ~= nil then
+            local map: string = s.map.value
+            if map ~= '' then
+                table.insert(maps, map)
+            end
+        end
+    end
+    return maps
+end
+
+-- pick the stage a round plays: --data=stage=n forces one, else a random one when there are several
+local function pickStage(self: Game)
+    local maps = stageMaps(self)
+    if #maps == 0 then
+        return -- the typical arena stage.luau loaded at require stays
+    end
+    local vm = self.vm
+    local forced = if vm ~= nil then math.floor(vm.stage.value) else 0
+    local index = forced
+    if forced < 1 or forced > #maps or self.stageForced == false then
+        self.seed = (self.seed * 1103515245 + 12345 + self.world.frame) % 2147483648
+        index = self.seed % #maps + 1
+    end
+    self.stage = index
+    if vm ~= nil then
+        vm.stage.value = index
+    end
+    Stage.load(maps[index])
+    buildPipeMask(self.pipeMask)
 end
 
 -- view model -------------------------------------------------------------------------------------
@@ -222,7 +261,11 @@ local function startRound(self: Game)
         if bit32.band(self.debug, 4) ~= 0 then
             self.showBoxes = true
         end
+        if not self.stageForced and vm.stage.value ~= self.stage then
+            self.stageForced = true -- --data=stage=n set it before the first round
+        end
     end
+    pickStage(self)
     World.reset(self.world)
     Enemies.reset(self.enemies, self.style)
     self.enemyViews = {}
@@ -591,6 +634,21 @@ local function outline(self: Game, renderer: Renderer, x: number, y: number, w: 
 end
 
 local function drawBoxes(self: Game, renderer: Renderer)
+    -- the stage's map over its art: every solid tile tinted, so a map that drifted from the art shows
+    local tint = Paint.with({ color = Color.rgba(255, 0, 255, 90) })
+    for row = 0, Stage.ROWS - 1 do
+        for col = 0, Stage.COLS - 1 do
+            if Stage.solidAt(col * Stage.TILE, row * Stage.TILE) then
+                self.path:reset()
+                self.path:moveTo(Vector.xy(col * Stage.TILE, row * Stage.TILE))
+                self.path:lineTo(Vector.xy(col * Stage.TILE + Stage.TILE, row * Stage.TILE))
+                self.path:lineTo(Vector.xy(col * Stage.TILE + Stage.TILE, row * Stage.TILE + Stage.TILE))
+                self.path:lineTo(Vector.xy(col * Stage.TILE, row * Stage.TILE + Stage.TILE))
+                self.path:close()
+                renderer:drawPath(self.path, tint)
+            end
+        end
+    end
     for _, p in self.players do
         outline(self, renderer, World.playerBox(p.body))
     end
@@ -713,6 +771,13 @@ return function(context: Context): Layout<Game>
         hudSlot2 = nil,
         hudSlot3 = nil,
         hudSlot4 = nil,
+        stage1 = nil,
+        stage2 = nil,
+        stage3 = nil,
+        stage4 = nil,
+        stage = 1,
+        seed = 7,
+        stageForced = false,
         menu = Menu.new(2),
         brains = { Npc.new(1), Npc.new(2) },
         ready = false,

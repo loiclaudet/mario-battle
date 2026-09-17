@@ -39,8 +39,8 @@ function Players.new(index: number): Player
     local p: Player = {
         index = index,
         controller = nil,
-        body = Physics.newBody(Stage.PLAYER_START_X[index], Stage.FLOOR_TOP - 16),
-        dir = if index == 1 then 1 else -1,
+        body = Physics.newBody(Stage.PLAYER_START[index].x, Stage.PLAYER_START[index].y),
+        dir = Stage.PLAYER_START[index].dir,
         state = Players.STATE_NORMAL,
         onGround = true,
         jumped = false,

@@ -1,7 +1,8 @@
 <Rive version="1" kind="fragment">
     <!-- Game artboard: the nes framebuffer, 256x240. earlier siblings draw on top, so the order is
          overlay component (pause and winner banners), the menu component in the Title solo, the playfield script
-         (players, enemies, fireballs, pow), the hud (four HudSlot components, under the sprites), the stage strips.
+         (players, enemies, fireballs, pow), the hud (four HudSlot components, under the sprites), the stage (one
+         component per layout in scene/stages, the Stage layer shows the one a round plays).
          the components live in scene/components and bind to their own view model through the placement's
          dataBindPathIds (Game.overlay, Game.menu, Game.hudN). ids: 0:1xx layout, 0:2xx stage, 0:3xx hud,
          0:4xx overlay, 0:5xx state machine, 0:6xx animations; 0:61xxx are the coop ids the first push wrote. -->
@@ -42,6 +43,10 @@
                 <ScriptInputViewModelProperty dataBindPathIds="9:200-9:251" name="hudSlot2" id="0:61993"/>
                 <ScriptInputViewModelProperty dataBindPathIds="9:200-9:252" name="hudSlot3" id="0:61994"/>
                 <ScriptInputViewModelProperty dataBindPathIds="9:200-9:253" name="hudSlot4" id="0:61995"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:256" name="stage1" id="0:62030"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:257" name="stage2" id="0:62031"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:258" name="stage3" id="0:62032"/>
+                <ScriptInputViewModelProperty dataBindPathIds="9:200-9:259" name="stage4" id="0:62033"/>
             </ScriptedLayout>
         </LayoutComponent>
 
@@ -55,22 +60,13 @@
             <NestedArtboard artboardId="10:100" dataBindPathIds="9:200-9:253" x="188" y="0" name="HudSlot4" id="0:61979"/>
         </Node>
 
-        <!-- stage, framebuffer coordinates from PRG/levels/2PVs/Typical.asm. y is bound to shakeY for the pow shake -->
-        <Node name="Stage" id="0:200">
+        <!-- the stages: one component per layout (scene/stages), the Stage layer shows the one Game.stage names.
+             y bound to shakeY for the pow shake, hidden by the title animations -->
+        <Solo activeComponentId="0:61997" name="Stages" id="0:200">
             <DataBindContext sourcePathIds="9:200-9:214" propertyKey="14" id="0:61821"/>
-            <Image assetId="8:48161" x="0" y="16" originX="0" originY="0" name="pipe_tl" id="0:203"/>
-            <Image assetId="8:56482" x="224" y="16" originX="0" originY="0" name="pipe_tr" id="0:204"/>
-            <Image assetId="8:31191" x="0" y="48" originX="0" originY="0" name="ledge_ul" id="0:205"/>
-            <Image assetId="8:35412" x="160" y="48" originX="0" originY="0" name="ledge_ur" id="0:206"/>
-            <Image assetId="8:30408" x="64" y="96" originX="0" originY="0" name="platform_c" id="0:207"/>
-            <Image assetId="8:30000" x="0" y="112" originX="0" originY="0" name="stub_l" id="0:208"/>
-            <Image assetId="8:52755" x="224" y="112" originX="0" originY="0" name="stub_r" id="0:209"/>
-            <Image assetId="8:60735" x="0" y="160" originX="0" originY="0" name="ledge_ll" id="0:210"/>
-            <Image assetId="8:56988" x="160" y="160" originX="0" originY="0" name="ledge_lr" id="0:211"/>
-            <Image assetId="8:6166" x="0" y="176" originX="0" originY="0" name="pipe_bl" id="0:212"/>
-            <Image assetId="8:5269" x="224" y="176" originX="0" originY="0" name="pipe_br" id="0:213"/>
-            <Image assetId="8:2606" x="0" y="208" originX="0" originY="0" name="floor" id="0:214"/>
-        </Node>
+            <NestedArtboard artboardId="21:100" dataBindPathIds="9:200-9:256" x="0" y="0" name="Stage1" id="0:61997"/>
+            <NestedArtboard artboardId="22:100" dataBindPathIds="9:200-9:257" x="0" y="0" name="Stage2" id="0:61998"/>
+        </Solo>
 
         <!-- one frame animations: the title solo, and the stage and hud hidden with it so the menu is the black screen
              the rom draws -->
@@ -85,7 +81,46 @@
             <KeyedObject objectId="0:300" id="0:61983"><KeyedProperty propertyKey="18" id="0:61984"><KeyFrameDouble value="1" frame="0" id="0:61985"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
 
+        <LinearAnimation loopValue="loop" duration="1" name="Stage 1" id="0:612">
+            <KeyedObject objectId="0:200" id="0:62020"><KeyedProperty propertyKey="296" id="0:62021"><KeyFrameId value="0:61997" frame="0" id="0:62022"/></KeyedProperty></KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation loopValue="loop" duration="1" name="Stage 2" id="0:613">
+            <KeyedObject objectId="0:200" id="0:62023"><KeyedProperty propertyKey="296" id="0:62024"><KeyFrameId value="0:61998" frame="0" id="0:62025"/></KeyedProperty></KeyedObject>
+        </LinearAnimation>
+
         <StateMachine name="Game" id="0:500">
+            <!-- Stage: which stage component is shown, from Game.stage -->
+            <StateMachineLayer name="Stage" id="0:580">
+                <AnyState x="60" y="-100" id="0:581"/>
+                <ExitState x="560" y="-100" id="0:582"/>
+                <EntryState x="0" y="0" id="0:583">
+                    <StateTransition stateToId="0:585" id="0:584"/>
+                </EntryState>
+                <AnimationState animationId="0:612" x="160" y="0" id="0:585">
+                    <StateTransition stateToId="0:586" duration="0" id="0:62000">
+                        <TransitionViewModelCondition opValue="equal" id="0:62001">
+                            <TransitionPropertyViewModelComparator id="0:62002">
+                                <BindablePropertyNumber id="0:62003">
+                                    <DataBindContext sourcePathIds="9:200-9:218" propertyKey="636" id="0:62004"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="2" id="0:62005"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+                <AnimationState animationId="0:613" x="320" y="0" id="0:586">
+                    <StateTransition stateToId="0:585" duration="0" id="0:62010">
+                        <TransitionViewModelCondition opValue="equal" id="0:62011">
+                            <TransitionPropertyViewModelComparator id="0:62012">
+                                <BindablePropertyNumber id="0:62013">
+                                    <DataBindContext sourcePathIds="9:200-9:218" propertyKey="636" id="0:62014"/>
+                                </BindablePropertyNumber>
+                            </TransitionPropertyViewModelComparator>
+                            <TransitionValueNumberComparator value="1" id="0:62015"/>
+                        </TransitionViewModelCondition>
+                    </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
             <StateMachineLayer name="Phase" id="0:510">
                 <AnyState x="60" y="-100" id="0:511"/>
                 <ExitState x="560" y="-100" id="0:512"/>

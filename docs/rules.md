@@ -38,8 +38,26 @@ overlay (`--data=debug=4` headless).
 | floor | 0 | 208 | 256x32 |
 | pow | 120 | 152 | 16 wide, box 15 / 12 / 10 tall after 0 / 1 / 2 hits (`Vs_POWHeight` 1, 4, 6), gone after 3 |
 
-x wraps at 256 (one byte in the rom). mario starts at x 64 facing right, luigi at 176 facing left.
-the hud boxes sit at x 52 and 140, y 12; the five coin slots start at x 72 and 160, y 16, 8 px apart.
+x wraps at 256 (one byte in the rom). mario starts at x 64 facing right, luigi at 176 facing left, wario at 8 and
+waluigi at 232 on the lower ledges above the bottom pipes. the hud boxes sit at x 8, 68, 128 and 188, y 0
+(60x17 each); the five coin slots start 16 px in, y 4, 8 px apart.
+
+## stages (scene/stages, scripts/stage.luau)
+
+the arena above is the `typical` stage. a stage is a component artboard in `scene/stages/<name>.rml` holding the
+art, bound to its own `StageData` instance whose `map` is the geometry the simulation plays: 30 rows of 32 tiles
+of 8 px, rows joined with `|`, `#` solid, `T` and `B` the top left tile of a 32x32 top and bottom pipe (scenery:
+the top ones spawn, the bottom ones recycle), `P` the top left tile of the pow, `1`..`4` where each player's
+16x16 body starts (facing right on the left half). `Stage.load` derives everything else: the collision grid,
+the platforms, the spawn x, the pipe entrances and limits, the pow, the starts; nav rebuilds its rows (one per
+platform top, the two halves of a ledge pair joined through the seam, lowest first) and their jumps, and the
+cpu its waiting posts. the art is free, the map must match it: `--data=debug=4` (F1) tints every solid tile
+over the art. with one stage the game plays it, with several a round picks one at random; `--data=stage=n`
+forces one. to add a stage: add its rectangles to `STAGES` in `tools/gen_stages_rml.py` and run it (it writes
+the rml and the view model instance from the same numbers), then in `scene/game.rml` give the `Stages` solo a
+`NestedArtboard` bound to `9:200-9:25x`, the `Stage` layer a state, and the playfield a `stageN` input, with a
+`stageN` property on `Game` pointing at the new instance. the second shipped stage, `steps`, has the centre
+platform and the stubs two tiles lower; the cpu is tuned on `typical` and plays `steps` less well.
 
 ## player (`VsPlayer_Normal`)
 
@@ -152,7 +170,8 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   first lost to a human who simply waited.
 
 - `nav.luau` sees the arena as five rows: floor, lower ring (the two lower ledges join through the wrap), centre
-  platform, the two stubs (a ring too), upper ring. the jumps and drops between rows are found at load by running
+  platform, the two stubs (a ring too), upper ring, all derived from the stage's platforms at load (one row per
+  platform top, lowest first, a ledge pair joined through the seam). the jumps and drops between rows are found at load by running
   the real player once per row end, from a standstill and at full run, so every launch window and landing spot
   is what the game does; a route aims 2 px inside a window, and the last step to it is walked, not waited out
   (the walk stops within 2 px of its target, which once left the cpu a pixel short of a window for 120 frames).
@@ -187,8 +206,9 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   4 px of margin). no block in time means no deny, the kick is tried instead; a human who lingers within
   64 px of it, waiting for the cpu to leave, gets it righted at them once 90 frames of patience are out;
   bump the block under the human (30, 100 with a live enemy within 40 px of them); stomp the human while they
-  are dizzy on the same row (25); otherwise wait at the safest post (the floor between the ledges, the ledges,
-  or a stub while nothing has spawned yet, where the first enemy walks out right above).
+  are dizzy on the same row (25); otherwise wait at the safest post (either side of the pow on the floor, the
+  middle of each ledge on the lowest row, or under the first block the next enemy steps on while nothing has
+  spawned yet).
 - the hunt: when no coin left can put it ahead (you have 3, or 2 to its 0 with... in short, the arithmetic says
   the coins are lost), it stops kicking and flipping altogether, since a coin only ends the round and a downed
   enemy is a harmless one. it goes for your death instead: bump the block under you (90, 140 with a live enemy

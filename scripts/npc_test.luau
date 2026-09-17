@@ -1,5 +1,6 @@
 --!strict
 local Npc = require('scripts/npc')
+local Nav = require('scripts/nav')
 local Players = require('scripts/players')
 local Enemies = require('scripts/enemies')
 local Fireballs = require('scripts/fireballs')
@@ -216,7 +217,7 @@ return function(): Tests
                 local sc = scene(52) -- under block 48 of the upper ring, from the centre platform's edge
                 local p = sc.players[1]
                 p.body.y = 80
-                sc.brain.lastRow = 3
+                sc.brain.lastRow = Nav.rowAt(52, 80) or 0
                 local h = sc.players[2]
                 h.halt = 0
                 h.body.x = 88 -- on the upper ring, 30 px from the downed spiny, standing still
