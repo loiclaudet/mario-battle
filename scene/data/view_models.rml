@@ -60,25 +60,30 @@
         <ViewModelPropertyNumber name="letter" id="9:810"/>
         <ViewModelPropertyNumber name="coins" id="9:811"/>
         <ViewModelPropertyNumber name="shown" id="9:812"/>
+        <ViewModelPropertyNumber name="coinsBlue" id="9:813"/>
         <ViewModelInstance exports="true" name="Slot1" id="9:801">
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:810" id="9:820"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:821"/>
             <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:812" id="9:822"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:813" id="9:823"/>
         </ViewModelInstance>
         <ViewModelInstance exports="true" name="Slot2" id="9:802">
             <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:810" id="9:830"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:831"/>
             <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="9:812" id="9:832"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:813" id="9:833"/>
         </ViewModelInstance>
         <ViewModelInstance exports="true" name="Slot3" id="9:803">
             <ViewModelInstanceNumber propertyValue="2" viewModelPropertyId="9:810" id="9:840"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:841"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:812" id="9:842"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:813" id="9:843"/>
         </ViewModelInstance>
         <ViewModelInstance exports="true" name="Slot4" id="9:804">
             <ViewModelInstanceNumber propertyValue="3" viewModelPropertyId="9:810" id="9:850"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:811" id="9:851"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:812" id="9:852"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="9:813" id="9:853"/>
         </ViewModelInstance>
     </ViewModel>
 

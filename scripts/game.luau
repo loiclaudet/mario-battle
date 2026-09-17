@@ -177,7 +177,8 @@ local function pushVm(self: Game)
             local p = self.players[i]
             h.letter.value = i - 1
             h.coins.value = self.shownCoins[i] or 0
-            h.shown.value = if p ~= nil and p.state ~= Players.STATE_OFF then 1 else 0
+            h.coinsBlue.value = if p ~= nil and p.blue then self.shownCoins[i] or 0 else 0
+            h.shown.value = if p ~= nil and p.state == Players.STATE_NORMAL then 1 else 0 -- gone with the player
         end
     end
     -- the menu component: taken cards hop, the cursor outlines and markers follow scripts/menu.luau's layout
@@ -332,8 +333,18 @@ end
 -- a player died this step (Sim.step already dropped their coins and gave them back as enemies). with others
 -- still alive the round goes on around the falling body; with one left the round is theirs once the body is gone
 local function onDeath(self: Game, index: number)
-    play(self, 'player_down')
-    if #Players.alive(self.players) > 1 then
+    if not self.players[index].blue then
+        play(self, 'player_down') -- a beaten target goes quietly, like a kicked enemy
+    end
+    -- the round is over when nobody else can win: one player left, or one contender left beside the targets
+    local alive = Players.alive(self.players)
+    local contenders = Sim.contenders(self.round)
+    if #alive > 1 and #contenders > 1 then
+        return
+    end
+    if #alive > 1 and #contenders == 1 and #alive - #contenders > 0 then
+        -- the last contender wins at once over the targets left standing
+        endRound(self, CHARACTERS[contenders[1]])
         return
     end
     local bank = self.sfx

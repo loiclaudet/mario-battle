@@ -4,6 +4,7 @@
     <ImageAsset file="assets/stage/block.png" samplerFilter="1" name="block" id="8:12562"/>
     <ImageAsset file="assets/stage/floor.png" samplerFilter="1" name="floor" id="8:2606"/>
     <ImageAsset file="assets/stage/hud_coin.png" samplerFilter="1" name="hud_coin" id="8:60009"/>
+    <ImageAsset file="assets/stage/hud_coin_blue.png" samplerFilter="1" name="hud_coin_blue" id="8:54180"/>
     <ImageAsset file="assets/stage/hud_l.png" samplerFilter="1" name="hud_l" id="8:30507"/>
     <ImageAsset file="assets/stage/hud_m.png" samplerFilter="1" name="hud_m" id="8:39357"/>
     <ImageAsset file="assets/stage/hud_w.png" samplerFilter="1" name="hud_w" id="8:21591"/>

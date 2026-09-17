@@ -316,6 +316,30 @@ return function(): Tests
                 expect(closest).greaterThan(24) -- never within reach
                 expect(p.side).is(false)
             end)
+            test.case('a standing target on its row gets stomped', function(expect)
+                local sc = scene(60)
+                local h = sc.players[2]
+                h.halt = 0
+                h.body.x = 140 -- the target, standing still on the floor
+                h.body.y = 192
+                h.onGround = true
+                Players.makeBlue(h)
+                h.invincible = 0
+                local p = sc.players[1]
+                local sided = false
+                for _ = 1, 240 do
+                    World.update(sc.w)
+                    Players.update(p, sc.w, Npc.think(sc.brain, p, sc.w, sc.s, sc.f, sc.players))
+                    Players.update(h, sc.w, Input.NONE)
+                    Players.bumpEachOther(p, h, 0)
+                    Enemies.update(sc.s, sc.w, sc.players, sc.w.frame, false)
+                    if h.side then
+                        sided = true
+                        break
+                    end
+                end
+                expect(sided).is(true)
+            end)
             test.case('climbs three rows to kick a flipped enemy on the upper ring', function(expect)
                 local sc = scene(64)
                 table.insert(sc.s.list, spiny(9, 40, 32, 0, true, 0xFF))

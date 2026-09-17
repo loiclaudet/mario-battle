@@ -155,15 +155,18 @@ a free for all for up to four: five coins exist, one per kicked enemy, and two e
 frame are two coins (the rom's counter only grows by one there, and the second kick in a frame is a case it never
 meets). every coin won flies from where it was won to its hud slot with an ease in (30 frames) before its
 fill lights. the round ends when one player has the most coins with the five out, or when one player is left
-alive. a touch by a live enemy or a flame kills a player without coins, or with one other player alive: he
-falls off the screen and the round goes on around the body, or ends when nobody else is left. holding coins
+alive, or when one player is left who is not a target (a target cannot win, so the last other player standing
+takes the round at once). a touch by a live enemy or a flame kills a player without coins, or with one other
+player alive: he falls off the screen and the round goes on around the body, or ends when nobody else is left.
+a dead player's hud goes out with him; a target's coins show in blue. holding coins
 with two or more others alive he becomes **the target** instead, standing where he was and keeping his coins:
 he wears the last enemy's blue (a 40 frame fade that does not stop play) and gets 275 frames of grace (the
 theme's intro at 1.2x) in which he blinks and nothing but the blocks touches him, no enemy, flame or player,
 and no sound plays. after it, any stun (a bumped block, the pow, a stomp) or a touch by an enemy or a flame
 lays him on his side (a quarter turn) with no control until a hit from under his feet (a bumped block or the
-pow) stands him up. another player touching him on his side beats him: the coins change hands (no kick sound;
-they fly to the beater's hud one after the other) and he falls off. with the five coins out and two players
+pow) stands him up; a stomp on his head is the surest way. another player touching him on his side beats him:
+the coins change hands (no kick sound and no death sound; they fly to the beater's hud one after the other)
+and he falls off. with the five coins out and two players
 sharing the top, the player with coins below them becomes the target the same way, and that is sudden death:
 the theme starts over at 1.2x, a leader beating him takes his coins and wins, a player below beating him takes
 the coins and becomes the target in turn, until someone stands alone at the top.
@@ -237,7 +240,8 @@ random numbers, so a lockstep multiplayer can run it on every peer.
   longest to reach (the posts and three points on every row, its own trip and any live enemy near the spot
   counted against it) and goes there, and its look ahead counts every frame within 64 px of a rival against
   it, landing on its side as a loss. a blue rival is a coin purse: one on his side is walked into like a
-  kick, one standing is worth a bump.
+  kick, one standing is stomped (100, +20 per coin he holds, the surest stun), bumped from under, or powed
+  while grounded (70).
 - the hunt: when no coin left can put it ahead (you have 3, or 2 to its 0 with... in short, the arithmetic says
   the coins are lost), it stops kicking and flipping altogether, since a coin only ends the round and a downed
   enemy is a harmless one. it goes for your death instead: bump the block under you (90, 140 with a live enemy

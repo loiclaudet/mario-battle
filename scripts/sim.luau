@@ -94,6 +94,17 @@ function Sim.clone(snap: Snap): Snap
     return copy(snap)
 end
 
+-- the players still able to win: alive and not the target
+function Sim.contenders(snap: Snap): { number }
+    local out: { number } = {}
+    for i, p in snap.players do
+        if p.state == Players.STATE_NORMAL and not p.blue then
+            table.insert(out, i)
+        end
+    end
+    return out
+end
+
 function Sim.total(snap: Snap): number
     local total = 0
     for _, c in snap.coins do

@@ -92,6 +92,11 @@ def hud_slot():
         L.append(f'            <Image assetId="{I("hud_" + ("wl" if c == "waluigi" else c[0]))}" originX="0" originY="0" opacity="0" name="{c}" id="10:20{k}">')
         L.append(f'                <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:71{k}" id="10:23{k}"/>')
         L.append('            </Image>')
+    # the blue fills sit above the normal ones and light from coinsBlue (the coins while the player is the target)
+    for k in range(5):
+        L.append(f'            <Image assetId="{I("hud_coin_blue")}" x="{16 + 8 * k}" y="4" originX="0" originY="0" opacity="0" name="coin_blue_{k + 1}" id="10:24{k}">')
+        L.append(f'                <DataBindContext sourcePathIds="9:800-9:813" propertyKey="18" converterId="10:70{k}" id="10:25{k}"/>')
+        L.append('            </Image>')
     for k in range(5):
         L.append(f'            <Image assetId="{I("hud_coin")}" x="{16 + 8 * k}" y="4" originX="0" originY="0" opacity="0" name="coin_{k + 1}" id="10:21{k}">')
         L.append(f'                <DataBindContext sourcePathIds="9:800-9:811" propertyKey="18" converterId="10:70{k}" id="10:22{k}"/>')

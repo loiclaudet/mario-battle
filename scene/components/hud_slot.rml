@@ -19,6 +19,21 @@
             <Image assetId="8:18619" originX="0" originY="0" opacity="0" name="waluigi" id="10:203">
                 <DataBindContext sourcePathIds="9:800-9:810" propertyKey="18" converterId="10:713" id="10:233"/>
             </Image>
+            <Image assetId="8:54180" x="16" y="4" originX="0" originY="0" opacity="0" name="coin_blue_1" id="10:240">
+                <DataBindContext sourcePathIds="9:800-9:813" propertyKey="18" converterId="10:700" id="10:250"/>
+            </Image>
+            <Image assetId="8:54180" x="24" y="4" originX="0" originY="0" opacity="0" name="coin_blue_2" id="10:241">
+                <DataBindContext sourcePathIds="9:800-9:813" propertyKey="18" converterId="10:701" id="10:251"/>
+            </Image>
+            <Image assetId="8:54180" x="32" y="4" originX="0" originY="0" opacity="0" name="coin_blue_3" id="10:242">
+                <DataBindContext sourcePathIds="9:800-9:813" propertyKey="18" converterId="10:702" id="10:252"/>
+            </Image>
+            <Image assetId="8:54180" x="40" y="4" originX="0" originY="0" opacity="0" name="coin_blue_4" id="10:243">
+                <DataBindContext sourcePathIds="9:800-9:813" propertyKey="18" converterId="10:703" id="10:253"/>
+            </Image>
+            <Image assetId="8:54180" x="48" y="4" originX="0" originY="0" opacity="0" name="coin_blue_5" id="10:244">
+                <DataBindContext sourcePathIds="9:800-9:813" propertyKey="18" converterId="10:704" id="10:254"/>
+            </Image>
             <Image assetId="8:60009" x="16" y="4" originX="0" originY="0" opacity="0" name="coin_1" id="10:210">
                 <DataBindContext sourcePathIds="9:800-9:811" propertyKey="18" converterId="10:700" id="10:220"/>
             </Image>

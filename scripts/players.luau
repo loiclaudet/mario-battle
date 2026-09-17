@@ -359,6 +359,9 @@ function Players.bumpEachOther(a: Player, b: Player, cooldown: number): (number,
         if bottom.onGround then
             bottom.body.vy = 0
             bottom.dizzy = Physics.STUN_FRAMES
+            if bottom.blue then
+                bottom.side = true -- a stomp lays the target on his side
+            end
             stunned = true
         end
     else

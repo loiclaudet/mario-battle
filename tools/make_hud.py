@@ -17,8 +17,10 @@ LETTERS = {
 }
 
 def narrow(src):
-    """drop columns 11..15 (empty) so the box is 60 wide"""
+    """drop columns 11..15 (empty) so the box is 60 wide; a box already 60 wide is left as it is"""
     im = Image.open(src).convert('RGBA')
+    if im.size[0] == 60:
+        return im
     out = Image.new('RGBA', (60, 17), CLEAR)
     out.paste(im.crop((0, 0, 11, 17)), (0, 0))
     out.paste(im.crop((16, 0, 65, 17)), (11, 0))
@@ -53,3 +55,15 @@ for name, rows in LETTERS.items():
     draw_letter(im, rows)
     im.save(os.path.join(stage, f'hud_{name}.png'))
 print('hud boxes written: m l w wl (60x17)')
+
+# the coin fill in the target's blue, for a blue player's hud
+coin = Image.open(os.path.join(stage, 'hud_coin.png')).convert('RGBA')
+BLUES = { (234, 158, 34, 255): (66, 64, 255, 255), (255, 204, 197, 255): (192, 223, 255, 255), (255, 255, 255, 255): (192, 223, 255, 255) }
+px = coin.load()
+for y in range(coin.size[1]):
+    for x in range(coin.size[0]):
+        c = px[x, y]
+        if c[3] > 0:
+            px[x, y] = BLUES.get(c, (100, 176, 255, 255))
+coin.save(os.path.join(stage, 'hud_coin_blue.png'))
+print('hud_coin_blue written')

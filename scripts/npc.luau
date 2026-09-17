@@ -682,6 +682,16 @@ local function choose(brain: Brain, p: Players.Player, w: World.State, enemies: 
             offer(110 + 30 * (brain.coins[i] or 0), { kind = 'kick', row = hr, x = h.body.x, slot = -i, targetRow = hr })
             continue
         end
+        if h.blue and h.invincible == 0 and not p.blue then
+            -- the target standing: a stomp lays him down, the surest way; so does the pow while he is grounded
+            local sr, sx, _ = playerLanding(h)
+            if sr ~= nil then
+                offer(100 + 20 * (brain.coins[i] or 0), { kind = 'stomp', row = sr, x = sx, slot = i, targetRow = sr })
+            end
+            if h.onGround and Stage.powRect(w.powHits) ~= nil and w.powCnt == 0 then
+                offer(70 + 10 * (brain.coins[i] or 0), { kind = 'pow', row = Nav.FLOOR, x = Npc.POW_X, slot = 0, targetRow = Nav.FLOOR })
+            end
+        end
         if hr ~= nil and hr ~= Nav.FLOOR then
             local below, spot = underSpot(h.body.x, h.body.y, hr)
             if below ~= nil then
@@ -785,7 +795,8 @@ local function valid(brain: Brain, plan: Plan, p: Players.Player, w: World.State
         local h = players[plan.slot]
         return h.state == Players.STATE_NORMAL and (not h.onGround or Nav.rowAt(h.body.x, h.body.y) == plan.targetRow)
     elseif plan.kind == 'stomp' then
-        return players[plan.slot].dizzy > 0
+        local h = players[plan.slot]
+        return h.state == Players.STATE_NORMAL and (h.dizzy > 0 or (h.blue and not h.side))
     end
     return true
 end
@@ -1038,8 +1049,16 @@ local function execute(brain: Brain, plan: Plan, p: Players.Player, w: World.Sta
         return moveTo(row, b, players[plan.slot].body.x)
     elseif plan.kind == 'stomp' then
         local h = players[plan.slot]
+        local hr = Nav.rowAt(h.body.x, h.body.y)
+        if hr ~= nil and hr ~= row then
+            -- on another row: get to his, the trip is the same as to any spot there
+            local step = Nav.step(row, b.x, hr, h.body.x)
+            if step ~= nil and step.kind == 'move' then
+                return moveTo(row, b, step.x)
+            end
+        end
         local dx = Nav.dx(row, b.x, h.body.x)
-        if math.abs(dx) < 20 then
+        if math.abs(dx) < 20 and math.abs(h.body.y - b.y) <= 8 then
             return jump(brain, sign(dx), 8)
         end
         return moveTo(row, b, h.body.x)
@@ -1203,8 +1222,9 @@ local function rollout(brain: Brain, macro: Input.Intent?, hold: number, w: Worl
             end
         end
         if #ev.killed > 0 then
-            -- a rival down: the round is ours when nobody else is left, a big step otherwise
-            if #Players.alive(snap.players) <= 1 then
+            -- a rival down: the round is ours when nobody else can win, a big step otherwise
+            local contenders = Sim.contenders(snap)
+            if #contenders <= 1 and (#contenders == 0 or contenders[1] == me) then
                 return 5000 - t
             end
             score += 150 * #ev.killed

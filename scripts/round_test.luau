@@ -116,6 +116,23 @@ return function(): Tests
                 expect(p.state).is(Players.STATE_DYING)
                 expect(ev.killed[1]).is(2)
             end)
+            test.case('a stomp lays a blue player on his side, and the last contender wins over the targets', function(expect)
+                local r = round()
+                local p = r.players[2]
+                Players.makeBlue(p)
+                p.invincible = 0
+                local top = r.players[1]
+                top.body.x = p.body.x
+                top.body.y = p.body.y - 12 -- coming down on his head
+                top.body.vy = 0x20
+                top.onGround = false
+                Sim.step(r, none(4))
+                expect(p.side).is(true)
+                expect(#Sim.contenders(r)).is(3)
+                r.players[3].state = Players.STATE_DYING
+                r.players[4].state = Players.STATE_DYING
+                expect(#Sim.contenders(r)).is(1) -- player 1 alone can still win, player 2 is the target
+            end)
             test.case('a hit from under rights a blue player on his side', function(expect)
                 local r = round()
                 local p = r.players[2]
