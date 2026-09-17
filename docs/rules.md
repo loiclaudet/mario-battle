@@ -161,10 +161,10 @@ player alive: he falls off the screen and the round goes on around the body, or 
 a dead player's hud goes out with him; a target's coins show in blue. holding coins
 with two or more others alive he becomes **the target** instead, standing where he was and keeping his coins:
 he wears the last enemy's blue (a 40 frame fade that does not stop play) and gets 275 frames of grace (the
-theme's intro at 1.2x) in which he blinks and nothing but the blocks touches him, no enemy, flame or player,
-and no sound plays. after it, any stun (a bumped block, the pow, a stomp) or a touch by an enemy or a flame
+theme's intro at 1.2x) in which he blinks and nothing moves him: no enemy, flame or player touches him, a
+bounced block or the pow under his feet does not stun him, and no sound plays. after it, any stun (a bumped block, the pow, a stomp) or a touch by an enemy or a flame
 lays him on his side (a quarter turn) with no control until a hit from under his feet (a bumped block or the
-pow) stands him up; a stomp on his head is the surest way. another player touching him on his side beats him:
+pow) stands him up, the bounce that did it leaving him be while it lasts; a stomp on his head is the surest way. another player touching him on his side beats him:
 the coins change hands (no kick sound and no death sound; they fly to the beater's hud one after the other)
 and he falls off. with the five coins out and two players
 sharing the top, the player with coins below them becomes the target the same way, and that is sudden death:

@@ -38,7 +38,8 @@ export type Player = {
     -- under his feet rights him; touched there by another player he is beaten and his coins change hands
     blue: boolean,
     side: boolean,
-    invincible: number, -- frames left of the grace a new target gets: enemies, flames and players pass through him
+    invincible: number, -- frames left of the grace a new target gets: enemies, flames, players and bounces pass him by
+    settle: number, -- frames after a righting in which the same bounce (14 frames) or pow (16) cannot stun him again
 }
 
 Players.INVINCIBLE_FRAMES = 275 -- the theme's intro at 1.2x (5.5 s / 1.2 at 60 fps)
@@ -65,6 +66,7 @@ function Players.new(index: number): Player
         blue = false,
         side = false,
         invincible = 0,
+        settle = 0,
     }
     return p
 end
@@ -97,6 +99,7 @@ function Players.reset(p: Player)
     p.blue = fresh.blue
     p.side = fresh.side
     p.invincible = fresh.invincible
+    p.settle = fresh.settle
 end
 
 local function noEvents(): Events
@@ -124,10 +127,12 @@ function Players.touchable(p: Player): boolean
     return p.state == Players.STATE_NORMAL and p.halt == 0 and p.invincible == 0
 end
 
--- a hit from under a blue player on his side stands him up again
+-- a hit from under a blue player on his side stands him up again; the bounce that did it must not stun him
+-- back down while it is still going
 function Players.right(p: Player)
     p.side = false
     p.dizzy = 0
+    p.settle = 18
 end
 
 -- the players still in the round and alive
@@ -208,6 +213,9 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     if p.invincible > 0 then
         p.invincible -= 1
     end
+    if p.settle > 0 then
+        p.settle -= 1
+    end
     if p.state == Players.STATE_DYING then
         if b.y > Players.GONE_Y then
             return ev -- off the screen, nothing more to fall through
@@ -278,8 +286,9 @@ function Players.update(p: Player, w: World.State, intent: Input.Intent): Events
     end
     powCollide(p, w, ev)
 
-    -- a bounced block under the feet, or the pow while grounded, stuns; it rights a blue player on his side
-    if p.onGround and (probe.underHit or w.powCnt > 0) then
+    -- a bounced block under the feet, or the pow while grounded, stuns; it rights a blue player on his side.
+    -- a target in his grace, or just righted, is not moved by it
+    if p.onGround and (probe.underHit or w.powCnt > 0) and p.settle == 0 and p.invincible == 0 then
         if p.side then
             Players.right(p)
             ev.stun = true

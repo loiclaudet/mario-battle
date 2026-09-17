@@ -133,15 +133,31 @@ return function(): Tests
                 r.players[4].state = Players.STATE_DYING
                 expect(#Sim.contenders(r)).is(1) -- player 1 alone can still win, player 2 is the target
             end)
-            test.case('a hit from under rights a blue player on his side', function(expect)
+            test.case('a hit from under rights a blue player on his side, and the same bounce does not lay him back down', function(expect)
                 local r = round()
                 local p = r.players[2]
                 Players.makeBlue(p)
+                p.invincible = 0
                 p.side = true
-                World.bump(r.w, p.body.x + 8, p.body.y + 16) -- the block under his feet
-                Sim.step(r, none(4))
+                World.bump(r.w, p.body.x + 8, p.body.y + 16) -- the block under his feet, bouncing 14 frames
+                for _ = 1, 20 do
+                    Sim.step(r, none(4))
+                end
                 expect(p.side).is(false)
+                expect(p.dizzy).is(0)
                 expect(p.blue).is(true)
+            end)
+            test.case('a bounce under a target in his grace does not stun him', function(expect)
+                local r = round()
+                local p = r.players[2]
+                Players.makeBlue(p)
+                World.bump(r.w, p.body.x + 8, p.body.y + 16)
+                for _ = 1, 20 do
+                    Sim.step(r, none(4))
+                end
+                expect(p.side).is(false)
+                expect(p.dizzy).is(0)
+                expect(p.onGround).is(true)
             end)
             test.case('five coins with a tie at the top: the odd one out turns blue, a leader beating him wins', function(expect)
                 local r = round()
